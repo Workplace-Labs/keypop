@@ -1,6 +1,24 @@
 import Foundation
 import KSPrivateBridge
 
+struct Replacement: Codable, Equatable {
+    let shortcut: String
+    let phrase: String
+}
+
+struct ImportPlan: Codable {
+    let create: [Replacement]
+    let update: [Replacement]
+    let skip: [Replacement]
+    let conflicts: [Replacement]
+}
+
+enum ConflictMode: String {
+    case fail
+    case skip
+    case overwrite
+}
+
 enum CLIError: Error, CustomStringConvertible {
     case usage(String)
     case runtime(String)
@@ -13,7 +31,15 @@ enum CLIError: Error, CustomStringConvertible {
     }
 }
 
-func printJSON(_ value: Any) throws {
+func printJSON<T: Encodable>(_ value: T) throws {
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+    let data = try encoder.encode(value)
+    FileHandle.standardOutput.write(data)
+    print("")
+}
+
+func printJSONObject(_ value: Any) throws {
     let data = try JSONSerialization.data(withJSONObject: value, options: [.prettyPrinted, .sortedKeys])
     FileHandle.standardOutput.write(data)
     print("")
@@ -66,12 +92,6 @@ func bridgeError(_ error: NSError?) -> CLIError {
     .runtime(error?.localizedDescription ?? "Unknown KeyboardServices bridge error")
 }
 
-func requirePrivateAPIFlag(_ args: [String]) throws {
-    guard args.contains("--i-understand-private-api") else {
-        throw CLIError.usage("Mutation commands require --i-understand-private-api")
-    }
-}
-
 func value(after flag: String, in args: [String]) throws -> String {
     guard let index = args.firstIndex(of: flag), args.indices.contains(index + 1) else {
         throw CLIError.usage("Missing \(flag)")
@@ -79,16 +99,151 @@ func value(after flag: String, in args: [String]) throws -> String {
     return args[index + 1]
 }
 
+func optionalValue(after flag: String, in args: [String]) -> String? {
+    guard let index = args.firstIndex(of: flag), args.indices.contains(index + 1) else {
+        return nil
+    }
+    return args[index + 1]
+}
+
+func replacements() throws -> [Replacement] {
+    var nsError: NSError?
+    let rows = KSTextReplacementList(&nsError)
+    if let nsError {
+        throw bridgeError(nsError)
+    }
+
+    return try rows.map { row in
+        guard let shortcut = row["shortcut"] as? String, let phrase = row["phrase"] as? String else {
+            throw CLIError.runtime("KeyboardServices returned a malformed replacement row")
+        }
+        return Replacement(shortcut: shortcut, phrase: phrase)
+    }
+    .sorted { left, right in
+        left.shortcut.localizedStandardCompare(right.shortcut) == .orderedAscending
+    }
+}
+
+func replacementMap(_ rows: [Replacement]) -> [String: Replacement] {
+    Dictionary(uniqueKeysWithValues: rows.map { ($0.shortcut, $0) })
+}
+
+func createReplacement(shortcut: String, phrase: String) throws {
+    var nsError: NSError?
+    guard KSPrivateCreate(shortcut, phrase, &nsError) else {
+        throw bridgeError(nsError)
+    }
+}
+
+func updateReplacement(shortcut: String, phrase: String) throws {
+    var nsError: NSError?
+    guard KSPrivateUpdate(shortcut, phrase, &nsError) else {
+        throw bridgeError(nsError)
+    }
+}
+
+func deleteReplacement(shortcut: String) throws {
+    var nsError: NSError?
+    guard KSPrivateDelete(shortcut, &nsError) else {
+        throw bridgeError(nsError)
+    }
+}
+
+func readImportFile(_ path: String) throws -> [Replacement] {
+    let data: Data
+    if path == "-" {
+        data = FileHandle.standardInput.readDataToEndOfFile()
+    } else {
+        data = try Data(contentsOf: URL(fileURLWithPath: path))
+    }
+    return try JSONDecoder().decode([Replacement].self, from: data)
+}
+
+func validateUniqueShortcuts(_ rows: [Replacement]) throws {
+    var seen = Set<String>()
+    var duplicates = Set<String>()
+    for row in rows {
+        if row.shortcut.isEmpty {
+            throw CLIError.usage("Import contains an empty shortcut")
+        }
+        if !seen.insert(row.shortcut).inserted {
+            duplicates.insert(row.shortcut)
+        }
+    }
+    if !duplicates.isEmpty {
+        throw CLIError.usage("Import contains duplicate shortcuts: \(duplicates.sorted().joined(separator: ", "))")
+    }
+}
+
+func buildImportPlan(incoming: [Replacement], existing: [Replacement], conflictMode: ConflictMode) -> ImportPlan {
+    let existingByShortcut = replacementMap(existing)
+    var create: [Replacement] = []
+    var update: [Replacement] = []
+    var skip: [Replacement] = []
+    var conflicts: [Replacement] = []
+
+    for row in incoming {
+        guard let current = existingByShortcut[row.shortcut] else {
+            create.append(row)
+            continue
+        }
+
+        if current == row {
+            skip.append(row)
+            continue
+        }
+
+        switch conflictMode {
+        case .fail:
+            conflicts.append(row)
+        case .skip:
+            skip.append(row)
+        case .overwrite:
+            update.append(row)
+        }
+    }
+
+    return ImportPlan(create: create, update: update, skip: skip, conflicts: conflicts)
+}
+
+func backupsDirectory() -> URL {
+    URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+        .appendingPathComponent("backups", isDirectory: true)
+}
+
+func timestamp() -> String {
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = TimeZone(secondsFromGMT: 0)
+    formatter.dateFormat = "yyyyMMdd-HHmmss"
+    return formatter.string(from: Date())
+}
+
+func writeBackup(_ rows: [Replacement]) throws -> URL {
+    let directory = backupsDirectory()
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    let url = directory.appendingPathComponent("text-replacements-\(timestamp()).json")
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+    try encoder.encode(rows).write(to: url, options: .atomic)
+    return url
+}
+
 func usage() -> String {
     """
     Usage:
+      trctl list
+      trctl get --shortcut <shortcut>
+      trctl export [--output <path>]
+      trctl create --shortcut <shortcut> --phrase <phrase>
+      trctl update --shortcut <shortcut> --phrase <phrase>
+      trctl delete --shortcut <shortcut>
+      trctl import <path|-> [--dry-run|--apply] [--on-conflict fail|skip|overwrite]
+
+    Diagnostics:
       trctl inspect
       trctl read-sources
       trctl db-summary
-      trctl private-list
-      trctl private-create --i-understand-private-api --shortcut <shortcut> --phrase <phrase>
-      trctl private-update --i-understand-private-api --shortcut <shortcut> --phrase <phrase>
-      trctl private-delete --i-understand-private-api --shortcut <shortcut>
     """
 }
 
@@ -97,52 +252,101 @@ func main() throws {
     guard let command = args.first else {
         throw CLIError.usage(usage())
     }
+    let commandArgs = Array(args.dropFirst())
 
     switch command {
+    case "list":
+        try printJSON(replacements())
+    case "get":
+        let shortcut = try value(after: "--shortcut", in: commandArgs)
+        guard let row = try replacements().first(where: { $0.shortcut == shortcut }) else {
+            throw CLIError.runtime("No replacement found for shortcut \(shortcut)")
+        }
+        try printJSON(row)
+    case "export":
+        let rows = try replacements()
+        if let output = optionalValue(after: "--output", in: commandArgs) {
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+            try encoder.encode(rows).write(to: URL(fileURLWithPath: output), options: .atomic)
+            try printJSONObject(["exported": rows.count, "output": output])
+        } else {
+            try printJSON(rows)
+        }
+    case "create":
+        let shortcut = try value(after: "--shortcut", in: commandArgs)
+        let phrase = try value(after: "--phrase", in: commandArgs)
+        if try replacements().contains(where: { $0.shortcut == shortcut }) {
+            throw CLIError.runtime("Replacement already exists for shortcut \(shortcut)")
+        }
+        try createReplacement(shortcut: shortcut, phrase: phrase)
+        try printJSON(["created": shortcut])
+    case "update":
+        let shortcut = try value(after: "--shortcut", in: commandArgs)
+        let phrase = try value(after: "--phrase", in: commandArgs)
+        if try !replacements().contains(where: { $0.shortcut == shortcut }) {
+            throw CLIError.runtime("No replacement found for shortcut \(shortcut)")
+        }
+        try updateReplacement(shortcut: shortcut, phrase: phrase)
+        try printJSON(["updated": shortcut])
+    case "delete":
+        let shortcut = try value(after: "--shortcut", in: commandArgs)
+        if try !replacements().contains(where: { $0.shortcut == shortcut }) {
+            throw CLIError.runtime("No replacement found for shortcut \(shortcut)")
+        }
+        try deleteReplacement(shortcut: shortcut)
+        try printJSON(["deleted": shortcut])
+    case "import":
+        guard let path = commandArgs.first, !path.hasPrefix("--") else {
+            throw CLIError.usage("Missing import path")
+        }
+        let dryRun = commandArgs.contains("--dry-run")
+        let apply = commandArgs.contains("--apply")
+        guard dryRun != apply else {
+            throw CLIError.usage("Import requires exactly one of --dry-run or --apply")
+        }
+        let conflictMode = ConflictMode(rawValue: optionalValue(after: "--on-conflict", in: commandArgs) ?? "fail")
+        guard let conflictMode else {
+            throw CLIError.usage("--on-conflict must be one of fail, skip, overwrite")
+        }
+
+        let incoming = try readImportFile(path)
+        try validateUniqueShortcuts(incoming)
+        let existing = try replacements()
+        let plan = buildImportPlan(incoming: incoming, existing: existing, conflictMode: conflictMode)
+        if !plan.conflicts.isEmpty {
+            try printJSON(plan)
+            throw CLIError.runtime("Import has conflicts; rerun with --on-conflict skip or --on-conflict overwrite")
+        }
+        if dryRun {
+            try printJSON(plan)
+            return
+        }
+
+        let backupURL = try writeBackup(existing)
+        for row in plan.create {
+            try createReplacement(shortcut: row.shortcut, phrase: row.phrase)
+        }
+        for row in plan.update {
+            try updateReplacement(shortcut: row.shortcut, phrase: row.phrase)
+        }
+        try printJSONObject([
+            "created": plan.create.count,
+            "updated": plan.update.count,
+            "skipped": plan.skip.count,
+            "backup": backupURL.path
+        ])
     case "inspect":
-        try printJSON(KSProbeInspect())
+        try printJSONObject(KSProbeInspect())
     case "read-sources":
         var nsError: NSError?
         let result = KSProbeReadSources(&nsError)
         if let nsError {
             throw bridgeError(nsError)
         }
-        try printJSON(result)
+        try printJSONObject(result)
     case "db-summary":
-        try printJSON(databaseSummary())
-    case "private-list":
-        var nsError: NSError?
-        let rows = KSPrivateList(&nsError)
-        if let nsError {
-            throw bridgeError(nsError)
-        }
-        try printJSON(rows)
-    case "private-create":
-        try requirePrivateAPIFlag(args)
-        let shortcut = try value(after: "--shortcut", in: args)
-        let phrase = try value(after: "--phrase", in: args)
-        var nsError: NSError?
-        guard KSPrivateCreate(shortcut, phrase, &nsError) else {
-            throw bridgeError(nsError)
-        }
-        try printJSON(["created": shortcut])
-    case "private-update":
-        try requirePrivateAPIFlag(args)
-        let shortcut = try value(after: "--shortcut", in: args)
-        let phrase = try value(after: "--phrase", in: args)
-        var nsError: NSError?
-        guard KSPrivateUpdate(shortcut, phrase, &nsError) else {
-            throw bridgeError(nsError)
-        }
-        try printJSON(["updated": shortcut])
-    case "private-delete":
-        try requirePrivateAPIFlag(args)
-        let shortcut = try value(after: "--shortcut", in: args)
-        var nsError: NSError?
-        guard KSPrivateDelete(shortcut, &nsError) else {
-            throw bridgeError(nsError)
-        }
-        try printJSON(["deleted": shortcut])
+        try printJSONObject(databaseSummary())
     default:
         throw CLIError.usage(usage())
     }

@@ -35,7 +35,7 @@ swift build
 swift test
 .build/debug/trctl inspect
 .build/debug/trctl read-sources
-.build/debug/trctl private-list
+.build/debug/trctl list
 scripts/validate-crud.sh
 ```
 

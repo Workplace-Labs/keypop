@@ -401,11 +401,11 @@ NSDictionary<NSString *, id> *KSProbeReadSources(NSError **error) {
         @"queryTextReplacementsWithCallbackCount": @(query.count),
         @"coreDataStoreCount": @(coreData.count),
         @"legacyDefaultsCount": @(legacy.count),
-        @"usedForPrivateList": direct.count > 0 ? @"textReplacementEntries" : (query.count > 0 ? @"queryTextReplacementsWithCallback:" : (coreData.count > 0 ? @"_KSTextReplacementCoreDataStore" : @"NSUserDictionaryReplacementItems fallback"))
+        @"usedForList": direct.count > 0 ? @"textReplacementEntries" : (query.count > 0 ? @"queryTextReplacementsWithCallback:" : (coreData.count > 0 ? @"_KSTextReplacementCoreDataStore" : @"NSUserDictionaryReplacementItems fallback"))
     };
 }
 
-NSArray<NSDictionary<NSString *, id> *> *KSPrivateList(NSError **error) {
+NSArray<NSDictionary<NSString *, id> *> *KSTextReplacementList(NSError **error) {
     if (!KSLoadFramework(error)) {
         return @[];
     }

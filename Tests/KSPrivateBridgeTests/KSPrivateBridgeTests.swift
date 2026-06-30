@@ -22,5 +22,6 @@ final class KSPrivateBridgeTests: XCTestCase {
         XCTAssertNotNil(sources["queryTextReplacementsWithCallbackCount"])
         XCTAssertNotNil(sources["coreDataStoreCount"])
         XCTAssertNotNil(sources["legacyDefaultsCount"])
+        XCTAssertNotNil(sources["usedForList"])
     }
 }

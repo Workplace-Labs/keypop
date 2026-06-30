@@ -48,6 +48,8 @@ Avoid reviving `performTransaction:completionHandler:` as the primary path. On m
 - Prefer count/schema/source probes for diagnostics.
 - Mutation validation must use a unique disposable shortcut and must clean it up.
 - Keep `scripts/validate-crud.sh` passing; it is the safest end-to-end mutation check.
+- Bulk import must require either `--dry-run` or `--apply`; never make apply implicit.
+- Keep import backups enabled before bulk mutation.
 - Treat private API behavior as OS-version-specific. Capture `sw_vers` evidence when changing API assumptions.
 - Do not add Accessibility/UI automation unless private APIs become nonviable and docs explain why.
 - This cannot be positioned as Mac App Store-safe software.
@@ -61,6 +63,7 @@ swift build
 swift test
 .build/debug/trctl inspect
 .build/debug/trctl read-sources
+.build/debug/trctl list
 scripts/validate-crud.sh
 ```
 
@@ -91,4 +94,3 @@ Expected output: `0`.
 - If adding mutating tests, make them opt-in and cleanup-safe.
 - Keep docs synchronized with observed OS behavior.
 - If investigating newer APIs, prefer `dyld_info`, runtime method inspection, and controlled probes before changing the wrapper path.
-

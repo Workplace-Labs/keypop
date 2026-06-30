@@ -7,7 +7,7 @@ db="${HOME}/Library/KeyboardServices/TextReplacements.db"
 probe=";trctlprobe$(date +%Y%m%d%H%M%S)"
 
 cleanup() {
-  "${trctl}" private-delete --i-understand-private-api --shortcut "${probe}" >/dev/null 2>&1 || true
+  "${trctl}" delete --shortcut "${probe}" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
@@ -27,15 +27,15 @@ expect_count() {
 cd "${root}"
 swift build >/dev/null
 
-"${trctl}" private-create --i-understand-private-api --shortcut "${probe}" --phrase "TRCTL create validation" >/dev/null
+"${trctl}" create --shortcut "${probe}" --phrase "TRCTL create validation" >/dev/null
 sleep 2
 expect_count "after-create" "1" "select count(*) from ZTEXTREPLACEMENTENTRY where ZWASDELETED = 0 and ZSHORTCUT = '${probe}' and ZPHRASE = 'TRCTL create validation';"
 
-"${trctl}" private-update --i-understand-private-api --shortcut "${probe}" --phrase "TRCTL update validation" >/dev/null
+"${trctl}" update --shortcut "${probe}" --phrase "TRCTL update validation" >/dev/null
 sleep 2
 expect_count "after-update" "1" "select count(*) from ZTEXTREPLACEMENTENTRY where ZWASDELETED = 0 and ZSHORTCUT = '${probe}' and ZPHRASE = 'TRCTL update validation';"
 
-"${trctl}" private-delete --i-understand-private-api --shortcut "${probe}" >/dev/null
+"${trctl}" delete --shortcut "${probe}" >/dev/null
 sleep 2
 expect_count "after-delete" "0" "select count(*) from ZTEXTREPLACEMENTENTRY where ZWASDELETED = 0 and ZSHORTCUT = '${probe}';"
 trap - EXIT

@@ -12,13 +12,27 @@ Current evidence was gathered on:
 
 ```sh
 swift build
-.build/debug/trctl inspect
-.build/debug/trctl read-sources
-.build/debug/trctl db-summary
-.build/debug/trctl private-list
+.build/debug/trctl list
+.build/debug/trctl export --output replacements.json
+.build/debug/trctl get --shortcut ';demo'
 ```
 
-Mutation commands are intentionally explicit:
+Mutation commands operate on your real Apple Text Replacements:
+
+```sh
+.build/debug/trctl create --shortcut ';demo' --phrase 'Demo phrase'
+.build/debug/trctl update --shortcut ';demo' --phrase 'Updated demo phrase'
+.build/debug/trctl delete --shortcut ';demo'
+```
+
+Bulk import is dry-run by default in practice because it requires either `--dry-run` or `--apply`:
+
+```sh
+.build/debug/trctl import replacements.json --dry-run
+.build/debug/trctl import replacements.json --apply --on-conflict overwrite
+```
+
+For a safe disposable end-to-end validation:
 
 ```sh
 scripts/validate-crud.sh
@@ -33,7 +47,7 @@ Validated on macOS 26.5.1:
 - delete via KeyboardServices private API
 - no Accessibility permission prompt observed
 
-Read behavior is also private-framework backed: `private-list` prefers `_KSTextReplacementCoreDataStore`. The older client-store read selectors still return empty on this OS, so the defaults mirror remains a last-resort fallback.
+Read behavior is also private-framework backed: `list` prefers `_KSTextReplacementCoreDataStore`. The older client-store read selectors still return empty on this OS, so the defaults mirror remains a last-resort fallback.
 
 ## Project Layout
 
@@ -48,7 +62,8 @@ Read behavior is also private-framework backed: `private-list` prefers `_KSTextR
 ## Safety Notes
 
 - `db-summary` reports schema and counts only. It does not print actual user replacements.
-- `read-sources` reports counts only and shows which read source `private-list` will use.
-- `private-list` prints actual replacements because that is required to inspect read capability. It prefers private framework reads and falls back to `NSUserDictionaryReplacementItems` only if private reads fail or return empty.
+- `read-sources` reports counts only and shows which read source `list` will use.
+- `list` and `export` print actual replacements because that is their purpose.
+- `import --apply` writes a timestamped JSON backup under `backups/` before changing replacements.
 - Writes go through KeyboardServices private APIs, not direct SQLite mutation.
 - Direct database writes are deliberately not implemented.
