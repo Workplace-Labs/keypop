@@ -1,10 +1,6 @@
 import Foundation
 import KSPrivateBridge
-
-struct Replacement: Codable, Equatable {
-    let shortcut: String
-    let phrase: String
-}
+import TrctlKit
 
 struct ImportPlan: Codable {
     let create: [Replacement]
@@ -163,7 +159,11 @@ func readImportFile(_ path: String) throws -> [Replacement] {
     } else {
         data = try Data(contentsOf: URL(fileURLWithPath: path))
     }
-    return try JSONDecoder().decode([Replacement].self, from: data)
+    return try KitFormat.parseReplacements(from: data)
+}
+
+func writeKitFile(_ replacements: [Replacement], to path: String) throws {
+    try KitFormat.encodeRaycast(replacements).write(to: URL(fileURLWithPath: path), options: .atomic)
 }
 
 func validateUniqueShortcuts(_ rows: [Replacement]) throws {
@@ -237,14 +237,14 @@ func writeBackup(_ rows: [Replacement]) throws -> URL {
     let directory = backupsDirectory()
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     let url = directory.appendingPathComponent("text-replacements-\(timestamp()).json")
-    let encoder = JSONEncoder()
-    encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-    try encoder.encode(rows).write(to: url, options: .atomic)
+    try writeKitFile(rows, to: url.path)
     return url
 }
 
 func usage() -> String {
     """
+    Kit files use the Raycast snippet JSON format (name, keyword, text).
+
     Usage:
       trctl list [--prefix <prefix>]
       trctl get --shortcut <shortcut>
@@ -271,23 +271,22 @@ func main() throws {
     switch command {
     case "list":
         let prefix = optionalValue(after: "--prefix", in: commandArgs)
-        try printJSON(filterReplacements(replacements(), prefix: prefix))
+        let rows = filterReplacements(try replacements(), prefix: prefix)
+        try printJSON(KitFormat.raycastSnippets(from: rows))
     case "get":
         let shortcut = try value(after: "--shortcut", in: commandArgs)
         guard let row = try replacements().first(where: { $0.shortcut == shortcut }) else {
             throw CLIError.runtime("No replacement found for shortcut \(shortcut)")
         }
-        try printJSON(row)
+        try printJSON(RaycastSnippet(replacement: row))
     case "export":
         let prefix = optionalValue(after: "--prefix", in: commandArgs)
         let rows = try filterReplacements(replacements(), prefix: prefix)
         if let output = optionalValue(after: "--output", in: commandArgs) {
-            let encoder = JSONEncoder()
-            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-            try encoder.encode(rows).write(to: URL(fileURLWithPath: output), options: .atomic)
-            try printJSONObject(["exported": rows.count, "output": output])
+            try writeKitFile(rows, to: output)
+            try printJSONObject(["exported": rows.count, "format": "raycast", "output": output])
         } else {
-            try printJSON(rows)
+            try printJSON(KitFormat.raycastSnippets(from: rows))
         }
     case "create":
         let shortcut = try value(after: "--shortcut", in: commandArgs)

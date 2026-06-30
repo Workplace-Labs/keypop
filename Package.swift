@@ -15,13 +15,20 @@ let package = Package(
             name: "KSPrivateBridge",
             publicHeadersPath: "include"
         ),
+        .target(
+            name: "TrctlKit"
+        ),
         .executableTarget(
             name: "trctl",
-            dependencies: ["KSPrivateBridge"]
+            dependencies: ["KSPrivateBridge", "TrctlKit"]
         ),
         .testTarget(
             name: "KSPrivateBridgeTests",
             dependencies: ["KSPrivateBridge"]
+        ),
+        .testTarget(
+            name: "TrctlKitTests",
+            dependencies: ["TrctlKit"]
         )
     ]
 )

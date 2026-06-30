@@ -41,24 +41,45 @@ swift build
 
 ### Export or share a library snapshot
 
+Kit files use the **Raycast snippet JSON format** (`name`, `keyword`, `text`). See [`docs/kits.md`](kits.md) for import/export workflows and limitations.
+
 Full library:
 
 ```sh
-.build/debug/trctl export --output replacements.json
+.build/debug/trctl export --output kits/full.raycast.json
 ```
 
 Team-only export (recommended for sharing):
 
 ```sh
-.build/debug/trctl export --prefix ';wl' --output wl-replacements.json
+.build/debug/trctl export --prefix ';wl' --output kits/wl-team.raycast.json
 ```
 
-Import is dry-run by default until you pass `--apply`:
+Prompt kit:
 
 ```sh
-.build/debug/trctl import wl-replacements.json --prefix ';wl' --dry-run
-.build/debug/trctl import wl-replacements.json --prefix ';wl' --apply --on-conflict skip
+.build/debug/trctl import kits/prompts-core.raycast.json --prefix ';p' --dry-run
+.build/debug/trctl import kits/prompts-core.raycast.json --prefix ';p' --apply --on-conflict skip
 ```
+
+Contact team kit:
+
+```sh
+.build/debug/trctl import kits/wl-team.raycast.json --prefix ';wl' --dry-run
+.build/debug/trctl import kits/wl-team.raycast.json --prefix ';wl' --apply --on-conflict skip
+```
+
+After any `trctl import --apply` or manual create/update/delete, sync Raycast:
+
+```sh
+./scripts/sync-raycast.sh
+```
+
+Raycast: **Override System Snippets ON** (Settings → Snippets, one-time). Same keywords in both systems — Apple for iOS, Raycast for Warp/VS Code/Cursor.
+
+Exports are Raycast-importable JSON. Raycast exports can be applied with `trctl import`.
+
+Import requires exactly one of `--dry-run` or `--apply`:
 
 When `--prefix` is set on import:
 
@@ -229,6 +250,48 @@ Use the **service or purpose name**, not the URL:
 
 ---
 
+## Prompt shortcuts (`;p` + task)
+
+AI prompts use **`;p`** plus a small task code. Org/team prompts add the org code before the task.
+
+### Suggested convention
+
+| Pattern | Scope | Examples |
+|---------|-------|----------|
+| `;p` + `<task>` | personal prompts | `;pcr`, `;psum`, `;pfx` |
+| `;p` + `<org>` + `<task>` | org/team prompts | `;pwlcr`, `;pblsum`, `;psjfx` |
+
+Read these aloud once when onboarding:
+
+| Code | Say | Task |
+|------|-----|------|
+| `cr` | review | code / PR review |
+| `sum` | sum | summarize |
+| `fx` | fix | debug |
+| `gn` | gen | generate |
+| `em` | email | email draft |
+| `rv` | rev | PR description |
+| `ou` | outline | outline / structure |
+
+Examples:
+
+| Shortcut | Meaning |
+|----------|---------|
+| `;pcr` | personal code / PR review prompt |
+| `;pwlcr` | Workplace Labs code / PR review prompt |
+| `;pblsum` | Blue Label summarize prompt |
+| `;psjfx` | Simple Joy debug/fix prompt |
+
+Prompt kits live in `kits/prompts-core.raycast.json` (Raycast format). Import:
+
+```sh
+.build/debug/trctl import kits/prompts-core.raycast.json --prefix ';p' --apply --on-conflict skip
+```
+
+Long prompts or `{clipboard}` placeholders: prefer **Raycast** on Mac; Apple Text Replacement sync is best for shorter prompts under the iOS size limit. In Warp and Terminal, use Raycast Snippets (`./scripts/sync-raycast.sh`, Override System Snippets ON). Details in [`docs/kits.md`](kits.md) and **App compatibility** below.
+
+---
+
 ## Team sharing
 
 macOS Text Replacements have no built-in team permissions. We share **prefix-scoped JSON** plus this guide.
@@ -238,18 +301,20 @@ The Workplace Labs zone is **`;wl*`** — shortcuts starting with `;wl` (`;wle`,
 ### Maintainer workflow
 
 ```sh
-.build/debug/trctl export --prefix ';wl' --output wl-replacements.json
+.build/debug/trctl export --prefix ';wl' --output kits/wl-team.raycast.json
+./scripts/sync-raycast.sh   # after applying changes to your own Mac
 ```
 
-Share via a secure channel (not public Git if it contains contact info). Every row in the file must start with `;wl`.
+Share via a secure channel. `kits/wl-team.raycast.json` is gitignored when it contains contact info. Every row must start with `;wl`.
 
 ### Onboarding
 
-1. Read this guide.
-2. Receive `wl-replacements.json`.
-3. Preview: `trctl import wl-replacements.json --prefix ';wl' --dry-run`
-4. Apply: `trctl import wl-replacements.json --prefix ';wl' --apply --on-conflict skip`
-5. Personal shortcuts (`;homep`, `;github`, `;ble`, …) are unaffected.
+1. Read this guide and [`docs/kits.md`](kits.md).
+2. Receive `kits/wl-team.raycast.json` from a maintainer.
+3. Preview: `trctl import kits/wl-team.raycast.json --prefix ';wl' --dry-run`
+4. Apply: `trctl import kits/wl-team.raycast.json --prefix ';wl' --apply --on-conflict skip`
+5. Sync Raycast: `./scripts/sync-raycast.sh` (Override System Snippets ON).
+6. Personal shortcuts (`;homep`, `;github`, `;ble`, …) are unaffected.
 
 ### Prefix zones
 
@@ -258,7 +323,7 @@ Share via a secure channel (not public Git if it contains contact info). Every r
 | Workplace Labs | `;wl` | Yes | `;wle`, `;wlw`, `;wla`, `;wlp` |
 | Blue Label | `;bl` | No | `;ble` |
 | Simple Joy | `;sj` | No | `;sj`, `;sjm` |
-| Personal | `;` | No | `;homep`, `;github`, `;cal` |
+| Prompts | `;p` | Kit in repo | `;pcr` |
 
 ---
 
@@ -272,7 +337,8 @@ NEW SHORTCUT CHECKLIST
 ☐ Short and mnemonic
 ☐ Not a prefix of another shortcut
 ☐ Phrase complete (full https:// for URLs)
-☐ Team WL entries start with ;wl and go in wl-replacements.json
+☐ Synced Raycast after changes → ./scripts/sync-raycast.sh
+☐ Raycast Override System Snippets ON (one-time)
 
 ORG ZONES (; + org + role)
 ──────────────────────────
@@ -284,6 +350,15 @@ WL website         ;wlw
 WL address         ;wla
 WL phone           ;wlp
 
+PROMPTS (;p + task, or ;p + org + task)
+────────────────────────────────────────
+Code review        ;pcr
+Summarize          ;psum
+Fix/debug          ;pfx
+WL code review     ;pwlcr
+BL summarize       ;pblsum
+SJ fix/debug       ;psjfx
+
 PERSONAL
 ────────
 Phone              ;homep
@@ -291,11 +366,11 @@ Address            ;homea
 Email              ;proton  ;gmail
 Link               ;github  ;cal  ;linkedin
 
-TRCTL
-─────
-trctl list --prefix ';wl'
-trctl export --prefix ';wl' --output wl-replacements.json
-trctl import wl-replacements.json --prefix ';wl' --dry-run
+KITS & RAYCAST SYNC
+───────────────────
+trctl export --prefix ';wl' --output kits/wl-team.raycast.json
+trctl import kits/prompts-core.raycast.json --prefix ';p' --dry-run
+./scripts/sync-raycast.sh          # after any trctl change
 ```
 
 ---
@@ -314,13 +389,35 @@ trctl import wl-replacements.json --prefix ';wl' --dry-run
 |---------|------|
 | `;wlw` | `https://www.workplacelabs.io` |
 
-Then export: `trctl export --prefix ';wl' --output wl-replacements.json`
+Then export: `trctl export --prefix ';wl' --output kits/wl-team.raycast.json`
+
+---
+
+## App compatibility
+
+macOS Text Replacements work in most **native** text fields and in some **Electron** apps (e.g. **Slack**). They often **do not expand** in apps with custom shell or editor input:
+
+| Reliability | Apps |
+|-------------|------|
+| **Usually works** | Notes, Mail, Messages, Safari, Slack |
+| **Usually does not** | **Warp**, **Terminal.app**, iTerm2, VS Code, **Cursor** |
+| **Varies** | Chrome and other Chromium browsers, JetBrains in-editor, Obsidian, Notion, Discord |
+
+If a shortcut works in Notes or Slack but not in Warp or Cursor, the replacement is fine — that app is the gap.
+
+**Coverage in terminals and editors (Warp, VS Code, Cursor):**
+
+- **Raycast Snippets** — `./scripts/sync-raycast.sh` after changes. **Override System Snippets ON** (Settings → Snippets).
+
+Details: [`docs/kits.md`](kits.md) (Limitations → Raycast-specific).
 
 ---
 
 ## Troubleshooting
 
-**Shortcut does not expand** — check System Settings or `trctl list`; some apps (VS Code, Terminal) ignore macOS replacements.
+**Shortcut does not expand in Warp / VS Code / Cursor** — run `./scripts/sync-raycast.sh`. Confirm **Override System Snippets ON** in Raycast Settings → Snippets.
+
+**Shortcut does not expand in Notes / Mail** — confirm with `trctl list` or System Settings, then test in **Notes**. If it works there but not in Warp, see **App compatibility** above.
 
 **Wrong phrase expands** — check for shortcuts where one is a prefix of another.
 
@@ -334,12 +431,12 @@ Then export: `trctl export --prefix ';wl' --output wl-replacements.json`
 
 | Command | Purpose |
 |---------|---------|
-| `trctl list` | All replacements |
+| `trctl list` | All entries (Raycast JSON) |
 | `trctl list --prefix ';wl'` | WL zone only |
-| `trctl export --prefix ';wl' --output wl.json` | Team export |
-| `trctl import wl.json --prefix ';wl' --dry-run` | Preview merge |
-| `trctl import wl.json --prefix ';wl' --apply --on-conflict skip` | Apply team library |
-| `trctl create --shortcut ';wlc' --phrase '...'` | Add one entry |
+| `trctl export --prefix ';wl' --output kits/wl-team.raycast.json` | Team kit (Raycast-importable) |
+| `trctl import kits/wl-team.raycast.json --prefix ';wl' --dry-run` | Preview merge |
+| `trctl import kits/prompts-core.raycast.json --prefix ';p' --apply` | Apply prompt kit |
+| `./scripts/sync-raycast.sh` | Sync all replacements to Raycast Snippets |
 
 ---
 
@@ -348,7 +445,9 @@ Then export: `trctl export --prefix ';wl' --output wl-replacements.json`
 1. **`;` on everything new** — one symbols switch on iOS, then letters.
 2. **No dots** in shortcuts — use `;wle` not `;wl.email`.
 3. **Org pattern:** `;` + 2-letter org + 1-letter role (`;ble`, `;sjm`, `;wle`).
-4. **Team sharing:** `export` / `import` with `--prefix ';wl'`.
-5. **Keep it small** — static strings you type daily, not passwords or templates.
+4. **Prompts:** `;p` + task for personal prompts, `;p` + org + task for team prompts (`;pcr`, `;pwlcr`).
+5. **Dual layer:** Apple Text Replacements (iOS) + Raycast Snippets (Mac black-hole apps). Same keywords; Raycast **Override System Snippets ON**. Sync: `./scripts/sync-raycast.sh`.
+6. **Kits:** Raycast JSON in `kits/` — `trctl export` / `import` and Raycast use the same format ([`docs/kits.md`](kits.md)).
+7. **Team sharing:** `export` / `import` with `--prefix ';wl'`.
 
-When in doubt, ask before adding to `wl-replacements.json`.
+When in doubt, ask before adding to shared kits.

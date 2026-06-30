@@ -258,7 +258,7 @@ Espanso has no universal import GUI; migration is often manual or scripted.
 
 - Formatted email signatures
 - Templates with variable fields
-- Reliable expansion in VS Code, Terminal, Chrome, Slack (varies by app and input method)
+- Reliable expansion in VS Code, Terminal, Chrome (varies by app and input field; Slack and native apps generally work)
 - Programmatic bulk management via `defaults write` (broken on Sequoia/Tahoe for persistence)
 - Team sharing with governance
 
@@ -278,12 +278,14 @@ Espanso has no universal import GUI; migration is often manual or scripted.
 
 ### 8.4 Hybrid workflow (pragmatic)
 
-Many practitioners run **both** native and a expander:
+Run **both** native Apple Text Replacements and Raycast with the **same keywords**:
 
-- Native: typo fixes + top 10 contact shortcuts (iCloud to iOS)
-- Raycast/Espanso: dev templates, dynamic snippets, app-specific rules
+- **Apple Text Replacements** (`trctl`): iOS sync, Notes, Mail, Slack, Safari
+- **Raycast Snippets** (`sync-raycast.sh`): Warp, VS Code, Cursor, Chrome
 
-Avoid duplicate triggers across layers — pick one owner per abbreviation.
+Raycast **Override System Snippets ON** — Raycast expands on Mac even when Apple has the same keyword. With it OFF, Raycast defers to macOS and Warp gets nothing.
+
+Avoid *different* keywords across layers for the same phrase; duplicate keywords across Apple + Raycast is intentional.
 
 ---
 

@@ -1,3 +1,5 @@
 .build/
 backups/
+exports/
 wl-replacements.json
+kits/wl-team.raycast.json

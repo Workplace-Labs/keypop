@@ -22,7 +22,7 @@ The current answer is yes on macOS 26.5.1: read/create/update/delete work throug
 - Objective-C runtime bridge target: `Sources/KSPrivateBridge`.
 - Tests: `Tests/KSPrivateBridgeTests`.
 - Research notes: `docs/`.
-- Repeatable probes: `scripts/inspect-system.sh` and `scripts/validate-crud.sh`.
+- Repeatable probes: `scripts/inspect-system.sh`, `scripts/validate-crud.sh`, `scripts/sync-raycast.sh`.
 
 Keep this project isolated under `projects/macos-text-replacements/`. Do not wire it into the root pnpm workspace.
 
@@ -52,9 +52,30 @@ Avoid reviving `performTransaction:completionHandler:` as the primary path. On m
 - Keep import backups enabled before bulk mutation.
 - Prefix-scoped work should use `--prefix <prefix>`, not a separate group abstraction.
 - When `import --prefix <prefix>` is used, reject rows outside that prefix.
+- Kit interchange uses Raycast snippet JSON (`name`, `keyword`, `text`); `export` is Raycast-importable.
+- `import` accepts Raycast snippet JSON only (`name`, `keyword`, `text`).
 - Treat private API behavior as OS-version-specific. Capture `sw_vers` evidence when changing API assumptions.
 - Do not add Accessibility/UI automation unless private APIs become nonviable and docs explain why.
 - This cannot be positioned as Mac App Store-safe software.
+
+## Snippet Sync Workflow
+
+Maintain the same keywords in both systems:
+
+| Layer | Tool | Covers |
+|-------|------|--------|
+| Apple Text Replacements | `trctl` | iOS, Notes, Mail, Slack, Safari |
+| Raycast Snippets | `sync-raycast.sh` | Warp, VS Code, Cursor, Chrome |
+
+Raycast setting: **Override System Snippets ON** (Settings → Snippets). Required when keywords overlap — with it OFF, Raycast defers to macOS and Warp gets nothing.
+
+After adding or changing replacements:
+
+```sh
+./scripts/sync-raycast.sh
+```
+
+Exports to `exports/raycast-sync.json`, copies to `~/Desktop/raycast-sync.json`, opens Raycast Import Snippets. Click the Desktop file in the picker.
 
 ## Validation
 
