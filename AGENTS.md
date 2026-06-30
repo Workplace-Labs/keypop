@@ -50,6 +50,8 @@ Avoid reviving `performTransaction:completionHandler:` as the primary path. On m
 - Keep `scripts/validate-crud.sh` passing; it is the safest end-to-end mutation check.
 - Bulk import must require either `--dry-run` or `--apply`; never make apply implicit.
 - Keep import backups enabled before bulk mutation.
+- Prefix-scoped work should use `--prefix <prefix>`, not a separate group abstraction.
+- When `import --prefix <prefix>` is used, reject rows outside that prefix.
 - Treat private API behavior as OS-version-specific. Capture `sw_vers` evidence when changing API assumptions.
 - Do not add Accessibility/UI automation unless private APIs become nonviable and docs explain why.
 - This cannot be positioned as Mac App Store-safe software.
@@ -64,6 +66,7 @@ swift test
 .build/debug/trctl inspect
 .build/debug/trctl read-sources
 .build/debug/trctl list
+.build/debug/trctl list --prefix ';wl'
 scripts/validate-crud.sh
 ```
 

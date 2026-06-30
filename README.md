@@ -13,7 +13,9 @@ Current evidence was gathered on:
 ```sh
 swift build
 .build/debug/trctl list
+.build/debug/trctl list --prefix ';wl'
 .build/debug/trctl export --output replacements.json
+.build/debug/trctl export --prefix ';wl' --output wl-replacements.json
 .build/debug/trctl get --shortcut ';demo'
 ```
 
@@ -30,6 +32,7 @@ Bulk import is dry-run by default in practice because it requires either `--dry-
 ```sh
 .build/debug/trctl import replacements.json --dry-run
 .build/debug/trctl import replacements.json --apply --on-conflict overwrite
+.build/debug/trctl import wl-replacements.json --prefix ';wl' --dry-run
 ```
 
 For a safe disposable end-to-end validation:
@@ -49,6 +52,12 @@ Validated on macOS 26.5.1:
 
 Read behavior is also private-framework backed: `list` prefers `_KSTextReplacementCoreDataStore`. The older client-store read selectors still return empty on this OS, so the defaults mirror remains a last-resort fallback.
 
+## New User Guide
+
+Start here for naming conventions, team sharing, and onboarding:
+
+- [`docs/user-guide.md`](docs/user-guide.md)
+
 ## Project Layout
 
 - `Sources/trctl`: Swift command-line interface.
@@ -64,6 +73,7 @@ Read behavior is also private-framework backed: `list` prefers `_KSTextReplaceme
 - `db-summary` reports schema and counts only. It does not print actual user replacements.
 - `read-sources` reports counts only and shows which read source `list` will use.
 - `list` and `export` print actual replacements because that is their purpose.
+- `--prefix <prefix>` scopes `list`, `export`, and `import` to shortcut naming conventions such as `;wl` (matches `;wle`, `;wlw`, …).
 - `import --apply` writes a timestamped JSON backup under `backups/` before changing replacements.
 - Writes go through KeyboardServices private APIs, not direct SQLite mutation.
 - Direct database writes are deliberately not implemented.

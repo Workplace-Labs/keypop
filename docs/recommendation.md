@@ -36,6 +36,7 @@ swift test
 .build/debug/trctl inspect
 .build/debug/trctl read-sources
 .build/debug/trctl list
+.build/debug/trctl list --prefix ';wl'
 scripts/validate-crud.sh
 ```
 

@@ -128,6 +128,13 @@ func replacementMap(_ rows: [Replacement]) -> [String: Replacement] {
     Dictionary(uniqueKeysWithValues: rows.map { ($0.shortcut, $0) })
 }
 
+func filterReplacements(_ rows: [Replacement], prefix: String?) -> [Replacement] {
+    guard let prefix else {
+        return rows
+    }
+    return rows.filter { $0.shortcut.hasPrefix(prefix) }
+}
+
 func createReplacement(shortcut: String, phrase: String) throws {
     var nsError: NSError?
     guard KSPrivateCreate(shortcut, phrase, &nsError) else {
@@ -172,6 +179,13 @@ func validateUniqueShortcuts(_ rows: [Replacement]) throws {
     }
     if !duplicates.isEmpty {
         throw CLIError.usage("Import contains duplicate shortcuts: \(duplicates.sorted().joined(separator: ", "))")
+    }
+}
+
+func validatePrefix(_ rows: [Replacement], prefix: String) throws {
+    let outOfScope = rows.map(\.shortcut).filter { !$0.hasPrefix(prefix) }.sorted()
+    if !outOfScope.isEmpty {
+        throw CLIError.usage("Import contains shortcuts outside prefix \(prefix): \(outOfScope.joined(separator: ", "))")
     }
 }
 
@@ -232,13 +246,13 @@ func writeBackup(_ rows: [Replacement]) throws -> URL {
 func usage() -> String {
     """
     Usage:
-      trctl list
+      trctl list [--prefix <prefix>]
       trctl get --shortcut <shortcut>
-      trctl export [--output <path>]
+      trctl export [--prefix <prefix>] [--output <path>]
       trctl create --shortcut <shortcut> --phrase <phrase>
       trctl update --shortcut <shortcut> --phrase <phrase>
       trctl delete --shortcut <shortcut>
-      trctl import <path|-> [--dry-run|--apply] [--on-conflict fail|skip|overwrite]
+      trctl import <path|-> [--prefix <prefix>] [--dry-run|--apply] [--on-conflict fail|skip|overwrite]
 
     Diagnostics:
       trctl inspect
@@ -256,7 +270,8 @@ func main() throws {
 
     switch command {
     case "list":
-        try printJSON(replacements())
+        let prefix = optionalValue(after: "--prefix", in: commandArgs)
+        try printJSON(filterReplacements(replacements(), prefix: prefix))
     case "get":
         let shortcut = try value(after: "--shortcut", in: commandArgs)
         guard let row = try replacements().first(where: { $0.shortcut == shortcut }) else {
@@ -264,7 +279,8 @@ func main() throws {
         }
         try printJSON(row)
     case "export":
-        let rows = try replacements()
+        let prefix = optionalValue(after: "--prefix", in: commandArgs)
+        let rows = try filterReplacements(replacements(), prefix: prefix)
         if let output = optionalValue(after: "--output", in: commandArgs) {
             let encoder = JSONEncoder()
             encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -309,10 +325,14 @@ func main() throws {
         guard let conflictMode else {
             throw CLIError.usage("--on-conflict must be one of fail, skip, overwrite")
         }
+        let prefix = optionalValue(after: "--prefix", in: commandArgs)
 
         let incoming = try readImportFile(path)
         try validateUniqueShortcuts(incoming)
-        let existing = try replacements()
+        if let prefix {
+            try validatePrefix(incoming, prefix: prefix)
+        }
+        let existing = try filterReplacements(replacements(), prefix: prefix)
         let plan = buildImportPlan(incoming: incoming, existing: existing, conflictMode: conflictMode)
         if !plan.conflicts.isEmpty {
             try printJSON(plan)
