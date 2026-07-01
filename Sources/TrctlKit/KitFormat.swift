@@ -10,7 +10,8 @@ public struct Replacement: Codable, Equatable {
     }
 }
 
-public struct RaycastSnippet: Codable, Equatable {
+/// JSON kit entry: `name`, `keyword`, `text` (Raycast-compatible shape).
+public struct SnippetEntry: Codable, Equatable {
     public let name: String
     public let keyword: String
     public let text: String
@@ -22,7 +23,7 @@ public struct RaycastSnippet: Codable, Equatable {
     }
 
     public init(replacement: Replacement, name: String? = nil) {
-        self.name = name ?? RaycastSnippet.defaultName(for: replacement.shortcut)
+        self.name = name ?? SnippetEntry.defaultName(for: replacement.shortcut)
         self.keyword = replacement.shortcut
         self.text = replacement.phrase
     }
@@ -46,9 +47,9 @@ public enum KitFormatError: Error, CustomStringConvertible {
     public var description: String {
         switch self {
         case .invalidRoot:
-            return "Kit file must be a JSON array of Raycast snippets"
+            return "Kit file must be a JSON array of snippet objects (name, keyword, text)"
         case .invalidEntry(let index):
-            return "Kit entry \(index) is not a valid Raycast snippet object"
+            return "Kit entry \(index) is not a valid snippet object"
         case .missingKeyword(let index):
             return "Kit entry \(index) is missing keyword"
         case .missingText(let index):
@@ -59,31 +60,31 @@ public enum KitFormatError: Error, CustomStringConvertible {
 
 public enum KitFormat {
     public static func parseReplacements(from data: Data) throws -> [Replacement] {
-        let snippets: [RaycastSnippet]
+        let entries: [SnippetEntry]
         do {
-            snippets = try JSONDecoder().decode([RaycastSnippet].self, from: data)
+            entries = try JSONDecoder().decode([SnippetEntry].self, from: data)
         } catch {
             throw KitFormatError.invalidRoot
         }
 
-        return try snippets.enumerated().map { index, snippet in
-            guard !snippet.keyword.isEmpty else {
+        return try entries.enumerated().map { index, entry in
+            guard !entry.keyword.isEmpty else {
                 throw KitFormatError.missingKeyword(index)
             }
-            guard !snippet.text.isEmpty else {
+            guard !entry.text.isEmpty else {
                 throw KitFormatError.missingText(index)
             }
-            return snippet.replacement
+            return entry.replacement
         }
     }
 
-    public static func raycastSnippets(from replacements: [Replacement]) -> [RaycastSnippet] {
-        replacements.map { RaycastSnippet(replacement: $0) }
+    public static func snippetEntries(from replacements: [Replacement]) -> [SnippetEntry] {
+        replacements.map { SnippetEntry(replacement: $0) }
     }
 
-    public static func encodeRaycast(_ replacements: [Replacement]) throws -> Data {
+    public static func encode(_ replacements: [Replacement]) throws -> Data {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        return try encoder.encode(raycastSnippets(from: replacements))
+        return try encoder.encode(snippetEntries(from: replacements))
     }
 }

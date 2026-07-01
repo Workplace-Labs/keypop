@@ -1,71 +1,53 @@
-# Agent Context (trctl)
+# Agent Context (trctl + trexpand)
 
-Swift CLI for Apple Text Replacements via private `KeyboardServices` APIs. Standalone SwiftPM package — not part of the root pnpm workspace.
+Swift package for Apple Text Replacements management and Mac system-wide expansion. Not part of the root pnpm workspace.
 
-## Goal
+**Branch:** `feat/trexpand-sprint0`
 
-Developer-tool path for reading, creating, updating, and deleting Apple Text Replacements without UI automation, daemons, or Accessibility permission. Validated on macOS 26.5.1.
+## Components
 
-## Project Shape
+| Target | Purpose |
+|--------|---------|
+| `trctl` | CLI — CRUD via private KeyboardServices APIs (no Accessibility) |
+| `trexpand` | Mac expander daemon — CGEventTap + clipboard inject |
+| `trexpand-probe` | TCC / inject / bridge diagnostics |
+| `TrctlKit` | Snippet kit format, `ExpanderExport` |
+| `TrexpandKit` | Engine, permissions, tap health, `SnippetFileWatcher` |
+| `KSPrivateBridge` | Objective-C runtime bridge |
 
-- CLI: `Sources/trctl`
-- Bridge: `Sources/KSPrivateBridge`
-- Kit helpers: `Sources/TrctlKit`
-- Tests: `Tests/KSPrivateBridgeTests`, `Tests/TrctlKitTests`
-- User docs: `README.md`, `docs/user-guide.md`, `docs/kits.md`
-- Contributor docs: `docs/architecture.md`, `docs/open-source-expander-research.md`, `docs/sprint-plan-expander-runtime.md`
-- Archived notes: `docs/archive/` (personal guide, research — not linked from README)
+## Design constraints
 
-## Known Working API Routes
+- **Plain text only** in kits — no `{clipboard}` or dynamic placeholders (iOS + Mac parity)
+- **trctl does not depend on TrexpandKit** — sync via `TrctlKit.ExpanderExport`
+- Kit JSON: `name`, `keyword`, `text` (`.snippets.json` convention)
 
-Read: `_KSTextReplacementCoreDataStore textReplacementEntriesWithLimit:` (fallback: `NSUserDictionaryReplacementItems`)
-
-Mutation via `_KSTextReplacementClientStore`:
-
-- Create/delete: `addEntries:removeEntries:withCompletionHandler:`
-- Update: `modifyEntry:toEntry:withCompletionHandler:`
-
-Do not use `performTransaction:completionHandler:` as primary path on macOS 26.5.1.
-
-## Safety Rules
-
-- Never write directly to `~/Library/KeyboardServices/TextReplacements.db`
-- Bulk import requires `--dry-run` or `--apply` (never implicit apply)
-- `import --apply` must write backups under `backups/` first
-- `--prefix` rejects out-of-scope rows on import
-- Kit format: Raycast JSON only (`name`, `keyword`, `text`)
-- Not Mac App Store safe
-
-## Snippet Sync Workflow
+## Snippet workflow
 
 | Layer | Tool | Covers |
 |-------|------|--------|
-| Apple Text Replacements | `trctl` | iOS, Notes, Mail, Slack, Safari |
-| Raycast Snippets | `sync-raycast.sh` | Warp, VS Code, Cursor |
+| Apple Text Replacements | `trctl` | iOS, native Mac apps |
+| Mac runtime | `trexpand` | Warp, VS Code, Cursor, terminals |
 
-Raycast: **Override System Snippets ON**. After changes: `./scripts/sync-raycast.sh`
+`trctl` mutations auto-export to `~/.config/trexpand/snippets.json` unless `--no-sync-expander`. Running trexpand reloads from that file via directory watch (~200ms debounce).
+
+Scripts: `install.sh`, `bundle-trexpand-app.sh`, `launch-trexpand.sh`, `sync-expander.sh`, `probes/run-sprint0.sh`
+
+**TCC:** LaunchAgent runs `~/.local/Trexpand.app/Contents/MacOS/trexpand`. Grant Input Monitoring + Accessibility to the **app bundle** (`~/.local/Trexpand.app`), not Terminal and not the bare `~/.local/bin/trexpand` exec. Re-grant after `install.sh` rebuilds the bundle.
+
+`trctl` prints `trexpand_hint|` on stderr when sync succeeds but the daemon process is not running.
 
 ## Validation
 
 ```sh
 swift build && swift test
+./scripts/install.sh
+./scripts/launch-trexpand.sh status
 trctl inspect
-trctl read-sources
 scripts/validate-crud.sh
 ```
 
-Probe cleanup check:
+## Safety
 
-```sh
-sqlite3 "$HOME/Library/KeyboardServices/TextReplacements.db" \
-  "select count(*) from ZTEXTREPLACEMENTENTRY where ZSHORTCUT like ';trctlprobe%';"
-```
-
-Expected: `0`.
-
-## Development Guidance
-
-- Dynamic Objective-C runtime calls over private headers
-- CLI outputs JSON for machine-readable commands
-- Tests non-mutating by default
-- Personal conventions live in `docs/archive/user-guide.personal.md` only
+- Never write directly to `~/Library/KeyboardServices/TextReplacements.db`
+- `import --apply` must write backups under `backups/` first
+- Not Mac App Store safe

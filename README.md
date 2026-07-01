@@ -1,68 +1,113 @@
-# trctl
+# trctl + trexpand
 
-CLI for Apple Text Replacements — manage shortcuts from the terminal, store kits in git, and sync to Raycast for apps macOS cannot reach.
+Manage Apple Text Replacements from the terminal and expand them system-wide on Mac.
 
-## The problem
+| Tool | Role |
+|------|------|
+| **trctl** | CRUD for Apple Text Replacements (iOS sync via iCloud) |
+| **trexpand** | Mac runtime expander for Warp, VS Code, Cursor, terminals |
 
-If you maintain dozens of AI prompts, email signatures, and contact snippets, you have probably felt the friction: Raycast on the Mac, Apple Settings for iPhone sync, no version history, no safe bulk import, and no way to share a team library without screenshots.
-
-Apple Text Replacements are the only built-in layer that syncs across Mac, iPhone, and iPad via iCloud. But Apple never shipped a CLI or import format for power users. Terminals and code editors (Warp, VS Code, Cursor) do not expand native replacements anyway.
-
-**`trctl` fills that gap:** programmatic CRUD for Apple Text Replacements, Raycast JSON kits for git-backed libraries, and a sync script for Mac apps Apple cannot reach.
+Same shortcuts everywhere. Plain static text only (no `{clipboard}` placeholders) so iOS and Mac stay aligned.
 
 ## How it works
 
-| Layer | Tool | Covers |
-|-------|------|--------|
-| Apple Text Replacements | `trctl` | iOS, Notes, Mail, Slack, Safari |
-| Raycast Snippets (optional) | `scripts/sync-raycast.sh` | Warp, VS Code, Cursor |
-
-Same keywords in both systems. Raycast: **Override System Snippets ON** (Settings → Snippets).
+```
+kits/*.snippets.json  ──trctl import──►  Apple Text Replacements (iOS + native apps)
+                              │
+                              └──auto-export──►  ~/.config/trexpand/snippets.json
+                                                        │
+                                                   trexpand (Warp, editors)
+```
 
 ## Requirements
 
 - macOS 14+ (validated on macOS 26.5.1, Apple Silicon)
-- Xcode / Swift toolchain (for build-from-source)
-- Uses private `KeyboardServices` APIs — not suitable for Mac App Store distribution
+- Swift toolchain
+- `trctl` uses private `KeyboardServices` APIs (not Mac App Store safe)
+- `trexpand` requires **Input Monitoring** + **Accessibility** for **`~/.local/Trexpand.app`** (not the bare CLI binary, not Terminal). See [User Guide](docs/user-guide.md#permissions).
 
 ## Install
 
 ```sh
-git clone <repo-url> && cd trctl
 ./scripts/install.sh
 ```
 
-`install.sh` builds a release binary and copies `trctl` to `~/.local/bin`. Ensure that directory is on your `PATH`.
-
-Contributors can also run `swift build` and use `.build/debug/trctl` directly.
+Installs `trctl`, `trexpand`, and `trexpand-probe` to `~/.local/bin`, bundles `~/.local/Trexpand.app`, and installs a LaunchAgent.
 
 ## Quick start
 
 ```sh
 trctl inspect
-trctl list
-trctl import kits/prompts-core.raycast.json --prefix ';p' --dry-run
-./scripts/sync-raycast.sh    # optional, Raycast users only
+trctl import kits/prompts-core.snippets.json --prefix ';p' --dry-run
+trctl import kits/prompts-core.snippets.json --prefix ';p' --apply --on-conflict skip
+
+# Grant TCC to ~/.local/Trexpand.app, then:
+./scripts/launch-trexpand.sh restart
 ```
 
-Safe end-to-end mutation check (creates and deletes a disposable shortcut):
+`trctl create` / `update` / `delete` / `import --apply` auto-export snippets for trexpand (reloads within ~200ms when the daemon is running). Opt out: `--no-sync-expander`.
+
+## CLI examples
+
+### Snippets (CRUD)
 
 ```sh
+# Add a shortcut (syncs to trexpand automatically)
+trctl create --shortcut ';wle' --phrase 'jon@workplacelabs.io'
+
+# Update prompt text
+trctl update --shortcut ';pcr' --phrase 'Review this diff for bugs and suggest fixes.'
+
+# Look up one entry
+trctl get --shortcut ';pcr'
+
+# Remove
+trctl delete --shortcut ';test'
+
+# List all, or filter by prefix
+trctl list
+trctl list --prefix ';p'
+```
+
+### Kits (import / export)
+
+```sh
+# Preview starter prompts (;pcr, ;psum, …)
+trctl import kits/prompts-core.snippets.json --prefix ';p' --dry-run
+
+# Apply (backs up affected rows first)
+trctl import kits/prompts-core.snippets.json --prefix ';p' --apply --on-conflict skip
+
+# Export your ;wl contact zone to share
+trctl export --prefix ';wl' --output kits/wl-team.snippets.json
+
+# Import without touching trexpand (rare)
+trctl import kits/foo.snippets.json --apply --no-sync-expander
+```
+
+### trexpand (daemon)
+
+```sh
+./scripts/launch-trexpand.sh status
+./scripts/launch-trexpand.sh restart
+tail -f ~/.local/log/trexpand.log          # expanded|;pcr|… or reloaded|23 snippets
+
+trexpand-probe permissions                 # TCC check
+trexpand-probe inject --text 'probe'       # paste test in focused field
+```
+
+### Diagnostics
+
+```sh
+trctl inspect
 scripts/validate-crud.sh
+scripts/probes/run-sprint0.sh
+trexpand-probe permissions
 ```
 
 ## Documentation
 
-- [User Guide](docs/user-guide.md) — conventions, team sharing, troubleshooting
-- [Kits](docs/kits.md) — Raycast JSON format and limitations
-- [AGENTS.md](AGENTS.md) — contributor notes and validation
-
-## Safety
-
-- `import --apply` writes a timestamped JSON backup under `backups/` before changes.
-- `list` and `export` output your real replacement text — treat exports as potentially sensitive.
-- Writes go through KeyboardServices private APIs, not direct SQLite mutation.
-
-## License
-
-MIT — see [LICENSE](LICENSE).
+- [User Guide](docs/user-guide.md)
+- [Kits](docs/kits.md)
+- [Architecture](docs/architecture.md) (contributors)
+- [Spike results](docs/spike-results.md)

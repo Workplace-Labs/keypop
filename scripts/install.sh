@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
-# Build trctl and install to ~/.local/bin (or --prefix <dir>).
+# Build trctl + trexpand and install to ~/.local/bin (or --prefix <dir>).
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 INSTALL_PREFIX="${HOME}/.local/bin"
-BINARY_NAME="trctl"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -15,7 +14,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -h|--help)
       echo "Usage: $0 [--prefix <directory>]"
-      echo "  Builds release trctl and copies to <directory>/trctl (default: ~/.local/bin)."
+      echo "  Builds release binaries and copies trctl, trexpand, trexpand-probe to <directory>/."
       exit 0
       ;;
     *)
@@ -26,27 +25,27 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
-  echo "error: trctl requires macOS" >&2
+  echo "error: requires macOS" >&2
   exit 1
 fi
 
 major="$(sw_vers -productVersion | cut -d. -f1)"
 if [[ "${major}" -lt 14 ]]; then
-  echo "error: macOS 14+ required (found $(sw_vers -productVersion))" >&2
+  echo "error: macOS 14+ required" >&2
   exit 1
 fi
 
-echo "Building trctl (release)..."
+echo "Building release binaries..."
 swift build --package-path "$PROJECT_DIR" -c release -q
 
-SRC="${PROJECT_DIR}/.build/release/${BINARY_NAME}"
-DEST="${INSTALL_PREFIX}/${BINARY_NAME}"
-
 mkdir -p "$INSTALL_PREFIX"
-cp "$SRC" "$DEST"
-chmod +x "$DEST"
+for name in trctl trexpand trexpand-probe; do
+  cp "${PROJECT_DIR}/.build/release/${name}" "${INSTALL_PREFIX}/${name}"
+  chmod +x "${INSTALL_PREFIX}/${name}"
+  echo "Installed: ${INSTALL_PREFIX}/${name}"
+done
 
-echo "Installed: ${DEST}"
+"${PROJECT_DIR}/scripts/bundle-trexpand-app.sh" "${INSTALL_PREFIX}/trexpand"
 
 case ":${PATH}:" in
   *":${INSTALL_PREFIX}:"*) ;;
@@ -59,13 +58,20 @@ esac
 
 echo ""
 echo "Running trctl inspect..."
-if ! "$DEST" inspect >/dev/null; then
-  echo "error: trctl inspect failed — KeyboardServices may be unavailable on this OS." >&2
+if ! "${INSTALL_PREFIX}/trctl" inspect >/dev/null; then
+  echo "error: trctl inspect failed" >&2
   exit 1
 fi
 
 echo ""
+echo "Installing LaunchAgent for trexpand..."
+"${PROJECT_DIR}/scripts/launch-trexpand.sh" install
+
+echo ""
 echo "Next steps:"
-echo "  trctl list"
-echo "  trctl import kits/prompts-core.raycast.json --prefix ';p' --dry-run"
+echo "  Grant Input Monitoring + Accessibility to: ${HOME}/.local/Trexpand.app"
+echo "  (Remove the old bare 'trexpand' exec entry if present.)"
+echo "  System Settings → Privacy & Security → click + → Cmd+Shift+G → paste app path"
+echo "  trctl import kits/prompts-core.snippets.json --prefix ';p' --dry-run"
+echo "  ./scripts/launch-trexpand.sh restart   # after TCC grants"
 echo "  See docs/user-guide.md"

@@ -2,7 +2,10 @@
 backups/
 exports/
 wl-replacements.json
+kits/*-team.snippets.json
 kits/*-team.raycast.json
+kits/full.snippets.json
 kits/full.raycast.json
-kits/acme-team.raycast.json
+kits/acme-team.snippets.json
+docs/spike-results.generated.md
 *.local.json

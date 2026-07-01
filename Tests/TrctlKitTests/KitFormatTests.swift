@@ -2,7 +2,7 @@ import TrctlKit
 import XCTest
 
 final class KitFormatTests: XCTestCase {
-    func testParseRaycastKit() throws {
+    func testParseSnippetKit() throws {
         let json = """
         [
           {
@@ -30,21 +30,21 @@ final class KitFormatTests: XCTestCase {
         """.data(using: .utf8)!
 
         XCTAssertThrowsError(try KitFormat.parseReplacements(from: json)) { error in
-            XCTAssertTrue("\(error)".contains("Raycast"))
+            XCTAssertTrue("\(error)".contains("snippet"))
         }
     }
 
-    func testExportRaycastRoundTrip() throws {
+    func testExportRoundTrip() throws {
         let original = [Replacement(shortcut: ";pcr", phrase: "Review this.")]
-        let data = try KitFormat.encodeRaycast(original)
+        let data = try KitFormat.encode(original)
         let parsed = try KitFormat.parseReplacements(from: data)
         XCTAssertEqual(parsed, original)
     }
 
     func testDefaultNameStripsSemicolonPrefix() {
-        XCTAssertEqual(RaycastSnippet.defaultName(for: ";ace"), "Ace")
-        XCTAssertEqual(RaycastSnippet.defaultName(for: "omw"), "Omw")
-        XCTAssertEqual(RaycastSnippet.defaultName(for: ";pcr"), "Pcr")
+        XCTAssertEqual(SnippetEntry.defaultName(for: ";ace"), "Ace")
+        XCTAssertEqual(SnippetEntry.defaultName(for: "omw"), "Omw")
+        XCTAssertEqual(SnippetEntry.defaultName(for: ";pcr"), "Pcr")
     }
 
     func testMissingKeywordFails() {

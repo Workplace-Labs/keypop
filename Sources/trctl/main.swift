@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 import KSPrivateBridge
 import TrctlKit
@@ -163,7 +164,59 @@ func readImportFile(_ path: String) throws -> [Replacement] {
 }
 
 func writeKitFile(_ replacements: [Replacement], to path: String) throws {
-    try KitFormat.encodeRaycast(replacements).write(to: URL(fileURLWithPath: path), options: .atomic)
+    try KitFormat.encode(replacements).write(to: URL(fileURLWithPath: path), options: .atomic)
+}
+
+func stableReplacements(maxAttempts: Int = 12, delayMicros: UInt32 = 250_000) throws -> [Replacement] {
+    // KeyboardServices reads can lag writes; wait before sampling.
+    usleep(500_000)
+
+    var previous = try replacements()
+    guard maxAttempts > 1 else { return previous }
+
+    for _ in 1 ..< maxAttempts {
+        usleep(delayMicros)
+        let current = try replacements()
+        if current == previous {
+            return current
+        }
+        previous = current
+    }
+    return previous
+}
+
+func syncExpanderIfEnabled(commandArgs: [String]) {
+    guard ExpanderExport.isEnabled(commandArgs: commandArgs) else { return }
+    do {
+        let rows = try stableReplacements()
+        let path = try ExpanderExport.write(rows)
+        fputs("trexpand_sync|\(path)|\(rows.count)\n", stderr)
+        hintIfTrexpandNotRunning()
+    } catch {
+        fputs("trexpand_sync_error|\(error)\n", stderr)
+    }
+}
+
+func trexpandProcessIsRunning() -> Bool {
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: "/usr/bin/pgrep")
+    process.arguments = ["-f", "trexpand run --snippets"]
+    process.standardOutput = FileHandle.nullDevice
+    process.standardError = FileHandle.nullDevice
+    do {
+        try process.run()
+        process.waitUntilExit()
+        return process.terminationStatus == 0
+    } catch {
+        return false
+    }
+}
+
+func hintIfTrexpandNotRunning() {
+    guard !trexpandProcessIsRunning() else { return }
+    let home = FileManager.default.homeDirectoryForCurrentUser.path
+    fputs("trexpand_hint|daemon not running; run: ./scripts/launch-trexpand.sh restart\n", stderr)
+    fputs("trexpand_hint|grant Input Monitoring + Accessibility to \(home)/.local/Trexpand.app\n", stderr)
 }
 
 func validateUniqueShortcuts(_ rows: [Replacement]) throws {
@@ -243,7 +296,7 @@ func writeBackup(_ rows: [Replacement]) throws -> URL {
 
 func usage() -> String {
     """
-    Kit files use the Raycast snippet JSON format (name, keyword, text).
+    Kit files use JSON snippet format (name, keyword, text).
 
     Usage:
       trctl list [--prefix <prefix>]
@@ -252,12 +305,22 @@ func usage() -> String {
       trctl create --shortcut <shortcut> --phrase <phrase>
       trctl update --shortcut <shortcut> --phrase <phrase>
       trctl delete --shortcut <shortcut>
-      trctl import <path|-> [--prefix <prefix>] [--dry-run|--apply] [--on-conflict fail|skip|overwrite]
+      trctl import <path|-> [--prefix <prefix>] [--dry-run|--apply] [--on-conflict fail|skip|overwrite] [--no-sync-expander]
+
+    Mutations auto-export to ~/.config/trexpand/snippets.json for trexpand (disable: --no-sync-expander or TREXPAND_SYNC=0).
 
     Diagnostics:
       trctl inspect
       trctl read-sources
       trctl db-summary
+
+    Examples:
+      trctl create --shortcut ';wle' --phrase 'you@example.com'
+      trctl update --shortcut ';pcr' --phrase 'Review this change…'
+      trctl list --prefix ';p'
+      trctl import kits/prompts-core.snippets.json --prefix ';p' --dry-run
+      trctl import kits/prompts-core.snippets.json --prefix ';p' --apply --on-conflict skip
+      trctl export --prefix ';wl' --output kits/wl-team.snippets.json
     """
 }
 
@@ -276,21 +339,21 @@ func main() throws {
     case "list":
         let prefix = optionalValue(after: "--prefix", in: commandArgs)
         let rows = filterReplacements(try replacements(), prefix: prefix)
-        try printJSON(KitFormat.raycastSnippets(from: rows))
+        try printJSON(KitFormat.snippetEntries(from: rows))
     case "get":
         let shortcut = try value(after: "--shortcut", in: commandArgs)
         guard let row = try replacements().first(where: { $0.shortcut == shortcut }) else {
             throw CLIError.runtime("No replacement found for shortcut \(shortcut)")
         }
-        try printJSON(RaycastSnippet(replacement: row))
+        try printJSON(SnippetEntry(replacement: row))
     case "export":
         let prefix = optionalValue(after: "--prefix", in: commandArgs)
         let rows = try filterReplacements(replacements(), prefix: prefix)
         if let output = optionalValue(after: "--output", in: commandArgs) {
             try writeKitFile(rows, to: output)
-            try printJSONObject(["exported": rows.count, "format": "raycast", "output": output])
+            try printJSONObject(["exported": rows.count, "format": "snippet-kit", "output": output])
         } else {
-            try printJSON(KitFormat.raycastSnippets(from: rows))
+            try printJSON(KitFormat.snippetEntries(from: rows))
         }
     case "create":
         let shortcut = try value(after: "--shortcut", in: commandArgs)
@@ -299,6 +362,7 @@ func main() throws {
             throw CLIError.runtime("Replacement already exists for shortcut \(shortcut)")
         }
         try createReplacement(shortcut: shortcut, phrase: phrase)
+        syncExpanderIfEnabled(commandArgs: commandArgs)
         try printJSON(["created": shortcut])
     case "update":
         let shortcut = try value(after: "--shortcut", in: commandArgs)
@@ -307,6 +371,7 @@ func main() throws {
             throw CLIError.runtime("No replacement found for shortcut \(shortcut)")
         }
         try updateReplacement(shortcut: shortcut, phrase: phrase)
+        syncExpanderIfEnabled(commandArgs: commandArgs)
         try printJSON(["updated": shortcut])
     case "delete":
         let shortcut = try value(after: "--shortcut", in: commandArgs)
@@ -314,6 +379,7 @@ func main() throws {
             throw CLIError.runtime("No replacement found for shortcut \(shortcut)")
         }
         try deleteReplacement(shortcut: shortcut)
+        syncExpanderIfEnabled(commandArgs: commandArgs)
         try printJSON(["deleted": shortcut])
     case "import":
         guard let path = commandArgs.first, !path.hasPrefix("--") else {
@@ -353,6 +419,7 @@ func main() throws {
         for row in plan.update {
             try updateReplacement(shortcut: row.shortcut, phrase: row.phrase)
         }
+        syncExpanderIfEnabled(commandArgs: commandArgs)
         try printJSONObject([
             "created": plan.create.count,
             "updated": plan.update.count,

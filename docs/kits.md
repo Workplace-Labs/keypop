@@ -1,10 +1,8 @@
-# Shareable Kits (Raycast JSON)
+# Shareable Snippet Kits
 
-Kit files use the **Raycast snippet import/export JSON format** — the interchange standard between Raycast, `trctl`, and teammates.
+Kit files are JSON arrays of `{ "name", "keyword", "text" }`. The shape matches Raycast export format for easy migration, but this project uses **static text only**.
 
 ## File format
-
-A kit is a JSON **array** of objects:
 
 ```json
 [
@@ -16,79 +14,61 @@ A kit is a JSON **array** of objects:
 ]
 ```
 
-| Field | Required | Stored in Apple Text Replacements? |
-|-------|----------|-------------------------------------|
-| `name` | Recommended | No — label for Raycast search only |
-| `keyword` | Yes | Yes — maps to the macOS **shortcut** |
-| `text` | Yes | Yes — maps to the macOS **phrase** |
-
-Raycast docs: [Import & Export](https://manual.raycast.com/import-export), [Snippets](https://manual.raycast.com/snippets).
+| Field | Required | Apple Text Replacements |
+|-------|----------|-------------------------|
+| `name` | Recommended | Not stored (label for humans) |
+| `keyword` | Yes | Shortcut |
+| `text` | Yes | Phrase (plain text only) |
 
 ## Workflows
 
-### Export from your Mac
+### Export and share
 
 ```sh
-trctl export --output kits/my-kit.raycast.json
-trctl export --prefix ';ac' --output kits/acme-team.raycast.json
-./scripts/sync-raycast.sh
+trctl export --output kits/my-kit.snippets.json
+trctl export --prefix ';ac' --output kits/acme-team.snippets.json
 ```
-
-`sync-raycast.sh` exports everything, copies to `~/Desktop/raycast-sync.json`, and opens Raycast Import Snippets.
 
 ### Import into Apple Text Replacements
 
 ```sh
-trctl import kits/acme-team.raycast.json --prefix ';ac' --dry-run
-trctl import kits/acme-team.raycast.json --prefix ';ac' --apply --on-conflict skip
+trctl import kits/acme-team.snippets.json --prefix ';ac' --dry-run
+trctl import kits/acme-team.snippets.json --prefix ';ac' --apply --on-conflict skip
 ```
 
-`trctl import` accepts **Raycast format only** (`name`, `keyword`, `text`). Requires exactly one of `--dry-run` or `--apply`.
+Requires exactly one of `--dry-run` or `--apply`. `import --apply` backs up affected rows under `backups/` first.
 
-### Import from Raycast
+### Mac expander
 
-1. Raycast → **Export Snippets** → save JSON
-2. Edit `name` / `keyword` / `text` if needed
-3. `trctl import <file> --dry-run` then `--apply`
+```sh
+./scripts/launch-trexpand.sh install   # first time
+./scripts/launch-trexpand.sh restart   # after trctl changes if hints appear
+```
+
+Mutations via `trctl` auto-export to `~/.config/trexpand/snippets.json`; trexpand watches the directory and reloads automatically (no restart needed when the daemon is healthy).
 
 ## Limitations
 
-### Apple Text Replacements
-
-| Feature | Raycast kit | Apple via `trctl` |
-|---------|-------------|-------------------|
-| Plain text | Yes | Yes |
-| `name` field | Yes | Ignored |
-| Multi-line text | Yes | Yes |
-| `{clipboard}`, `{date}`, `{cursor}` | Yes | **No** — literal text unless stripped |
-| Snippets over ~2,000 characters | Yes | **Risky on iOS** |
-| Tags | Raycast UI only | Use `name` prefixes like `Acme / Email` |
-
-### Raycast-specific
-
-- **Override System Snippets ON** when keywords overlap with Apple replacements — otherwise Raycast defers to macOS and Warp gets nothing.
-- Terminals and editors: use `./scripts/sync-raycast.sh` after `trctl` changes.
-
-### Prompt kits (`;p*`)
-
-See [user-guide.md](user-guide.md). Keep Apple-synced prompts short; use Raycast for long prompts.
+| Feature | Supported |
+|---------|-----------|
+| Plain / multi-line text | Yes |
+| `{clipboard}`, `{date}`, `{cursor}` | **No** — breaks iOS/trexpand parity |
+| Snippets over ~2,000 characters | Risky on iOS |
+| Rich text | No |
 
 ## Kit in this repo
 
 | File | Prefix | Purpose |
 |------|--------|---------|
-| `kits/prompts-core.raycast.json` | `;p` | Starter AI prompt templates |
+| `kits/prompts-core.snippets.json` | `;p` | Starter AI prompt templates |
 
-Team contact kits (e.g. `kits/acme-team.raycast.json`) should stay local or gitignored — they contain PII.
+Team contact kits (e.g. `kits/acme-team.snippets.json`) should stay local or gitignored.
 
-## Naming kits
+## Naming
 
-Use descriptive `name` values for Raycast search:
+Use descriptive `name` values for browsing kits in git:
 
 ```
 Acme / Email
-Acme / Website
 Prompt / Code review
 ```
-
-Keep `keyword` values letter-only after `;` — see [user-guide.md](user-guide.md).

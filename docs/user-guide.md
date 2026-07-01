@@ -1,10 +1,10 @@
 # Text Replacements User Guide
 
-How to set up and maintain Apple Text Replacements with `trctl` — conventions, kits, and optional Raycast sync.
+Set up Apple Text Replacements with `trctl` and expand them in Warp, editors, and terminals with `trexpand`.
 
-**Prerequisites:** `trctl` installed (see [README](../README.md)).
+**Prerequisites:** `trctl` and `trexpand` installed ([README](../README.md)).
 
-**Related:** [Kits format](kits.md) · [Architecture](architecture.md) (contributors)
+**Related:** [Kits](kits.md) · [Architecture](architecture.md)
 
 ---
 
@@ -17,178 +17,222 @@ trctl inspect
 trctl list
 ```
 
-2. **Preview a starter prompt kit**
+2. **Preview the starter prompt kit**
 
 ```sh
-trctl import kits/prompts-core.raycast.json --prefix ';p' --dry-run
+trctl import kits/prompts-core.snippets.json --prefix ';p' --dry-run
 ```
 
-3. **Apply when ready** (writes a backup under `backups/` first)
+3. **Apply** (writes a backup under `backups/` first)
 
 ```sh
-trctl import kits/prompts-core.raycast.json --prefix ';p' --apply --on-conflict skip
+trctl import kits/prompts-core.snippets.json --prefix ';p' --apply --on-conflict skip
 ```
 
-4. **Optional — Raycast for Warp / VS Code / Cursor**
+4. **Start the Mac expander**
 
 ```sh
-./scripts/sync-raycast.sh
+./scripts/install.sh                  # or: ./scripts/launch-trexpand.sh install
 ```
 
-In Raycast: **Settings → Snippets → Override System Snippets ON** (one-time).
+### Permissions
 
-You can also add replacements in **System Settings → Keyboard → Text Replacements**; they sync to iPhone/iPad via iCloud.
+Grant **Input Monitoring** and **Accessibility** to **`~/.local/Trexpand.app`** (the app bundle, not Terminal and not the bare `trexpand` exec):
+
+1. System Settings → Privacy & Security → Input Monitoring (and Accessibility)
+2. Click **+** → **Cmd+Shift+G** → paste: `~/.local/Trexpand.app`
+3. Remove any old **trexpand** entry with a black exec icon if present
+
+Then restart:
+
+```sh
+./scripts/launch-trexpand.sh restart
+./scripts/launch-trexpand.sh status     # expect: running + Trexpand.app path
+```
+
+Type `;pcr` in Warp to verify.
+
+Replacements also sync to iPhone/iPad via iCloud (System Settings → Keyboard → Text Replacements).
 
 ---
 
-## What text replacements do
+## Two layers, one library
 
-Type a short **shortcut** (trigger). macOS replaces it with a longer **phrase** — email, URL, address, or canned reply.
+| Layer | Tool | Where it works |
+|-------|------|----------------|
+| Apple Text Replacements | `trctl` | iOS, Notes, Mail, Messages, Safari, Slack |
+| Mac expander | `trexpand` | Warp, VS Code, Cursor, Terminal |
 
-Example: `;cal` → your booking link.
-
-Replacements sync across Apple devices on the same iCloud account. No extra app required on iOS.
+Use the **same keywords** in both layers. `trctl` mutations auto-export to `~/.config/trexpand/snippets.json`; trexpand watches that file.
 
 ---
 
 ## Conventions
 
-### Start every shortcut with `;`
-
-Semicolon is rare in normal typing, easy to reach, and creates a clear namespace.
+### Start shortcuts with `;`
 
 ```
 Good:  ;github   ;phone   ;ace
-Risky: github    phone    ace     ← can collide with real words
+Risky: github    phone         ← can collide with real words
 ```
 
 ### Letters only after `;` (no dots)
 
-Dot grouping (`;ac.email`) reads well on Mac but is tedious on iPhone — each `.` often needs the symbols keyboard. Use compact letter codes instead: `;ace` (Acme email), `;acw` (Acme website).
+Use `;ace` not `;ac.email` — dots are tedious on iOS.
 
 ### Org zones: `;` + org + role
 
-Pattern for company-specific entries:
-
-```
-; + <2-letter org> + <1-letter role>
-```
-
-| Role letter | Meaning | Example |
-|-------------|---------|---------|
-| `e` | email | `;ace` |
-| `w` | website | `;acw` |
-| `a` | address | `;aca` |
-| `p` | phone | `;acp` |
-
-Fictional Acme Corp zone (`;ac*`):
-
-| Shortcut | Phrase |
-|----------|--------|
-| `;ace` | `team@example.com` |
-| `;acw` | `https://www.example.com` |
-| `;aca` | `123 Main St, Example City` |
-
-Scope with `trctl list --prefix ';ac'` or `trctl export --prefix ';ac'`.
-
-### Personal shortcuts
-
-Use a service mnemonic, not the URL:
-
-| Shortcut | Typical phrase |
-|----------|----------------|
-| `;github` | `https://github.com/yourhandle` |
-| `;linkedin` | LinkedIn profile URL |
-| `;cal` | Cal.com or booking link |
-| `;email` | your primary email |
-
-Rules: store full `https://` in the phrase; keep shortcuts unique; avoid prefix collisions (`;git` vs `;github`).
+| Role | Letter | Example |
+|------|--------|---------|
+| email | `e` | `;ace` |
+| website | `w` | `;acw` |
+| address | `a` | `;aca` |
+| phone | `p` | `;acp` |
 
 ### AI prompts: `;p` + task
 
-| Pattern | Scope | Examples |
-|---------|-------|----------|
-| `;p` + task | personal | `;pcr`, `;psum`, `;pfx` |
-| `;p` + org + task | team | `;pacr`, `;pacsum` |
-
 | Code | Task |
 |------|------|
-| `cr` | code / PR review |
+| `cr` | code review |
 | `sum` | summarize |
 | `fx` | debug / fix |
-| `em` | email draft |
 
-Starter kit: `kits/prompts-core.raycast.json`. Long prompts or `{clipboard}` placeholders work better in Raycast than in Apple-synced replacements (iOS size limits). See [kits.md](kits.md).
+Starter kit: `kits/prompts-core.snippets.json`. Keep prompts as **plain static text** (no `{clipboard}`) so iOS and Mac stay in sync.
 
 ---
 
 ## Team sharing
 
-macOS has no built-in team permissions. Share **prefix-scoped JSON kits** via git or a secure channel.
-
-**Maintainer:**
+Export prefix-scoped kits:
 
 ```sh
-trctl export --prefix ';ac' --output kits/acme-team.raycast.json
-./scripts/sync-raycast.sh
+trctl export --prefix ';ac' --output kits/acme-team.snippets.json
 ```
 
-Keep real contact kits out of public repos (gitignore them). Every row in a team kit must share the same prefix.
+Onboarding:
 
-**Onboarding:**
+```sh
+trctl import kits/acme-team.snippets.json --prefix ';ac' --dry-run
+trctl import kits/acme-team.snippets.json --prefix ';ac' --apply --on-conflict skip
+./scripts/launch-trexpand.sh install
+```
 
-1. Receive the kit JSON from a maintainer.
-2. `trctl import kits/acme-team.raycast.json --prefix ';ac' --dry-run`
-3. `trctl import kits/acme-team.raycast.json --prefix ';ac' --apply --on-conflict skip`
-4. `./scripts/sync-raycast.sh` if you use Raycast.
-
-Personal shortcuts outside the prefix are untouched.
-
-Import rules when `--prefix` is set:
-
-- Every JSON row must start with that prefix.
-- Conflicts are resolved only within that zone.
-- `import --apply` backs up affected rows under `backups/` first.
+Keep PII kits out of public repos (gitignored).
 
 ---
 
 ## App compatibility
 
-| Reliability | Apps |
-|-------------|------|
-| **Usually works** | Notes, Mail, Messages, Safari, Slack |
-| **Usually does not** | Warp, Terminal.app, iTerm2, VS Code, Cursor |
-| **Varies** | Chrome, JetBrains, Obsidian, Notion, Discord |
-
-If a shortcut works in Notes but not Warp, the replacement is fine — use Raycast for that app.
+| Layer | Usually works | Usually does not |
+|-------|---------------|------------------|
+| Apple | Notes, Mail, Messages, Safari, Slack | Warp, VS Code, Cursor |
+| trexpand | Warp, VS Code, Cursor, Terminal | N/A (Mac only) |
 
 ---
 
 ## Troubleshooting
 
-**No expansion in Warp / VS Code / Cursor** — run `./scripts/sync-raycast.sh`; confirm Raycast **Override System Snippets ON**.
+**No expansion in Warp / VS Code / Cursor**
 
-**No expansion in Notes / Mail** — check `trctl list` or System Settings; test in Notes first.
+```sh
+./scripts/launch-trexpand.sh status   # is trexpand running?
+./scripts/sync-expander.sh            # re-export snippets
+tail -f ~/.local/log/trexpand.log     # expansion / tap health logs
+```
 
-**Wrong phrase** — look for shortcuts where one is a prefix of another.
+**No expansion on iPhone** — check System Settings → Keyboard → Text Replacements; wait for iCloud sync.
 
-**iCloud sync stale** — open Text Replacements on another device; wait a few minutes.
+**Double expansion in Slack** — rare; both Apple and trexpand may fire. Test in Notes vs Warp to isolate.
 
-**Import prefix error** — every row must match `--prefix` (e.g. all start with `;ac`).
+**trexpand stopped after sleep** — check log for `tap_health` lines; restart: `./scripts/launch-trexpand.sh restart`
+
+**TCC not working after rebuild** — re-grant permissions to `~/.local/Trexpand.app` (rebuild re-signs the bundle), remove stale exec entries, then `./scripts/launch-trexpand.sh restart`.
+
+**`trctl` synced but Warp unchanged** — check stderr for `trexpand_hint|` lines; confirm daemon is running and log shows `reloaded|N snippets` after mutations.
+
+---
+
+## CLI examples
+
+### Everyday snippets
+
+```sh
+# TDD workflow prompt
+trctl create --shortcut ';ptdd' \
+  --phrase 'Add a failing test, run it, verify it fails, fix the issue, verify the test passes'
+
+# Pre-PR hardening prompt (from prompts-core kit)
+trctl import kits/prompts-core.snippets.json --prefix ';p' --apply --on-conflict skip
+
+# Change one prompt in place
+trctl update --shortcut ';pcr' --phrase 'Great work on this! Now reflect on…'
+
+# Inspect before deleting
+trctl get --shortcut ';ptdd'
+trctl delete --shortcut ';ptdd'
+```
+
+After each mutation, stderr should include `trexpand_sync|…`. If you see `trexpand_hint|daemon not running`, run `./scripts/launch-trexpand.sh restart`.
+
+### Prefix zones
+
+```sh
+trctl list --prefix ';wl'    # Workplace Labs contacts
+trctl list --prefix ';p'     # prompt kit
+
+trctl export --prefix ';wl' --output kits/wl-team.snippets.json
+trctl export --output kits/full.snippets.json
+```
+
+### Import strategies
+
+```sh
+# Preview only
+trctl import kits/acme-team.snippets.json --prefix ';ac' --dry-run
+
+# Skip rows that already exist
+trctl import kits/acme-team.snippets.json --prefix ';ac' --apply --on-conflict skip
+
+# Overwrite conflicts
+trctl import kits/acme-team.snippets.json --prefix ';ac' --apply --on-conflict overwrite
+```
+
+### trexpand operator commands
+
+```sh
+./scripts/install.sh                       # build, bundle Trexpand.app, install LaunchAgent
+./scripts/launch-trexpand.sh install       # plist only (after manual build)
+./scripts/launch-trexpand.sh status        # running? which binary path?
+./scripts/launch-trexpand.sh restart       # after TCC grant or rebuild
+./scripts/sync-expander.sh                 # force re-export from trctl
+
+# Foreground debug (uses Terminal TCC, not LaunchAgent)
+trexpand run --snippets ~/.config/trexpand/snippets.json
+```
+
+### Verify expansion
+
+1. `./scripts/launch-trexpand.sh status` → `running`
+2. Type `;pcr` in Warp → full prompt appears
+3. Log: `tail -f ~/.local/log/trexpand.log` → `expanded|;pcr|…`
 
 ---
 
 ## Command reference
 
-| Command | Purpose |
+| Command | Example |
 |---------|---------|
-| `trctl list` | All entries (Raycast JSON) |
-| `trctl list --prefix ';ac'` | Prefix zone only |
-| `trctl export --prefix ';ac' --output kits/acme-team.raycast.json` | Shareable kit |
-| `trctl import <kit> --prefix ';p' --dry-run` | Preview merge |
-| `trctl import <kit> --prefix ';p' --apply --on-conflict skip` | Apply kit |
-| `trctl create / update / delete` | Single-entry CRUD |
-| `trctl inspect` | Health check (KeyboardServices) |
-| `./scripts/sync-raycast.sh` | Push all replacements to Raycast |
-
-Run `trctl --help` for the full command list.
+| List all | `trctl list` |
+| List prefix | `trctl list --prefix ';wl'` |
+| Get one | `trctl get --shortcut ';pcr'` |
+| Create | `trctl create --shortcut ';wle' --phrase 'you@example.com'` |
+| Update | `trctl update --shortcut ';pcr' --phrase 'New prompt text…'` |
+| Delete | `trctl delete --shortcut ';test'` |
+| Export kit | `trctl export --prefix ';wl' --output kits/wl-team.snippets.json` |
+| Import preview | `trctl import kits/prompts-core.snippets.json --prefix ';p' --dry-run` |
+| Import apply | `trctl import kits/prompts-core.snippets.json --prefix ';p' --apply --on-conflict skip` |
+| Install daemon | `./scripts/launch-trexpand.sh install` |
+| Restart daemon | `./scripts/launch-trexpand.sh restart` |
+| Re-export | `./scripts/sync-expander.sh` |
+| TCC probe | `trexpand-probe permissions` |
+| Inject probe | `trexpand-probe inject --text 'hello'` |
