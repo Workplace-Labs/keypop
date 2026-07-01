@@ -8,7 +8,7 @@ description: >-
   terminals.
 metadata:
   version: "1.0"
-  project: macos-text-replacements
+  project: keypop
 ---
 
 # keypop — Text Replacements

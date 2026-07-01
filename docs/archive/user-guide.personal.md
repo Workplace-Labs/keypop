@@ -33,7 +33,7 @@ Replacements sync across Apple devices on the same iCloud account (Mac, iPhone, 
 ### List what is already configured (developers)
 
 ```sh
-cd projects/macos-text-replacements
+cd keypop
 swift build
 .build/debug/keypop list
 .build/debug/keypop list --prefix ';wl'

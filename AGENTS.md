@@ -1,6 +1,8 @@
 # Agent Context (keypop)
 
-Swift package for Apple Text Replacements management and Mac system-wide expansion. Not part of the root pnpm workspace.
+Swift package for Apple Text Replacements management and Mac system-wide expansion.
+
+**Repository:** [Workplace-Labs/keypop](https://github.com/Workplace-Labs/keypop)
 
 ## Components
 

@@ -12,7 +12,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build and test
-        working-directory: projects/macos-text-replacements
         run: |
           swift build
           swift test

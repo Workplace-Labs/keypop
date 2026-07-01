@@ -28,7 +28,7 @@ Current recommendation: use the private framework approach for a developer-only 
 
 ## Next Validation Gate
 
-Run this from `projects/macos-text-replacements`:
+Run this from `keypop`:
 
 ```sh
 swift build

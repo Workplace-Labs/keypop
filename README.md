@@ -53,7 +53,7 @@ Mutations auto-export snippets for `keypop run` (reloads within ~200ms when the 
 ### Snippets (CRUD)
 
 ```sh
-keypop create --shortcut ';wle' --phrase 'jon@workplacelabs.io'
+keypop create --shortcut ';wle' --phrase 'you@example.com'
 keypop update --shortcut ';pcr' --phrase 'Review this diff for bugs and suggest fixes.'
 keypop get --shortcut ';pcr'
 keypop delete --shortcut ';test'
@@ -88,6 +88,14 @@ keypop inspect
 scripts/validate-crud.sh
 scripts/probes/run-sprint0.sh
 keypop probe permissions
+```
+
+## Repository
+
+```sh
+git clone git@github.com:Workplace-Labs/keypop.git
+cd keypop
+./scripts/install.sh
 ```
 
 ## Documentation
