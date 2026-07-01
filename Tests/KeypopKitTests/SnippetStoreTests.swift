@@ -1,5 +1,5 @@
 import XCTest
-@testable import TrexpandKit
+@testable import KeypopKit
 
 final class SnippetStoreTests: XCTestCase {
     func testLoadSnippetKit() throws {
@@ -10,7 +10,7 @@ final class SnippetStoreTests: XCTestCase {
         """.data(using: .utf8)!
 
         let path = FileManager.default.temporaryDirectory
-            .appendingPathComponent("trexpand-test-\(UUID().uuidString).json")
+            .appendingPathComponent("keypop-test-\(UUID().uuidString).json")
         try json.write(to: path)
         defer { try? FileManager.default.removeItem(at: path) }
 

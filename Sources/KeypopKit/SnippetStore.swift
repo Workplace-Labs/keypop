@@ -1,5 +1,4 @@
 import Foundation
-import TrctlKit
 
 public struct SnippetStore: Sendable {
     public private(set) var phrases: [String: String]
@@ -9,7 +8,7 @@ public struct SnippetStore: Sendable {
     }
 
     public static func defaultPath() -> String {
-        ExpanderExport.defaultSnippetsPath
+        RuntimeExport.defaultSnippetsPath
     }
 
     public static func load(from path: String) throws -> SnippetStore {

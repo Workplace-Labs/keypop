@@ -1,8 +1,8 @@
 # Text Replacements User Guide
 
-Set up Apple Text Replacements with `trctl` and expand them in Warp, editors, and terminals with `trexpand`.
+Set up Apple Text Replacements with `keypop` and expand them in Warp, editors, and terminals with `keypop run`.
 
-**Prerequisites:** `trctl` and `trexpand` installed ([README](../README.md)).
+**Prerequisites:** `keypop` installed ([README](../README.md)).
 
 **Related:** [Kits](kits.md) · [Architecture](architecture.md)
 
@@ -13,41 +13,41 @@ Set up Apple Text Replacements with `trctl` and expand them in Warp, editors, an
 1. **Verify the CLI**
 
 ```sh
-trctl inspect
-trctl list
+keypop inspect
+keypop list
 ```
 
 2. **Preview the starter prompt kit**
 
 ```sh
-trctl import kits/prompts-core.snippets.json --prefix ';p' --dry-run
+keypop import kits/prompts-core.snippets.json --prefix ';p' --dry-run
 ```
 
 3. **Apply** (writes a backup under `backups/` first)
 
 ```sh
-trctl import kits/prompts-core.snippets.json --prefix ';p' --apply --on-conflict skip
+keypop import kits/prompts-core.snippets.json --prefix ';p' --apply --on-conflict skip
 ```
 
 4. **Start the Mac expander**
 
 ```sh
-./scripts/install.sh                  # or: ./scripts/launch-trexpand.sh install
+./scripts/install.sh                  # or: ./scripts/launch-keypop.sh install
 ```
 
 ### Permissions
 
-Grant **Input Monitoring** and **Accessibility** to **`~/.local/Trexpand.app`** (the app bundle, not Terminal and not the bare `trexpand` exec):
+Grant **Input Monitoring** and **Accessibility** to **`~/.local/KeyPop.app`** (the app bundle, not Terminal and not the bare `keypop` exec):
 
 1. System Settings → Privacy & Security → Input Monitoring (and Accessibility)
-2. Click **+** → **Cmd+Shift+G** → paste: `~/.local/Trexpand.app`
-3. Remove any old **trexpand** entry with a black exec icon if present
+2. Click **+** → **Cmd+Shift+G** → paste: `~/.local/KeyPop.app`
+3. Remove any old **keypop** bare-exec entry with a black icon if present
 
 Then restart:
 
 ```sh
-./scripts/launch-trexpand.sh restart
-./scripts/launch-trexpand.sh status     # expect: running + Trexpand.app path
+./scripts/launch-keypop.sh restart
+./scripts/launch-keypop.sh status     # expect: running + KeyPop.app path
 ```
 
 Type `;pcr` in Warp to verify.
@@ -58,12 +58,12 @@ Replacements also sync to iPhone/iPad via iCloud (System Settings → Keyboard �
 
 ## Two layers, one library
 
-| Layer | Tool | Where it works |
-|-------|------|----------------|
-| Apple Text Replacements | `trctl` | iOS, Notes, Mail, Messages, Safari, Slack |
-| Mac expander | `trexpand` | Warp, VS Code, Cursor, Terminal |
+| Layer | Command | Where it works |
+|-------|---------|----------------|
+| Apple Text Replacements | `keypop` (CRUD) | iOS, Notes, Mail, Messages, Safari, Slack |
+| Mac runtime | `keypop run` | Warp, VS Code, Cursor, Terminal |
 
-Use the **same keywords** in both layers. `trctl` mutations auto-export to `~/.config/trexpand/snippets.json`; trexpand watches that file.
+Use the **same keywords** in both layers. `keypop` mutations auto-export to `~/.config/keypop/snippets.json`; `keypop run` watches that file.
 
 ---
 
@@ -106,15 +106,15 @@ Starter kit: `kits/prompts-core.snippets.json`. Keep prompts as **plain static t
 Export prefix-scoped kits:
 
 ```sh
-trctl export --prefix ';ac' --output kits/acme-team.snippets.json
+keypop export --prefix ';ac' --output kits/acme-team.snippets.json
 ```
 
 Onboarding:
 
 ```sh
-trctl import kits/acme-team.snippets.json --prefix ';ac' --dry-run
-trctl import kits/acme-team.snippets.json --prefix ';ac' --apply --on-conflict skip
-./scripts/launch-trexpand.sh install
+keypop import kits/acme-team.snippets.json --prefix ';ac' --dry-run
+keypop import kits/acme-team.snippets.json --prefix ';ac' --apply --on-conflict skip
+./scripts/launch-keypop.sh install
 ```
 
 Keep PII kits out of public repos (gitignored).
@@ -126,7 +126,7 @@ Keep PII kits out of public repos (gitignored).
 | Layer | Usually works | Usually does not |
 |-------|---------------|------------------|
 | Apple | Notes, Mail, Messages, Safari, Slack | Warp, VS Code, Cursor |
-| trexpand | Warp, VS Code, Cursor, Terminal | N/A (Mac only) |
+| keypop run | Warp, VS Code, Cursor, Terminal | N/A (Mac only) |
 
 ---
 
@@ -135,20 +135,20 @@ Keep PII kits out of public repos (gitignored).
 **No expansion in Warp / VS Code / Cursor**
 
 ```sh
-./scripts/launch-trexpand.sh status   # is trexpand running?
-./scripts/sync-expander.sh            # re-export snippets
-tail -f ~/.local/log/trexpand.log     # expansion / tap health logs
+./scripts/launch-keypop.sh status   # is keypop run loaded?
+./scripts/sync-keypop.sh            # re-export snippets
+tail -f ~/.local/log/keypop.log     # expansion / tap health logs
 ```
 
 **No expansion on iPhone** — check System Settings → Keyboard → Text Replacements; wait for iCloud sync.
 
-**Double expansion in Slack** — rare; both Apple and trexpand may fire. Test in Notes vs Warp to isolate.
+**Double expansion in Slack** — rare; both Apple Text Replacements and `keypop run` may fire. Test in Notes vs Warp to isolate.
 
-**trexpand stopped after sleep** — check log for `tap_health` lines; restart: `./scripts/launch-trexpand.sh restart`
+**Daemon stopped after sleep** — check log for `tap_health` lines; restart: `./scripts/launch-keypop.sh restart`
 
-**TCC not working after rebuild** — re-grant permissions to `~/.local/Trexpand.app` (rebuild re-signs the bundle), remove stale exec entries, then `./scripts/launch-trexpand.sh restart`.
+**TCC not working after rebuild** — re-grant permissions to `~/.local/KeyPop.app` (rebuild re-signs the bundle), remove stale exec entries, then `./scripts/launch-keypop.sh restart`.
 
-**`trctl` synced but Warp unchanged** — check stderr for `trexpand_hint|` lines; confirm daemon is running and log shows `reloaded|N snippets` after mutations.
+**`keypop` synced but Warp unchanged** — check stderr for `keypop_hint|` lines; confirm `keypop run` is loaded and log shows `reloaded|N snippets` after mutations.
 
 ---
 
@@ -158,63 +158,63 @@ tail -f ~/.local/log/trexpand.log     # expansion / tap health logs
 
 ```sh
 # TDD workflow prompt
-trctl create --shortcut ';ptdd' \
+keypop create --shortcut ';ptdd' \
   --phrase 'Add a failing test, run it, verify it fails, fix the issue, verify the test passes'
 
 # Pre-PR hardening prompt (from prompts-core kit)
-trctl import kits/prompts-core.snippets.json --prefix ';p' --apply --on-conflict skip
+keypop import kits/prompts-core.snippets.json --prefix ';p' --apply --on-conflict skip
 
 # Change one prompt in place
-trctl update --shortcut ';pcr' --phrase 'Great work on this! Now reflect on…'
+keypop update --shortcut ';pcr' --phrase 'Great work on this! Now reflect on…'
 
 # Inspect before deleting
-trctl get --shortcut ';ptdd'
-trctl delete --shortcut ';ptdd'
+keypop get --shortcut ';ptdd'
+keypop delete --shortcut ';ptdd'
 ```
 
-After each mutation, stderr should include `trexpand_sync|…`. If you see `trexpand_hint|daemon not running`, run `./scripts/launch-trexpand.sh restart`.
+After each mutation, stderr should include `keypop_sync|…`. If you see `keypop_hint|daemon not running`, run `./scripts/launch-keypop.sh restart`.
 
 ### Prefix zones
 
 ```sh
-trctl list --prefix ';wl'    # Workplace Labs contacts
-trctl list --prefix ';p'     # prompt kit
+keypop list --prefix ';wl'    # Workplace Labs contacts
+keypop list --prefix ';p'     # prompt kit
 
-trctl export --prefix ';wl' --output kits/wl-team.snippets.json
-trctl export --output kits/full.snippets.json
+keypop export --prefix ';wl' --output kits/wl-team.snippets.json
+keypop export --output kits/full.snippets.json
 ```
 
 ### Import strategies
 
 ```sh
 # Preview only
-trctl import kits/acme-team.snippets.json --prefix ';ac' --dry-run
+keypop import kits/acme-team.snippets.json --prefix ';ac' --dry-run
 
 # Skip rows that already exist
-trctl import kits/acme-team.snippets.json --prefix ';ac' --apply --on-conflict skip
+keypop import kits/acme-team.snippets.json --prefix ';ac' --apply --on-conflict skip
 
 # Overwrite conflicts
-trctl import kits/acme-team.snippets.json --prefix ';ac' --apply --on-conflict overwrite
+keypop import kits/acme-team.snippets.json --prefix ';ac' --apply --on-conflict overwrite
 ```
 
-### trexpand operator commands
+### Daemon commands
 
 ```sh
-./scripts/install.sh                       # build, bundle Trexpand.app, install LaunchAgent
-./scripts/launch-trexpand.sh install       # plist only (after manual build)
-./scripts/launch-trexpand.sh status        # running? which binary path?
-./scripts/launch-trexpand.sh restart       # after TCC grant or rebuild
-./scripts/sync-expander.sh                 # force re-export from trctl
+./scripts/install.sh                       # build, bundle KeyPop.app, install LaunchAgent
+./scripts/launch-keypop.sh install       # plist only (after manual build)
+./scripts/launch-keypop.sh status        # running? which binary path?
+./scripts/launch-keypop.sh restart       # after TCC grant or rebuild
+./scripts/sync-keypop.sh                 # force re-export from keypop
 
 # Foreground debug (uses Terminal TCC, not LaunchAgent)
-trexpand run --snippets ~/.config/trexpand/snippets.json
+keypop run --snippets ~/.config/keypop/snippets.json
 ```
 
 ### Verify expansion
 
-1. `./scripts/launch-trexpand.sh status` → `running`
+1. `./scripts/launch-keypop.sh status` → `running`
 2. Type `;pcr` in Warp → full prompt appears
-3. Log: `tail -f ~/.local/log/trexpand.log` → `expanded|;pcr|…`
+3. Log: `tail -f ~/.local/log/keypop.log` → `expanded|;pcr|…`
 
 ---
 
@@ -222,17 +222,17 @@ trexpand run --snippets ~/.config/trexpand/snippets.json
 
 | Command | Example |
 |---------|---------|
-| List all | `trctl list` |
-| List prefix | `trctl list --prefix ';wl'` |
-| Get one | `trctl get --shortcut ';pcr'` |
-| Create | `trctl create --shortcut ';wle' --phrase 'you@example.com'` |
-| Update | `trctl update --shortcut ';pcr' --phrase 'New prompt text…'` |
-| Delete | `trctl delete --shortcut ';test'` |
-| Export kit | `trctl export --prefix ';wl' --output kits/wl-team.snippets.json` |
-| Import preview | `trctl import kits/prompts-core.snippets.json --prefix ';p' --dry-run` |
-| Import apply | `trctl import kits/prompts-core.snippets.json --prefix ';p' --apply --on-conflict skip` |
-| Install daemon | `./scripts/launch-trexpand.sh install` |
-| Restart daemon | `./scripts/launch-trexpand.sh restart` |
-| Re-export | `./scripts/sync-expander.sh` |
-| TCC probe | `trexpand-probe permissions` |
-| Inject probe | `trexpand-probe inject --text 'hello'` |
+| List all | `keypop list` |
+| List prefix | `keypop list --prefix ';wl'` |
+| Get one | `keypop get --shortcut ';pcr'` |
+| Create | `keypop create --shortcut ';wle' --phrase 'you@example.com'` |
+| Update | `keypop update --shortcut ';pcr' --phrase 'New prompt text…'` |
+| Delete | `keypop delete --shortcut ';test'` |
+| Export kit | `keypop export --prefix ';wl' --output kits/wl-team.snippets.json` |
+| Import preview | `keypop import kits/prompts-core.snippets.json --prefix ';p' --dry-run` |
+| Import apply | `keypop import kits/prompts-core.snippets.json --prefix ';p' --apply --on-conflict skip` |
+| Install daemon | `./scripts/launch-keypop.sh install` |
+| Restart daemon | `./scripts/launch-keypop.sh restart` |
+| Re-export | `./scripts/sync-keypop.sh` |
+| TCC probe | `keypop probe permissions` |
+| Inject probe | `keypop probe inject --text 'hello'` |

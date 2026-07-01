@@ -1,17 +1,17 @@
-import TrctlKit
+import KeypopKit
 import XCTest
 
-final class ExpanderExportTests: XCTestCase {
+final class RuntimeExportTests: XCTestCase {
     func testIsEnabledDefaultsToTrue() {
-        XCTAssertTrue(ExpanderExport.isEnabled(commandArgs: []))
+        XCTAssertTrue(RuntimeExport.isEnabled(commandArgs: []))
     }
 
     func testIsEnabledRespectsNoSyncFlag() {
-        XCTAssertFalse(ExpanderExport.isEnabled(commandArgs: ["import", "--no-sync-expander"]))
+        XCTAssertFalse(RuntimeExport.isEnabled(commandArgs: ["import", "--no-sync"]))
     }
 
     func testIsEnabledRespectsDisableEnv() {
-        let key = ExpanderExport.disableEnvironmentKey
+        let key = RuntimeExport.disableEnvironmentKey
         let previous = ProcessInfo.processInfo.environment[key]
         defer {
             if let previous {
@@ -23,29 +23,29 @@ final class ExpanderExportTests: XCTestCase {
 
         for value in ["0", "false", "no", "off"] {
             setenv(key, value, 1)
-            XCTAssertFalse(ExpanderExport.isEnabled(commandArgs: []), "expected disabled for \(value)")
+            XCTAssertFalse(RuntimeExport.isEnabled(commandArgs: []), "expected disabled for \(value)")
         }
 
         setenv(key, "1", 1)
-        XCTAssertTrue(ExpanderExport.isEnabled(commandArgs: []))
+        XCTAssertTrue(RuntimeExport.isEnabled(commandArgs: []))
     }
 
     func testWriteSnippetKit() throws {
         let path = FileManager.default.temporaryDirectory
-            .appendingPathComponent("expander-export-\(UUID().uuidString).json")
-        let previous = ProcessInfo.processInfo.environment[ExpanderExport.snippetsPathEnvironmentKey]
-        setenv(ExpanderExport.snippetsPathEnvironmentKey, path.path, 1)
+            .appendingPathComponent("keypop-export-\(UUID().uuidString).json")
+        let previous = ProcessInfo.processInfo.environment[RuntimeExport.snippetsPathEnvironmentKey]
+        setenv(RuntimeExport.snippetsPathEnvironmentKey, path.path, 1)
         defer {
             if let previous {
-                setenv(ExpanderExport.snippetsPathEnvironmentKey, previous, 1)
+                setenv(RuntimeExport.snippetsPathEnvironmentKey, previous, 1)
             } else {
-                unsetenv(ExpanderExport.snippetsPathEnvironmentKey)
+                unsetenv(RuntimeExport.snippetsPathEnvironmentKey)
             }
             try? FileManager.default.removeItem(at: path)
         }
 
         let rows = [Replacement(shortcut: ";x", phrase: "exported")]
-        let written = try ExpanderExport.write(rows)
+        let written = try RuntimeExport.write(rows)
         XCTAssertEqual(written, path.path)
 
         let data = try Data(contentsOf: path)

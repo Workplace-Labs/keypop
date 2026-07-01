@@ -1,52 +1,45 @@
 #!/usr/bin/env bash
-# Manage trexpand via a LaunchAgent so it survives terminal/session exit.
+# Manage keypop via a LaunchAgent so it survives terminal/session exit.
 #
 # Usage:
-#   ./scripts/launch-trexpand.sh [start|stop|restart|status|install|uninstall]
+#   ./scripts/launch-keypop.sh [start|stop|restart|status|install|uninstall]
 #
-# install   — write plist + load agent (persists across reboots)
-# uninstall — unload + remove plist
-# start     — load agent if already installed, else run install
-# stop      — unload agent (leave plist; next login restarts it)
-# restart   — stop + start (rewrites plist if binary path changed)
-# status    — print running state
-#
-# Override binary: TREXPAND_BIN=/path/to/trexpand
+# Override binary: KEYPOP_BIN=/path/to/keypop
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-SNIPPETS="${HOME}/.config/trexpand/snippets.json"
-LOG_FILE="${HOME}/.local/log/trexpand.log"
+SNIPPETS="${HOME}/.config/keypop/snippets.json"
+LOG_FILE="${HOME}/.local/log/keypop.log"
 
-LABEL="io.trexpand.daemon"
+LABEL="io.keypop.daemon"
 PLIST_DIR="${HOME}/Library/LaunchAgents"
 PLIST="${PLIST_DIR}/${LABEL}.plist"
 LAUNCHCTL_DOMAIN="gui/$(id -u)"
 LAUNCHCTL_SERVICE="${LAUNCHCTL_DOMAIN}/${LABEL}"
 
-resolve_trexpand_binary() {
-  if [[ -n "${TREXPAND_BIN:-}" && -x "${TREXPAND_BIN}" ]]; then
-    echo "${TREXPAND_BIN}"
+resolve_keypop_binary() {
+  if [[ -n "${KEYPOP_BIN:-}" && -x "${KEYPOP_BIN}" ]]; then
+    echo "${KEYPOP_BIN}"
     return 0
   fi
-  local app_binary="${HOME}/.local/Trexpand.app/Contents/MacOS/trexpand"
+  local app_binary="${HOME}/.local/KeyPop.app/Contents/MacOS/keypop"
   if [[ -x "$app_binary" ]]; then
     echo "$app_binary"
     return 0
   fi
-  local installed="${HOME}/.local/bin/trexpand"
+  local installed="${HOME}/.local/bin/keypop"
   if [[ -x "$installed" ]]; then
     echo "$installed"
     return 0
   fi
-  local release="${PROJECT_DIR}/.build/release/trexpand"
+  local release="${PROJECT_DIR}/.build/release/keypop"
   if [[ -x "$release" ]]; then
     echo "$release"
     return 0
   fi
-  local debug="${PROJECT_DIR}/.build/debug/trexpand"
+  local debug="${PROJECT_DIR}/.build/debug/keypop"
   if [[ -x "$debug" ]]; then
     echo "$debug"
     return 0
@@ -55,17 +48,17 @@ resolve_trexpand_binary() {
 }
 
 ensure_binary() {
-  if resolve_trexpand_binary >/dev/null; then
+  if resolve_keypop_binary >/dev/null; then
     return 0
   fi
-  echo "Building trexpand (debug)..."
+  echo "Building keypop (debug)..."
   swift build --package-path "$PROJECT_DIR" -q
-  "${PROJECT_DIR}/scripts/bundle-trexpand-app.sh" "${PROJECT_DIR}/.build/debug/trexpand"
+  "${PROJECT_DIR}/scripts/bundle-keypop-app.sh" "${PROJECT_DIR}/.build/debug/keypop"
 }
 
 ensure_snippets() {
   if [[ ! -f "$SNIPPETS" ]]; then
-    "${PROJECT_DIR}/scripts/sync-expander.sh"
+    "${PROJECT_DIR}/scripts/sync-keypop.sh"
   fi
 }
 
@@ -113,7 +106,7 @@ write_plist() {
 PLIST
   echo "Wrote ${PLIST}"
   echo "TCC: grant Input Monitoring + Accessibility to app bundle:"
-  echo "  ${HOME}/.local/Trexpand.app"
+  echo "  ${HOME}/.local/KeyPop.app"
 }
 
 is_loaded() {
@@ -136,7 +129,7 @@ unload_agent() {
 
 ensure_plist() {
   local binary
-  binary="$(resolve_trexpand_binary)"
+  binary="$(resolve_keypop_binary)"
   if needs_plist_refresh "$binary"; then
     write_plist "$binary"
   fi
@@ -148,9 +141,9 @@ case "$cmd" in
   install)
     ensure_binary
     ensure_snippets
-    write_plist "$(resolve_trexpand_binary)"
+    write_plist "$(resolve_keypop_binary)"
     load_agent
-    echo "trexpand installed and started"
+    echo "keypop installed and started"
     echo "log: $LOG_FILE"
     ;;
 
@@ -159,7 +152,7 @@ case "$cmd" in
       unload_agent
     fi
     rm -f "$PLIST"
-    echo "trexpand uninstalled"
+    echo "keypop uninstalled"
     ;;
 
   start)
@@ -167,10 +160,10 @@ case "$cmd" in
     ensure_snippets
     ensure_plist
     if is_loaded; then
-      echo "trexpand already loaded"
+      echo "keypop already loaded"
     else
       load_agent
-      echo "trexpand started"
+      echo "keypop started"
     fi
     echo "log: $LOG_FILE"
     ;;
@@ -178,9 +171,9 @@ case "$cmd" in
   stop)
     if is_loaded; then
       unload_agent
-      echo "trexpand stopped (plist kept; will restart on next login)"
+      echo "keypop stopped (plist kept; will restart on next login)"
     else
-      echo "trexpand not loaded"
+      echo "keypop not loaded"
     fi
     ;;
 
@@ -190,15 +183,15 @@ case "$cmd" in
     fi
     ensure_binary
     ensure_snippets
-    write_plist "$(resolve_trexpand_binary)"
+    write_plist "$(resolve_keypop_binary)"
     load_agent
-    echo "trexpand restarted"
+    echo "keypop restarted"
     echo "log: $LOG_FILE"
     ;;
 
   status)
     if is_loaded; then
-      BINARY="$(resolve_trexpand_binary)"
+      BINARY="$(resolve_keypop_binary)"
       PID="$(pgrep -f "${BINARY} run --snippets" 2>/dev/null | head -1 || true)"
       echo "running${PID:+ (pid $PID)}"
       echo "binary: ${BINARY}"

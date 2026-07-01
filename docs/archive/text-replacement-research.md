@@ -4,7 +4,7 @@ Research date: 2026-06-30
 Machine context: macOS 26.5.1, Apple Silicon  
 Research method: web synthesis (Perplexity not available in workspace; sources cited inline)
 
-This document summarizes current best practices, use cases, and conventions for text replacement / text expansion tools, with emphasis on macOS and developer-oriented tooling like `trctl`.
+This document summarizes current best practices, use cases, and conventions for text replacement / text expansion tools, with emphasis on macOS and developer-oriented tooling like `keypop`.
 
 **For onboarding and team conventions, see [`user-guide.md`](user-guide.md).**
 
@@ -20,7 +20,7 @@ Text replacement tools sit on a spectrum from **system-native shortcuts** (Apple
 4. **Prefer local-first for PII** — cloud sync is convenient but increases exposure; never store secrets in snippets.
 5. **Version-control when possible** — Git-backed YAML/JSON is the developer norm; Apple native sync is opaque and occasionally unreliable.
 
-For this project, Apple native replacements remain the right **cross-device baseline** (iPhone/iPad sync via iCloud), while `trctl` fills the gap for **programmatic CRUD, backup, audit, and dotfiles-style management** on macOS.
+For this project, Apple native replacements remain the right **cross-device baseline** (iPhone/iPad sync via iCloud), while `keypop` fills the gap for **programmatic CRUD, backup, audit, and dotfiles-style management** on macOS.
 
 ---
 
@@ -234,7 +234,7 @@ Sources: [Apple Support backup guide](https://support.apple.com/guide/mac-help/b
 |---------|-----------|----------|
 | **Git dotfiles** | Symlink `~/.config/espanso` via Stow/Dotbot | Espanso users, multi-machine devs |
 | **Export/import** | CSV, TextExpander format, Raycast export | Migration between tools |
-| **JSON snapshot** | `trctl private-list` output in repo | Apple native library audit (careful: contains PII) |
+| **JSON snapshot** | `keypop private-list` output in repo | Apple native library audit (careful: contains PII) |
 | **1Password inject** | Template files with `op://` refs at build time | Secrets adjacent to but not in snippets |
 
 ### 7.3 Import/export matrix
@@ -245,7 +245,7 @@ Espanso has no universal import GUI; migration is often manual or scripted.
 
 ---
 
-## 8. macOS Native: Implications for `trctl`
+## 8. macOS Native: Implications for `keypop`
 
 ### 8.1 What native replacements are good for
 
@@ -262,9 +262,9 @@ Espanso has no universal import GUI; migration is often manual or scripted.
 - Programmatic bulk management via `defaults write` (broken on Sequoia/Tahoe for persistence)
 - Team sharing with governance
 
-### 8.3 Where `trctl` fits
+### 8.3 Where `keypop` fits
 
-| Capability | System Settings | `trctl` |
+| Capability | System Settings | `keypop` |
 |------------|-----------------|---------|
 | List all replacements | Tedious UI | `private-list` JSON |
 | Bulk export | Manual | `private-list` → file |
@@ -274,13 +274,13 @@ Espanso has no universal import GUI; migration is often manual or scripted.
 | Schema inspection | No | `db-summary` |
 | App Store safe | Yes | No (private API) |
 
-**Recommended positioning:** `trctl` as a **developer harness** for managing the Apple-native layer — backup, bootstrap new machines, lint library conventions, migrate to/from Espanso — not as a consumer-facing expander runtime.
+**Recommended positioning:** `keypop` as a **developer harness** for managing the Apple-native layer — backup, bootstrap new machines, lint library conventions, migrate to/from Espanso — not as a consumer-facing expander runtime.
 
 ### 8.4 Hybrid workflow (pragmatic)
 
 Run **both** native Apple Text Replacements and Raycast with the **same keywords**:
 
-- **Apple Text Replacements** (`trctl`): iOS sync, Notes, Mail, Slack, Safari
+- **Apple Text Replacements** (`keypop`): iOS sync, Notes, Mail, Slack, Safari
 - **Raycast Snippets** (`sync-raycast.sh`): Warp, VS Code, Cursor, Chrome
 
 Raycast **Override System Snippets ON** — Raycast expands on Mac even when Apple has the same keyword. With it OFF, Raycast defers to macOS and Warp gets nothing.
@@ -306,7 +306,7 @@ When sharing a snippet library (org or open-source dotfiles):
 
 ## 10. Recommendations for This Project
 
-### 10.1 Near-term `trctl` enhancements (aligned with research)
+### 10.1 Near-term `keypop` enhancements (aligned with research)
 
 1. **`private-list --format table|json|csv`** — portability toward Raycast/Espanso migration
 2. **`private-import` / `private-export`** — JSON round-trip for Git-backed dotfiles
@@ -379,5 +379,5 @@ groups:
 1. **XPC server vs Core Data for reads** — cleaner API boundary vs current working path (`_KSTextReplacementCoreDataStore`)
 2. **Export format** — JSON schema stable enough for dotfiles merge workflows?
 3. **iOS parity** — can iPhone exports be ingested, or is Mac-only management sufficient?
-4. **Conflict resolution** — strategy when iCloud push races with `trctl` bulk import
+4. **Conflict resolution** — strategy when iCloud push races with `keypop` bulk import
 5. **Lint rules** — which conventions are universal vs personal preference?

@@ -1,7 +1,7 @@
 # Sprint Plan: Replace Raycast Runtime (macOS Tahoe)
 
 Target: macOS 26.x (Tahoe), Apple Silicon  
-Prerequisite: `trctl` CRUD validated on 26.5.1  
+Prerequisite: `keypop` CRUD validated on 26.5.1  
 Companion research: [`open-source-expander-research.md`](open-source-expander-research.md)
 
 ---
@@ -10,17 +10,17 @@ Companion research: [`open-source-expander-research.md`](open-source-expander-re
 
 Remove Raycast as the Mac runtime expander for Warp, VS Code, Cursor, and Chromium inputs while keeping:
 
-- `trctl` + Apple Text Replacements for iOS sync and native apps
+- `keypop` + Apple Text Replacements for iOS sync and native apps
 - Kit JSON (`name`, `keyword`, `text`) as interchange format
 - Same `;wl*`, `;p*` keyword conventions
 
-Success = type `;wle` in Warp and VS Code without Raycast installed; no manual import step after `trctl` changes.
+Success = type `;wle` in Warp and VS Code without Raycast installed; no manual import step after `keypop` changes.
 
 ---
 
 ## Strategy
 
-Build a **Swift menu-bar daemon** in this repo (working name: `trexpand`), reusing `KSPrivateBridge` for snippet source and `TrctlKit` for kit parsing. Espanso and Poof are reference implementations, not dependencies.
+Build a **Swift menu-bar daemon** in this repo (working name: `keypop`), reusing `KSPrivateBridge` for snippet source and `KeypopKit` for kit parsing. Espanso and Poof are reference implementations, not dependencies.
 
 Fallback if spikes fail: adopt **Poof** (MIT, Swift, Raycast import) via `brew install mikker/tap/poof` and a `sync-poof.sh` script until custom daemon is ready.
 
@@ -51,7 +51,7 @@ These are ordered by kill potential. **Sprint 0 exists only to validate or falsi
 
 ### S0.1 — Event tap viability
 
-**Task:** Minimal Swift target `trexpand-probe` with `CGEvent.tapCreate(.cgSessionEventTap, .listenOnly, .keyDown)`.
+**Task:** Minimal Swift target `keypop probe` with `CGEvent.tapCreate(.cgSessionEventTap, .listenOnly, .keyDown)`.
 
 **Pass:** Callbacks fire in TextEdit after signed `.app` launch from `/Applications`.
 
@@ -68,7 +68,7 @@ log stream --predicate 'subsystem == "com.apple.TCC"' --level debug
 
 | App | Test string | Pass? |
 |-----|-------------|-------|
-| Warp | `;trctlprobe-clip` | |
+| Warp | `;keypopprobe-clip` | |
 | VS Code | same | |
 | Cursor | same | |
 | Chrome (textarea) | same | |
@@ -84,11 +84,11 @@ Run only for apps where S0.2 fails.
 
 **Task:** Call existing `_KSTextReplacementCoreDataStore` read from a GUI app target (not CLI).
 
-**Pass:** Entry count matches `trctl list | jq length`.
+**Pass:** Entry count matches `keypop list | jq length`.
 
 ### S0.5 — Dual-layer conflict
 
-**Task:** Create `;trctlprobe-dual` in Apple via `trctl create`. Expand in Warp with only custom daemon (no Raycast).
+**Task:** Create `;keypopprobe-dual` in Apple via `keypop create`. Expand in Warp with only custom daemon (no Raycast).
 
 **Pass:** Exactly one expansion, correct phrase, no duplicated keyword text.
 
@@ -112,7 +112,7 @@ Run only for apps where S0.2 fails.
 
 ### S0.10 — Poof fallback smoke test
 
-**Task:** `brew install mikker/tap/poof`, `just import-raycast` equivalent with `trctl export` output, test in Warp.
+**Task:** `brew install mikker/tap/poof`, `just import-raycast` equivalent with `keypop export` output, test in Warp.
 
 **Purpose:** Establishes floor if S0.1–S0.3 fail partially.
 
@@ -130,8 +130,8 @@ Run only for apps where S0.2 fails.
 
 ### Scope
 
-- Menu-bar app `trexpand` (no dock icon)
-- Load snippets from exported JSON (`trctl export`) with file watcher
+- Menu-bar app `keypop` (no dock icon)
+- Load snippets from exported JSON (`keypop export`) with file watcher
 - Immediate expansion on keyword match (semicolon triggers, no delimiter required for v1)
 - Clipboard injection backend only
 - Enable / disable toggle
@@ -147,8 +147,8 @@ Run only for apps where S0.2 fails.
 
 | # | Task | Estimate |
 |---|------|----------|
-| 1.1 | SPM target `trexpand` + `Info.plist` permissions strings | 0.5d |
-| 1.2 | `SnippetStore`: load `TrctlKit` JSON, in-memory `keyword → text` map | 0.5d |
+| 1.1 | SPM target `keypop` + `Info.plist` permissions strings | 0.5d |
+| 1.2 | `SnippetStore`: load `KeypopKit` JSON, in-memory `keyword → text` map | 0.5d |
 | 1.3 | `EventTapEngine`: listen-only tap, ring buffer, prefix trie for `;` keywords | 1.5d |
 | 1.4 | `ClipboardInjector`: save/set/paste/restore | 1d |
 | 1.5 | Expansion pipeline: delete trigger chars + inject | 1d |
@@ -157,18 +157,18 @@ Run only for apps where S0.2 fails.
 
 ### Exit criteria
 
-- [ ] `trctl export -o ~/.config/trexpand/snippets.json` → edit shortcut → file watch reloads
-- [ ] `;trctlprobe` works in Warp + VS Code + Cursor
+- [ ] `keypop export -o ~/.config/keypop/snippets.json` → edit shortcut → file watch reloads
+- [ ] `;keypopprobe` works in Warp + VS Code + Cursor
 - [ ] Raycast not required for P0 apps
 
 ---
 
-## Sprint 2 — `trctl` integration (3–5 days)
+## Sprint 2 — `keypop` integration (3–5 days)
 
 ### Scope
 
-- `trctl export --watch` or `trexpand` reads directly via `KSPrivateBridge` (if S0.4 passed)
-- Replace `sync-raycast.sh` with `scripts/sync-expander.sh`
+- `keypop export --watch` or `keypop` reads directly via `KSPrivateBridge` (if S0.4 passed)
+- Replace `sync-raycast.sh` with `scripts/sync-keypop.sh`
 - Login item helper (SMAppService or `launchctl` user agent)
 - Rename path: neutral `*.snippets.json` alias (keep Raycast-compatible schema)
 
@@ -176,15 +176,15 @@ Run only for apps where S0.2 fails.
 
 | # | Task | Estimate |
 |---|------|----------|
-| 2.1 | `trexpand reload` via UNIX socket or DistributedNotification | 1d |
-| 2.2 | `trctl export` triggers reload after `--apply` import | 0.5d |
+| 2.1 | `keypop reload` via UNIX socket or DistributedNotification | 1d |
+| 2.2 | `keypop export` triggers reload after `--apply` import | 0.5d |
 | 2.3 | Optional: live DB read in daemon (poll or notify) | 1–2d |
 | 2.4 | Update `docs/kits.md`, `AGENTS.md`, `user-guide.md` Raycast sections | 0.5d |
 | 2.5 | Deprecation notice on `sync-raycast.sh` | 0.25d |
 
 ### Exit criteria
 
-- [ ] `trctl import ... --apply` → expansion updated without manual export click
+- [ ] `keypop import ... --apply` → expansion updated without manual export click
 - [ ] Documented workflow has zero Raycast steps
 
 ---
@@ -225,7 +225,7 @@ Run only for apps where S0.2 fails.
 
 - `{date}`, `{time}`, `{datetime}`, `{clipboard}` (Raycast syntax)
 - `{cursor}` deferred if hard
-- `trctl lint` for unknown placeholders in Apple-bound imports
+- `keypop lint` for unknown placeholders in Apple-bound imports
 - Code signing + notarization for personal distribution
 
 ### Exit criteria
@@ -287,7 +287,7 @@ scripts/validate-crud.sh
 | No false positive | type `;w` only | No expansion |
 | iOS unchanged | `;wle` on iPhone | Apple layer still works |
 | Permissions revoked | Remove Accessibility | Daemon shows alert, no silent fail |
-| Import apply | `trctl import kit --apply` | New keyword works in <5s |
+| Import apply | `keypop import kit --apply` | New keyword works in <5s |
 | Competing expander | Raycast enabled | Document conflict or detect |
 
 ### Tahoe version pinning

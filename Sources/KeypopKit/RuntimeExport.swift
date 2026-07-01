@@ -1,13 +1,13 @@
 import Foundation
 
-/// Exports live replacements for the trexpand Mac runtime.
-public enum ExpanderExport {
-    public static let snippetsPathEnvironmentKey = "TREXPAND_SNIPPETS"
-    public static let disableEnvironmentKey = "TREXPAND_SYNC"
+/// Exports live replacements for the `keypop run` runtime.
+public enum RuntimeExport {
+    public static let snippetsPathEnvironmentKey = "KEYPOP_SNIPPETS"
+    public static let disableEnvironmentKey = "KEYPOP_SYNC"
 
     public static var defaultSnippetsPath: String {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
-        return "\(home)/.config/trexpand/snippets.json"
+        return "\(home)/.config/keypop/snippets.json"
     }
 
     public static func snippetsPath() -> String {
@@ -18,7 +18,7 @@ public enum ExpanderExport {
     }
 
     public static func isEnabled(commandArgs: [String]) -> Bool {
-        if commandArgs.contains("--no-sync-expander") {
+        if commandArgs.contains("--no-sync") {
             return false
         }
         if let value = ProcessInfo.processInfo.environment[disableEnvironmentKey] {

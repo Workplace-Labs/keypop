@@ -33,10 +33,10 @@ Run this from `projects/macos-text-replacements`:
 ```sh
 swift build
 swift test
-.build/debug/trctl inspect
-.build/debug/trctl read-sources
-.build/debug/trctl list
-.build/debug/trctl list --prefix ';wl'
+.build/debug/keypop inspect
+.build/debug/keypop read-sources
+.build/debug/keypop list
+.build/debug/keypop list --prefix ';wl'
 scripts/validate-crud.sh
 ```
 

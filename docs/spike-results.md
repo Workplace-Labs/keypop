@@ -40,20 +40,20 @@ Interpretation:
 
 | Spike | App | Pass? | Notes |
 |-------|-----|-------|-------|
-| S0.2 clipboard inject | Warp | **PASS** | `trexpand-probe inject` |
-| S1 keyword expand | Warp | **PASS** | `trexpand run` → `;wle` expanded 20 chars |
+| S0.2 clipboard inject | Warp | **PASS** | `keypop probe inject` |
+| S1 keyword expand | Warp | **PASS** | `keypop run` → `;wle` expanded 20 chars |
 | S0.2 | VS Code | | |
 | S0.2 | Cursor | | |
 | S0.2 | Chrome | | |
 | S0.5 dual-layer | Slack | | Apple + daemon same keyword |
 | S0.7 long prompt | Warp | | `;pcr` length |
 | S0.8 clipboard placeholder | Warp | | |
-| S0.10 Poof fallback | n/a | skipped | trexpand shipped (no Poof) |
+| S0.10 Poof fallback | n/a | skipped | keypop shipped (no Poof) |
 
 ## Listen smoke test
 
 ```sh
-trexpand-probe listen --seconds 5
+keypop probe listen --seconds 5
 # Type keys in TextEdit; expect keydown lines on stderr
 ```
 

@@ -3,14 +3,12 @@
 import PackageDescription
 
 let package = Package(
-    name: "MacOSTextReplacements",
+    name: "Keypop",
     platforms: [
         .macOS(.v14)
     ],
     products: [
-        .executable(name: "trctl", targets: ["trctl"]),
-        .executable(name: "trexpand-probe", targets: ["trexpand-probe"]),
-        .executable(name: "trexpand", targets: ["trexpand"]),
+        .executable(name: "keypop", targets: ["keypop"]),
     ],
     targets: [
         .target(
@@ -18,35 +16,19 @@ let package = Package(
             publicHeadersPath: "include"
         ),
         .target(
-            name: "TrctlKit"
-        ),
-        .target(
-            name: "TrexpandKit",
-            dependencies: ["TrctlKit"]
+            name: "KeypopKit"
         ),
         .executableTarget(
-            name: "trctl",
-            dependencies: ["KSPrivateBridge", "TrctlKit"]
-        ),
-        .executableTarget(
-            name: "trexpand-probe",
-            dependencies: ["TrexpandKit", "KSPrivateBridge"]
-        ),
-        .executableTarget(
-            name: "trexpand",
-            dependencies: ["TrexpandKit"]
+            name: "keypop",
+            dependencies: ["KSPrivateBridge", "KeypopKit"]
         ),
         .testTarget(
             name: "KSPrivateBridgeTests",
             dependencies: ["KSPrivateBridge"]
         ),
         .testTarget(
-            name: "TrctlKitTests",
-            dependencies: ["TrctlKit"]
-        ),
-        .testTarget(
-            name: "TrexpandKitTests",
-            dependencies: ["TrexpandKit"]
+            name: "KeypopKitTests",
+            dependencies: ["KeypopKit"]
         ),
     ]
 )

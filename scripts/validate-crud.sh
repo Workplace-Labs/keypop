@@ -3,33 +3,33 @@ set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 db="${HOME}/Library/KeyboardServices/TextReplacements.db"
-snippets="${HOME}/.config/trexpand/snippets.json"
-probe=";trctlprobe$(date +%Y%m%d%H%M%S)"
+snippets="${HOME}/.config/keypop/snippets.json"
+probe=";keypopprobe$(date +%Y%m%d%H%M%S)"
 
-resolve_trctl() {
-  if command -v trctl >/dev/null 2>&1; then
-    command -v trctl
+resolve_keypop() {
+  if command -v keypop >/dev/null 2>&1; then
+    command -v keypop
     return
   fi
-  local installed="${HOME}/.local/bin/trctl"
+  local installed="${HOME}/.local/bin/keypop"
   if [[ -x "$installed" ]]; then
     echo "$installed"
     return
   fi
-  local built="${root}/.build/debug/trctl"
+  local built="${root}/.build/debug/keypop"
   if [[ -x "$built" ]]; then
     echo "$built"
     return
   fi
-  echo "Building trctl..."
+  echo "Building keypop..."
   swift build --package-path "$root" -q
-  echo "${root}/.build/debug/trctl"
+  echo "${root}/.build/debug/keypop"
 }
 
-trctl="$(resolve_trctl)"
+keypop="$(resolve_keypop)"
 
 cleanup() {
-  "${trctl}" delete --shortcut "${probe}" >/dev/null 2>&1 || true
+  "${keypop}" delete --shortcut "${probe}" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
@@ -80,30 +80,30 @@ expect_snippet_absent() {
 
 cd "${root}"
 
-create_out="$("${trctl}" create --shortcut "${probe}" --phrase "TRCTL create validation" 2>&1)"
+create_out="$("${keypop}" create --shortcut "${probe}" --phrase "keypop create validation" 2>&1)"
 printf '%s\n' "${create_out}"
-grep -q 'trexpand_sync|' <<<"${create_out}" || {
-  echo "Expected trexpand_sync line after create" >&2
+grep -q 'keypop_sync|' <<<"${create_out}" || {
+  echo "Expected keypop_sync line after create" >&2
   exit 1
 }
 sleep 2
-expect_count "after-create" "1" "select count(*) from ZTEXTREPLACEMENTENTRY where ZWASDELETED = 0 and ZSHORTCUT = '${probe}' and ZPHRASE = 'TRCTL create validation';"
-expect_snippet_sync "after-create" "TRCTL create validation"
+expect_count "after-create" "1" "select count(*) from ZTEXTREPLACEMENTENTRY where ZWASDELETED = 0 and ZSHORTCUT = '${probe}' and ZPHRASE = 'keypop create validation';"
+expect_snippet_sync "after-create" "keypop create validation"
 
-update_out="$("${trctl}" update --shortcut "${probe}" --phrase "TRCTL update validation" 2>&1)"
+update_out="$("${keypop}" update --shortcut "${probe}" --phrase "keypop update validation" 2>&1)"
 printf '%s\n' "${update_out}"
-grep -q 'trexpand_sync|' <<<"${update_out}" || {
-  echo "Expected trexpand_sync line after update" >&2
+grep -q 'keypop_sync|' <<<"${update_out}" || {
+  echo "Expected keypop_sync line after update" >&2
   exit 1
 }
 sleep 2
-expect_count "after-update" "1" "select count(*) from ZTEXTREPLACEMENTENTRY where ZWASDELETED = 0 and ZSHORTCUT = '${probe}' and ZPHRASE = 'TRCTL update validation';"
-expect_snippet_sync "after-update" "TRCTL update validation"
+expect_count "after-update" "1" "select count(*) from ZTEXTREPLACEMENTENTRY where ZWASDELETED = 0 and ZSHORTCUT = '${probe}' and ZPHRASE = 'keypop update validation';"
+expect_snippet_sync "after-update" "keypop update validation"
 
-delete_out="$("${trctl}" delete --shortcut "${probe}" 2>&1)"
+delete_out="$("${keypop}" delete --shortcut "${probe}" 2>&1)"
 printf '%s\n' "${delete_out}"
-grep -q 'trexpand_sync|' <<<"${delete_out}" || {
-  echo "Expected trexpand_sync line after delete" >&2
+grep -q 'keypop_sync|' <<<"${delete_out}" || {
+  echo "Expected keypop_sync line after delete" >&2
   exit 1
 }
 sleep 2

@@ -69,14 +69,14 @@ Read behavior:
 
 That means modern private read and mutation are both viable through KeyboardServices, with a narrower open question around whether the XPC server connection is a better long-term API boundary than local Core Data store access.
 
-## trexpand Mac runtime
+## keypop run (Mac runtime)
 
-trexpand is a headless LaunchAgent (not a menu-bar app). It expands snippets in apps where Apple Text Replacements do not fire (Warp, VS Code, Cursor, many terminals).
+`keypop run` is a headless LaunchAgent (not a menu-bar app). It expands snippets in apps where Apple Text Replacements do not fire (Warp, VS Code, Cursor, many terminals).
 
 ```
-trctl mutation
+keypop mutation
     → stableReplacements() read (KeyboardServices lag handled)
-    → ExpanderExport.write → ~/.config/trexpand/snippets.json (atomic)
+    → RuntimeExport.write → ~/.config/keypop/snippets.json (atomic)
     → SnippetFileWatcher (parent directory; atomic replace safe)
     → ExpanderEngine.reload()
 ```
@@ -86,9 +86,9 @@ trctl mutation
 | `ExpanderEngine` | `CGEventTap` listen-only + `ClipboardInjector` backspace/paste |
 | `SnippetFileWatcher` | Directory vnode watch; file-only watch breaks after atomic export |
 | `TapHealthMonitor` | Re-enable tap on timeout; light periodic health checks |
-| `Trexpand.app` | Minimal signed bundle at `~/.local/Trexpand.app` for stable LaunchAgent TCC |
-| LaunchAgent | `io.trexpand.daemon` in `~/Library/LaunchAgents/` |
+| `KeyPop.app` | Minimal signed bundle at `~/.local/KeyPop.app` for stable LaunchAgent TCC |
+| LaunchAgent | `io.keypop.daemon` in `~/Library/LaunchAgents/` |
 
-**TCC pitfall:** macOS grants Input Monitoring to bare CLI binaries when launched from Terminal, but `launchd`-spawned binaries need a `.app` bundle identity. The System Settings toggle on a black **exec** `trexpand` entry does not apply to the LaunchAgent.
+**TCC pitfall:** macOS grants Input Monitoring to bare CLI binaries when launched from Terminal, but `launchd`-spawned binaries need a `.app` bundle identity. The System Settings toggle on a black **exec** `keypop` entry does not apply to the LaunchAgent.
 
-**Operator flow:** `./scripts/install.sh` → grant TCC to `Trexpand.app` → `./scripts/launch-trexpand.sh restart`. `trctl` emits `trexpand_hint|` when sync succeeds but no daemon process is running.
+**Operator flow:** `./scripts/install.sh` → grant TCC to `KeyPop.app` → `./scripts/launch-keypop.sh restart`. `keypop` emits `keypop_hint|` when sync succeeds but no daemon process is running.

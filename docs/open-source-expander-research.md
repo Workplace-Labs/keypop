@@ -10,7 +10,7 @@ Related: [`architecture.md`](architecture.md), [`kits.md`](kits.md), [`sprint-pl
 
 ## 1. Executive Summary
 
-Raycast is only the **runtime expander** for apps where Apple Text Replacements do not fire (Warp, VS Code, Cursor, many Chromium inputs). `trctl` already owns storage and CRUD.
+Raycast is only the **runtime expander** for apps where Apple Text Replacements do not fire (Warp, VS Code, Cursor, many Chromium inputs). `keypop` already owns storage and CRUD.
 
 Every viable open-source macOS expander uses the same core pattern:
 
@@ -20,7 +20,7 @@ Every viable open-source macOS expander uses the same core pattern:
 
 The hardest problems are not matching logic. They are **TCC permission stability on Tahoe**, **per-app injection quirks**, and **coexistence with Apple's native layer**.
 
-**Recommendation:** Build a small Swift menu-bar daemon (`trexpand` or similar) in this repo, using Espanso and Poof as reference implementations. Poof is the closest architectural peer (Swift, Raycast import, TOML/dotfiles). Espanso is the most battle-tested injection layer.
+**Recommendation:** Build a small Swift menu-bar daemon (`keypop` or similar) in this repo, using Espanso and Poof as reference implementations. Poof is the closest architectural peer (Swift, Raycast import, TOML/dotfiles). Espanso is the most battle-tested injection layer.
 
 ---
 
@@ -170,7 +170,7 @@ Our current Raycast setting **Override System Snippets ON** is the model: custom
 
 | Pitfall | Symptom | Mitigation |
 |---------|---------|------------|
-| Manual Raycast import | Drift between `trctl` and Raycast | File watch on `trctl export` output; auto-reload snippet map |
+| Manual Raycast import | Drift between `keypop` and Raycast | File watch on `keypop export` output; auto-reload snippet map |
 | `name` field in kits | Lost in Apple DB | Keep in sidecar JSON for daemon; Apple stores shortcut+phrase only |
 | `{clipboard}` in kits imported to Apple | Literal `{clipboard}` text on iOS | Strip or resolve at daemon layer only |
 | Long prompts on iOS | Apple size limit | Mark long prompts Mac-only in kit `name` |
@@ -192,7 +192,7 @@ Source: [Espanso #2689 — SearchUI beachball on 26.5](https://github.com/espans
 | `{cursor}` placement | Yes | Yes | Hard | Later |
 | App exclusions | Yes | Partial | Medium | Yes (disable in password managers) |
 | Search/picker UI | Yes | No | Hard | No (v1) |
-| Raycast JSON import | Via convert | Built-in | Trivial (`TrctlKit`) | **Yes** |
+| Raycast JSON import | Via convert | Built-in | Trivial (`KeypopKit`) | **Yes** |
 | Read from Apple DB live | No | No | **Already have bridge** | **Yes — differentiator** |
 | iOS sync | No | No | Via Apple layer only | Keep dual-layer |
 | Notarization | Yes | Yes | Medium | For daily driver |
@@ -208,7 +208,7 @@ Source: [Espanso #2689 — SearchUI beachball on 26.5](https://github.com/espans
 | **C. Custom Swift daemon** | 3–5 weeks to daily-driver | You own it | **Best** — reuses `KSPrivateBridge`, single toolchain |
 | **D. Hammerspoon config** | Hours | Fragile | Poor — tap reliability reports |
 
-**Suggested path:** Phase 0 spikes on Tahoe → Phase 1 custom Swift daemon OR Poof fork if spikes fail → keep `trctl` as source of truth.
+**Suggested path:** Phase 0 spikes on Tahoe → Phase 1 custom Swift daemon OR Poof fork if spikes fail → keep `keypop` as source of truth.
 
 Poof is a strong **stopgap** if we want to drop Raycast this week without building inject from scratch. Custom daemon is the long-term fit because we can read Apple Text Replacements directly and eliminate export/import sync.
 

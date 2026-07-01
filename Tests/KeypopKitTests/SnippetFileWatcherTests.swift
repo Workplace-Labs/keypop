@@ -1,12 +1,12 @@
 import Foundation
-import TrctlKit
-import TrexpandKit
+import KeypopKit
+import KeypopKit
 import XCTest
 
 final class SnippetFileWatcherTests: XCTestCase {
     func testReloadsAfterAtomicSnippetWrite() throws {
         let directory = FileManager.default.temporaryDirectory
-            .appendingPathComponent("trexpand-watch-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("keypop-watch-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let snippetsURL = directory.appendingPathComponent("snippets.json")
         defer { try? FileManager.default.removeItem(at: directory) }

@@ -9,9 +9,9 @@ public enum ExpanderEngineError: Error, LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .listenNotReady:
-            return "Input Monitoring not granted. Enable trexpand in System Settings → Input Monitoring."
+            return "Input Monitoring not granted. Enable keypop in System Settings → Input Monitoring."
         case .injectNotReady:
-            return "Post-event access not granted. Enable trexpand in System Settings → Accessibility."
+            return "Post-event access not granted. Enable keypop in System Settings → Accessibility."
         case .tapCreateFailed:
             return "Failed to create keyboard event tap."
         }
@@ -175,7 +175,7 @@ public final class ExpanderEngine {
 
         try installTap()
         startHealthMonitor()
-        fputs("trexpand running|\(state.phrases.count) snippets\n", stderr)
+        fputs("keypop running|\(state.phrases.count) snippets\n", stderr)
     }
 
     public func stop() {
@@ -276,7 +276,7 @@ public final class ExpanderEngine {
         if issues.contains(.tapDisabled) || issues.contains(.listenPermissionLost) {
             reinstallTapFromHealthCheck()
         } else if issues.contains(.staleAxCacheSuspected) {
-            fputs("tap_health_hint|restart trexpand after macOS update or re-sign\n", stderr)
+            fputs("tap_health_hint|restart keypop after macOS update or re-sign\n", stderr)
         }
     }
 

@@ -25,15 +25,15 @@ Kit files are JSON arrays of `{ "name", "keyword", "text" }`. The shape matches 
 ### Export and share
 
 ```sh
-trctl export --output kits/my-kit.snippets.json
-trctl export --prefix ';ac' --output kits/acme-team.snippets.json
+keypop export --output kits/my-kit.snippets.json
+keypop export --prefix ';ac' --output kits/acme-team.snippets.json
 ```
 
 ### Import into Apple Text Replacements
 
 ```sh
-trctl import kits/acme-team.snippets.json --prefix ';ac' --dry-run
-trctl import kits/acme-team.snippets.json --prefix ';ac' --apply --on-conflict skip
+keypop import kits/acme-team.snippets.json --prefix ';ac' --dry-run
+keypop import kits/acme-team.snippets.json --prefix ';ac' --apply --on-conflict skip
 ```
 
 Requires exactly one of `--dry-run` or `--apply`. `import --apply` backs up affected rows under `backups/` first.
@@ -41,18 +41,18 @@ Requires exactly one of `--dry-run` or `--apply`. `import --apply` backs up affe
 ### Mac expander
 
 ```sh
-./scripts/launch-trexpand.sh install   # first time
-./scripts/launch-trexpand.sh restart   # after trctl changes if hints appear
+./scripts/launch-keypop.sh install   # first time
+./scripts/launch-keypop.sh restart   # after keypop CRUD changes if hints appear
 ```
 
-Mutations via `trctl` auto-export to `~/.config/trexpand/snippets.json`; trexpand watches the directory and reloads automatically (no restart needed when the daemon is healthy).
+Mutations via `keypop` auto-export to `~/.config/keypop/snippets.json`; `keypop run` watches the directory and reloads automatically (no restart needed when the daemon is healthy).
 
 ## Limitations
 
 | Feature | Supported |
 |---------|-----------|
 | Plain / multi-line text | Yes |
-| `{clipboard}`, `{date}`, `{cursor}` | **No** — breaks iOS/trexpand parity |
+| `{clipboard}`, `{date}`, `{cursor}` | **No** — breaks iOS/keypop parity |
 | Snippets over ~2,000 characters | Risky on iOS |
 | Rich text | No |
 

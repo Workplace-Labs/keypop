@@ -7,11 +7,11 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
-PROBE="${PROJECT_DIR}/.build/debug/trexpand-probe"
+KEYPOP="${PROJECT_DIR}/.build/debug/keypop"
 RESULTS="${PROJECT_DIR}/docs/spike-results.generated.md"
 
-if [[ ! -x "$PROBE" ]]; then
-  echo "Building trexpand-probe..."
+if [[ ! -x "$KEYPOP" ]]; then
+  echo "Building keypop..."
   swift build --package-path "$PROJECT_DIR" -q
 fi
 
@@ -19,8 +19,8 @@ mkdir -p "${PROJECT_DIR}/docs"
 TS="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 OS_INFO="$(sw_vers | tr '\n' ' ')"
 
-PERMS="$("$PROBE" permissions 2>/dev/null || echo '{"error":"probe failed"}')"
-BRIDGE="$("$PROBE" bridge 2>/dev/null || echo '{"ok":false}')"
+PERMS="$("$KEYPOP" probe permissions 2>/dev/null || echo '{"error":"probe failed"}')"
+BRIDGE="$("$KEYPOP" probe bridge 2>/dev/null || echo '{"ok":false}')"
 
 cat > "$RESULTS" <<EOF
 # Sprint 0 Spike Results
@@ -52,19 +52,19 @@ ${BRIDGE}
 
 | Spike | App | Pass? | Notes |
 |-------|-----|-------|-------|
-| S0.2 clipboard inject | Warp | | Focus field, run: \`trexpand-probe inject --text 'probe'\` |
+| S0.2 clipboard inject | Warp | | Focus field, run: \`keypop probe inject --text 'probe'\` |
 | S0.2 | VS Code | | |
 | S0.2 | Cursor | | |
 | S0.2 | Chrome | | |
 | S0.5 dual-layer | Slack | | Apple + daemon same keyword |
 | S0.7 long prompt | Warp | | \`;pcr\` length |
 | S0.8 clipboard placeholder | Warp | | |
-| S0.10 Poof fallback | n/a | skipped | trexpand shipped |
+| S0.10 Poof fallback | n/a | skipped | keypop shipped |
 
 ## Listen smoke test
 
 \`\`\`sh
-trexpand-probe listen --seconds 5
+keypop probe listen --seconds 5
 # Type keys in TextEdit; expect keydown lines on stderr
 \`\`\`
 

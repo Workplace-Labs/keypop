@@ -1,5 +1,5 @@
 import XCTest
-@testable import TrexpandKit
+@testable import KeypopKit
 
 final class TapHealthMonitorTests: XCTestCase {
     func testTapDisabledOnlyOnLightCheck() {

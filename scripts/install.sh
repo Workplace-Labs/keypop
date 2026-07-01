@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build trctl + trexpand and install to ~/.local/bin (or --prefix <dir>).
+# Build keypop and install to ~/.local/bin (or --prefix <dir>).
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -14,7 +14,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -h|--help)
       echo "Usage: $0 [--prefix <directory>]"
-      echo "  Builds release binaries and copies trctl, trexpand, trexpand-probe to <directory>/."
+      echo "  Builds release keypop binary and installs to <directory>/."
       exit 0
       ;;
     *)
@@ -35,17 +35,15 @@ if [[ "${major}" -lt 14 ]]; then
   exit 1
 fi
 
-echo "Building release binaries..."
+echo "Building release binary..."
 swift build --package-path "$PROJECT_DIR" -c release -q
 
 mkdir -p "$INSTALL_PREFIX"
-for name in trctl trexpand trexpand-probe; do
-  cp "${PROJECT_DIR}/.build/release/${name}" "${INSTALL_PREFIX}/${name}"
-  chmod +x "${INSTALL_PREFIX}/${name}"
-  echo "Installed: ${INSTALL_PREFIX}/${name}"
-done
+cp "${PROJECT_DIR}/.build/release/keypop" "${INSTALL_PREFIX}/keypop"
+chmod +x "${INSTALL_PREFIX}/keypop"
+echo "Installed: ${INSTALL_PREFIX}/keypop"
 
-"${PROJECT_DIR}/scripts/bundle-trexpand-app.sh" "${INSTALL_PREFIX}/trexpand"
+"${PROJECT_DIR}/scripts/bundle-keypop-app.sh" "${INSTALL_PREFIX}/keypop"
 
 case ":${PATH}:" in
   *":${INSTALL_PREFIX}:"*) ;;
@@ -57,21 +55,20 @@ case ":${PATH}:" in
 esac
 
 echo ""
-echo "Running trctl inspect..."
-if ! "${INSTALL_PREFIX}/trctl" inspect >/dev/null; then
-  echo "error: trctl inspect failed" >&2
+echo "Running keypop inspect..."
+if ! "${INSTALL_PREFIX}/keypop" inspect >/dev/null; then
+  echo "error: keypop inspect failed" >&2
   exit 1
 fi
 
 echo ""
-echo "Installing LaunchAgent for trexpand..."
-"${PROJECT_DIR}/scripts/launch-trexpand.sh" install
+echo "Installing LaunchAgent for keypop..."
+"${PROJECT_DIR}/scripts/launch-keypop.sh" install
 
 echo ""
 echo "Next steps:"
-echo "  Grant Input Monitoring + Accessibility to: ${HOME}/.local/Trexpand.app"
-echo "  (Remove the old bare 'trexpand' exec entry if present.)"
+echo "  Grant Input Monitoring + Accessibility to: ${HOME}/.local/KeyPop.app"
 echo "  System Settings → Privacy & Security → click + → Cmd+Shift+G → paste app path"
-echo "  trctl import kits/prompts-core.snippets.json --prefix ';p' --dry-run"
-echo "  ./scripts/launch-trexpand.sh restart   # after TCC grants"
+echo "  keypop import kits/prompts-core.snippets.json --prefix ';p' --dry-run"
+echo "  ./scripts/launch-keypop.sh restart   # after TCC grants"
 echo "  See docs/user-guide.md"

@@ -16,4 +16,4 @@ jobs:
         run: |
           swift build
           swift test
-          .build/debug/trctl inspect
+          .build/debug/keypop inspect
