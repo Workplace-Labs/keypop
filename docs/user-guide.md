@@ -1,8 +1,8 @@
-# Text Replacements User Guide
+# keypop User Guide
 
-Set up Apple Text Replacements with `keypop` and expand them in Warp, editors, and terminals with `keypop run`.
+Get your snippet library running on Mac and iPhone, including Warp, VS Code, and Cursor.
 
-**Prerequisites:** `keypop` installed ([README](../README.md)).
+**Prerequisites:** `keypop` installed — see [README](../README.md) for install steps.
 
 **Related:** [Kits](kits.md) · [Architecture](architecture.md)
 
