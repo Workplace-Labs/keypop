@@ -2,6 +2,11 @@
   {
     "name": "Prompt / Code review",
     "keyword": ";pcr",
-    "text": "Great work on this!  Now, reflect on the changes we made and look for things we can clean up, simplify, refactor, or finish before opening a PR.  Remember that this app is in early development and we can refactor without backwards compatibility.  It is important to follow the latest best practice and avoid workarounds.  Research any latest best practices you are not sure about by using Context7 or Perplexity.  If something is unclear, ask me."
+    "text": "Review this code for correctness, clarity, and maintainability. Suggest concrete improvements. Ask clarifying questions if requirements are ambiguous."
+  },
+  {
+    "name": "Prompt / Summarize",
+    "keyword": ";psum",
+    "text": "Summarize the following in clear bullet points. Lead with the most important takeaway."
   }
 ]

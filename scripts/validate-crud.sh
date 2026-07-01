@@ -2,9 +2,25 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-trctl="${root}/.build/debug/trctl"
 db="${HOME}/Library/KeyboardServices/TextReplacements.db"
 probe=";trctlprobe$(date +%Y%m%d%H%M%S)"
+
+resolve_trctl() {
+  if command -v trctl >/dev/null 2>&1; then
+    command -v trctl
+    return
+  fi
+  local built="${root}/.build/debug/trctl"
+  if [[ -x "$built" ]]; then
+    echo "$built"
+    return
+  fi
+  echo "Building trctl..."
+  swift build --package-path "$root" -q
+  echo "${root}/.build/debug/trctl"
+}
+
+trctl="$(resolve_trctl)"
 
 cleanup() {
   "${trctl}" delete --shortcut "${probe}" >/dev/null 2>&1 || true
@@ -25,7 +41,6 @@ expect_count() {
 }
 
 cd "${root}"
-swift build >/dev/null
 
 "${trctl}" create --shortcut "${probe}" --phrase "TRCTL create validation" >/dev/null
 sleep 2

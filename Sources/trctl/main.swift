@@ -263,6 +263,10 @@ func usage() -> String {
 
 func main() throws {
     let args = Array(CommandLine.arguments.dropFirst())
+    if args.isEmpty || args.first == "--help" || args.first == "-h" || args.first == "help" {
+        print(usage())
+        return
+    }
     guard let command = args.first else {
         throw CLIError.usage(usage())
     }

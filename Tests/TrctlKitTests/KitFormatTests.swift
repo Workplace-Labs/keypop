@@ -23,8 +23,8 @@ final class KitFormatTests: XCTestCase {
         let json = """
         [
           {
-            "shortcut": ";wle",
-            "phrase": "jon@workplacelabs.io"
+            "shortcut": ";ace",
+            "phrase": "user@example.com"
           }
         ]
         """.data(using: .utf8)!
@@ -42,7 +42,7 @@ final class KitFormatTests: XCTestCase {
     }
 
     func testDefaultNameStripsSemicolonPrefix() {
-        XCTAssertEqual(RaycastSnippet.defaultName(for: ";wle"), "Wle")
+        XCTAssertEqual(RaycastSnippet.defaultName(for: ";ace"), "Ace")
         XCTAssertEqual(RaycastSnippet.defaultName(for: "omw"), "Omw")
         XCTAssertEqual(RaycastSnippet.defaultName(for: ";pcr"), "Pcr")
     }

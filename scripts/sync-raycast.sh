@@ -10,17 +10,33 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-BINARY="${PROJECT_DIR}/.build/debug/trctl"
+
+resolve_trctl() {
+  if command -v trctl >/dev/null 2>&1; then
+    command -v trctl
+    return
+  fi
+  local built="${PROJECT_DIR}/.build/release/trctl"
+  if [[ -x "$built" ]]; then
+    echo "$built"
+    return
+  fi
+  built="${PROJECT_DIR}/.build/debug/trctl"
+  if [[ -x "$built" ]]; then
+    echo "$built"
+    return
+  fi
+  echo "Building trctl..."
+  swift build --package-path "$PROJECT_DIR" -q
+  echo "${PROJECT_DIR}/.build/debug/trctl"
+}
+
+TRCTL="$(resolve_trctl)"
 EXPORT="${PROJECT_DIR}/exports/raycast-sync.json"
 DESKTOP="${HOME}/Desktop/raycast-sync.json"
 
-if [[ ! -x "$BINARY" ]]; then
-  echo "Building trctl..."
-  swift build --package-path "$PROJECT_DIR" -q
-fi
-
 mkdir -p "${PROJECT_DIR}/exports"
-"$BINARY" export --output "$EXPORT"
+"$TRCTL" export --output "$EXPORT"
 cp "$EXPORT" "$DESKTOP"
 
 open -R "$DESKTOP"

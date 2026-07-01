@@ -1,6 +1,6 @@
 # Shareable Kits (Raycast JSON)
 
-Kit files under `kits/` use the **Raycast snippet import/export JSON format**. This is the interchange standard for sharing libraries between Raycast, `trctl`, and teammates.
+Kit files use the **Raycast snippet import/export JSON format** — the interchange standard between Raycast, `trctl`, and teammates.
 
 ## File format
 
@@ -9,95 +9,86 @@ A kit is a JSON **array** of objects:
 ```json
 [
   {
-    "name": "WL / Email",
-    "keyword": ";wle",
-    "text": "jon@workplacelabs.io"
+    "name": "Acme / Email",
+    "keyword": ";ace",
+    "text": "team@example.com"
   }
 ]
 ```
 
 | Field | Required | Stored in Apple Text Replacements? |
 |-------|----------|-------------------------------------|
-| `name` | Recommended | No — label for Raycast search and kit docs only |
+| `name` | Recommended | No — label for Raycast search only |
 | `keyword` | Yes | Yes — maps to the macOS **shortcut** |
 | `text` | Yes | Yes — maps to the macOS **phrase** |
 
-Raycast documentation: [Import & Export](https://manual.raycast.com/import-export), [Snippets](https://manual.raycast.com/snippets).
+Raycast docs: [Import & Export](https://manual.raycast.com/import-export), [Snippets](https://manual.raycast.com/snippets).
 
 ## Workflows
 
-### Export from your Mac → share or import into Raycast
+### Export from your Mac
 
 ```sh
-swift build
-.build/debug/trctl export --output kits/my-kit.raycast.json
-.build/debug/trctl export --prefix ';wl' --output kits/wl-team.raycast.json
-
-# Sync all replacements to Raycast after changes:
+trctl export --output kits/my-kit.raycast.json
+trctl export --prefix ';ac' --output kits/acme-team.raycast.json
 ./scripts/sync-raycast.sh
 ```
 
 `sync-raycast.sh` exports everything, copies to `~/Desktop/raycast-sync.json`, and opens Raycast Import Snippets.
 
-### Import a kit into Apple Text Replacements (`trctl`)
+### Import into Apple Text Replacements
 
 ```sh
-.build/debug/trctl import kits/wl-team.raycast.json --prefix ';wl' --dry-run
-.build/debug/trctl import kits/wl-team.raycast.json --prefix ';wl' --apply --on-conflict skip
+trctl import kits/acme-team.raycast.json --prefix ';ac' --dry-run
+trctl import kits/acme-team.raycast.json --prefix ';ac' --apply --on-conflict skip
 ```
 
-`trctl import` accepts **Raycast format only** (`name`, `keyword`, `text`).
+`trctl import` accepts **Raycast format only** (`name`, `keyword`, `text`). Requires exactly one of `--dry-run` or `--apply`.
 
-### Import from Raycast → edit → apply with `trctl`
+### Import from Raycast
 
-1. In Raycast: **Export Snippets** → save JSON
-2. Optionally edit `name` / `keyword` / `text` in the file
+1. Raycast → **Export Snippets** → save JSON
+2. Edit `name` / `keyword` / `text` if needed
 3. `trctl import <file> --dry-run` then `--apply`
 
 ## Limitations
 
-### Apple Text Replacements (`trctl` target)
+### Apple Text Replacements
 
 | Feature | Raycast kit | Apple via `trctl` |
 |---------|-------------|-------------------|
 | Plain text | Yes | Yes |
-| `name` field | Yes | Ignored (not stored in KeyboardServices) |
+| `name` field | Yes | Ignored |
 | Multi-line text | Yes | Yes |
-| `{clipboard}`, `{date}`, `{cursor}` | Yes | **No** — imported as literal text unless you strip them |
-| Snippets over ~2,000 characters | Yes | **Risky on iOS** — Apple Text Replacement limit |
-| Tags | Raycast UI only | **Not in JSON** — use `name` prefixes like `WL / Email` |
+| `{clipboard}`, `{date}`, `{cursor}` | Yes | **No** — literal text unless stripped |
+| Snippets over ~2,000 characters | Yes | **Risky on iOS** |
+| Tags | Raycast UI only | Use `name` prefixes like `Acme / Email` |
 
 ### Raycast-specific
 
-- **Team shared snippets:** Raycast may not sync `keyword` across org members — each person sets their own keyword after import. Kits should document the intended `keyword` values.
-- **Dual expanders:** Keep the same keywords in both Apple Text Replacements (iOS sync) and Raycast (Warp, VS Code, etc.). Set Raycast **Override System Snippets ON** — with it OFF, Raycast skips conflicting keywords and Warp gets nothing because Apple replacements don't work there. With it ON, Raycast expands on Mac even when Apple has the same keyword.
-- **App compatibility:** macOS Text Replacements hook into standard system text fields. They work in most **native** apps (Notes, Mail, Messages, Safari) and in some **Electron** apps (e.g. **Slack**). They often **do not expand** in:
-  - **Terminals:** Warp, Terminal.app, iTerm2
-  - **Code editors:** VS Code, Cursor
-  - **Inconsistent elsewhere:** Chrome and other Chromium browsers (many web inputs), JetBrains in-editor, Obsidian, Notion, Discord — depends on whether the app enables macOS text substitution
-  For terminals and editors, run `./scripts/sync-raycast.sh` and set Raycast **Override System Snippets ON**.
+- **Override System Snippets ON** when keywords overlap with Apple replacements — otherwise Raycast defers to macOS and Warp gets nothing.
+- Terminals and editors: use `./scripts/sync-raycast.sh` after `trctl` changes.
 
-### Prompt kits (`;p*` shortcuts)
+### Prompt kits (`;p*`)
 
-- Use `;pcr`, `;psum`, etc. (`;p` + task code). See `docs/user-guide.md`.
-- Long prompts: fine in Raycast; keep Apple-synced prompts under the iOS size limit or mark Raycast-only in `name`.
+See [user-guide.md](user-guide.md). Keep Apple-synced prompts short; use Raycast for long prompts.
 
-## Kit inventory
+## Kit in this repo
 
 | File | Prefix | Purpose |
 |------|--------|---------|
-| `kits/wl-team.raycast.json` | `;wl` | Workplace Labs team contact snippets |
-| `kits/prompts-core.raycast.json` | `;p` | Core AI prompts (e.g. `;pcr` code review) |
+| `kits/prompts-core.raycast.json` | `;p` | Starter AI prompt templates |
+
+Team contact kits (e.g. `kits/acme-team.raycast.json`) should stay local or gitignored — they contain PII.
 
 ## Naming kits
 
-Use descriptive `name` values — they are the human label when browsing in Raycast:
+Use descriptive `name` values for Raycast search:
 
 ```
-WL / Email
-WL / Website
+Acme / Email
+Acme / Website
 Prompt / Code review
-Prompt / Summarize
 ```
 
-Keep `keyword` values aligned with `docs/user-guide.md` (letter-only, no dots).
+Keep `keyword` values letter-only after `;` — see [user-guide.md](user-guide.md).

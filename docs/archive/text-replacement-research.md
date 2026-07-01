@@ -330,7 +330,7 @@ rules:
 groups:
   contact: [email, phone, address]
   links: [url, social, booking]
-  work: [workplacelabs, bluelabellabs]
+  work: [acme, exampleco]
 ```
 
 ### 10.3 Research-backed library hygiene for current system
