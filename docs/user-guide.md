@@ -23,7 +23,7 @@ keypop list
 keypop import kits/prompts-core.snippets.json --prefix ';p' --dry-run
 ```
 
-3. **Apply** (writes a backup under `backups/` first)
+3. **Apply** (writes a backup under `private/backups/` first)
 
 ```sh
 keypop import kits/prompts-core.snippets.json --prefix ';p' --apply --on-conflict skip

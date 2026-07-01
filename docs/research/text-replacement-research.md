@@ -6,7 +6,7 @@ Research method: web synthesis (Perplexity not available in workspace; sources c
 
 This document summarizes current best practices, use cases, and conventions for text replacement / text expansion tools, with emphasis on macOS and developer-oriented tooling like `keypop`.
 
-**For onboarding and team conventions, see [`user-guide.md`](user-guide.md).**
+**For onboarding and team conventions, see [`user-guide.md`](../user-guide.md).**
 
 ---
 
@@ -369,8 +369,8 @@ groups:
 
 ### Internal
 
-- `docs/architecture.md` — KeyboardServices / Core Data storage model
-- `docs/recommendation.md` — private API viability on macOS 26.5.1
+- [`docs/architecture.md`](../architecture.md) — KeyboardServices / Core Data storage model
+- [`recommendation.md`](recommendation.md) — private API viability on macOS 26.5.1
 
 ---
 

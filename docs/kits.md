@@ -36,7 +36,7 @@ keypop import kits/acme-team.snippets.json --prefix ';ac' --dry-run
 keypop import kits/acme-team.snippets.json --prefix ';ac' --apply --on-conflict skip
 ```
 
-Requires exactly one of `--dry-run` or `--apply`. `import --apply` backs up affected rows under `backups/` first.
+Requires exactly one of `--dry-run` or `--apply`. `import --apply` backs up affected rows under `private/backups/` first.
 
 ### Mac expander
 

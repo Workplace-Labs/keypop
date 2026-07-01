@@ -263,7 +263,7 @@ enum CRUDCommands {
 
     static func backupsDirectory() -> URL {
         URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-            .appendingPathComponent("backups", isDirectory: true)
+            .appendingPathComponent("private/backups", isDirectory: true)
     }
 
     static func timestamp() -> String {

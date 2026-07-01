@@ -4,7 +4,7 @@ Research date: 2026-06-30
 Target OS: macOS 26.x (Tahoe), build 25F80 observed on dev machine  
 Goal: Replace Raycast Snippets runtime dependency with a local-first expander
 
-Related: [`architecture.md`](architecture.md), [`kits.md`](kits.md), [`sprint-plan-expander-runtime.md`](sprint-plan-expander-runtime.md)
+Related: [`architecture.md`](../architecture.md), [`kits.md`](../kits.md)
 
 ---
 
@@ -239,7 +239,7 @@ every N seconds:
 
 ## 8. App Compatibility Matrix (test targets)
 
-Priority apps from [`kits.md`](kits.md):
+Priority apps from [`kits.md`](../kits.md):
 
 | App | Apple native | Raycast today | Spike priority |
 |-----|--------------|---------------|----------------|
@@ -277,5 +277,5 @@ Priority apps from [`kits.md`](kits.md):
 
 ### Internal
 
-- [`docs/architecture.md`](architecture.md) — KeyboardServices / Apple layer
-- [`docs/kits.md`](kits.md) — Raycast JSON interchange, app gaps
+- [`docs/architecture.md`](../architecture.md) — KeyboardServices / Apple layer
+- [`docs/kits.md`](../kits.md) — Raycast JSON interchange, app gaps

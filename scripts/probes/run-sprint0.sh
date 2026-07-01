@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sprint 0 spike runner — writes docs/spike-results.generated.md
+# Sprint 0 spike runner — writes docs/research/spike-results.generated.md
 #
 # Usage: ./scripts/probes/run-sprint0.sh
 
@@ -8,14 +8,14 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 KEYPOP="${PROJECT_DIR}/.build/debug/keypop"
-RESULTS="${PROJECT_DIR}/docs/spike-results.generated.md"
+RESULTS="${PROJECT_DIR}/docs/research/spike-results.generated.md"
 
 if [[ ! -x "$KEYPOP" ]]; then
   echo "Building keypop..."
   swift build --package-path "$PROJECT_DIR" -q
 fi
 
-mkdir -p "${PROJECT_DIR}/docs"
+mkdir -p "${PROJECT_DIR}/docs/research"
 TS="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 OS_INFO="$(sw_vers | tr '\n' ' ')"
 
@@ -79,7 +79,6 @@ keypop probe listen --seconds 5
 EOF
 
 echo "Wrote ${RESULTS}"
-echo "Manual matrix lives in docs/spike-results.md (not overwritten)."
 echo ""
 echo "Permissions:"
 echo "$PERMS" | jq '{readyForListen, readyForInject, staleAxCacheSuspected}' 2>/dev/null || echo "$PERMS"

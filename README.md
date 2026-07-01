@@ -103,4 +103,5 @@ cd keypop
 - [User Guide](docs/user-guide.md)
 - [Kits](docs/kits.md)
 - [Architecture](docs/architecture.md) (contributors)
-- [Spike results](docs/spike-results.md)
+
+Research (spikes, expander landscape, private API notes): [`docs/research/`](docs/research/)

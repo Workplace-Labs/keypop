@@ -45,5 +45,6 @@ scripts/validate-crud.sh
 ## Safety
 
 - Never write directly to `~/Library/KeyboardServices/TextReplacements.db`
-- `import --apply` must write backups under `backups/` first
+- `import --apply` must write backups under `private/backups/` first
+- `private/` is gitignored — personal user guide, snippet mirrors, import backups
 - Not Mac App Store safe

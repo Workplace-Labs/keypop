@@ -94,11 +94,66 @@ keypop import kits/prompts-core.snippets.json --prefix ';p' --apply --on-conflic
 - Never write directly to `~/Library/KeyboardServices/TextReplacements.db`
 - Always `--dry-run` before `import --apply`
 
+## Personal workspace (`private/`)
+
+Gitignored folder for machine-local content. Scaffold it when the user wants a personal or team user guide, private kits, or a snippet mirror for diffing.
+
+```
+private/
+  user-guide.md     # personal/team conventions and onboarding notes
+  snippets.json     # optional mirror (see below)
+  backups/          # import --apply backups (auto-created)
+  kits/             # optional personal team kits (*.snippets.json)
+```
+
+**Where snippets actually live**
+
+| Path | Role |
+|------|------|
+| `~/.config/keypop/snippets.json` | **Canonical runtime file** — daemon reads this; `keypop` mutations auto-export here |
+| `private/snippets.json` | Optional workspace mirror for review, diff, or agent context |
+
+Refresh the mirror:
+
+```sh
+mkdir -p private
+keypop export --output private/snippets.json
+keypop export --prefix ';ac' --output private/kits/acme-team.snippets.json
+```
+
+### Create a personal user guide
+
+When the user asks to set up personal docs or team conventions:
+
+1. `mkdir -p private`
+2. If `private/user-guide.md` is missing, create it from the outline below (adapt to their org/prefixes).
+3. Point them at `docs/user-guide.md` for public setup steps; keep team-specific rules in `private/`.
+
+**Suggested outline for `private/user-guide.md`:**
+
+```markdown
+# Text Replacements: Personal User Guide
+
+> Gitignored at private/user-guide.md. Public guide: docs/user-guide.md.
+
+## Who this is for
+## Shortcut conventions (prefix zones, naming patterns)
+## Org/team patterns (e.g. ;ac, ;wl)
+## Prompt shortcuts (;p…)
+## Kits we maintain (paths under private/kits/ or kits/)
+## Import/export workflows
+## App compatibility notes (which apps need keypop run)
+## Troubleshooting (team-specific)
+```
+
+Fill in their actual prefix zones, example shortcuts, and kit paths. Do not commit `private/` — it stays local.
+
 ## Key paths
 
 | Path | Purpose |
 |------|---------|
-| `~/.config/keypop/snippets.json` | runtime snippets |
+| `~/.config/keypop/snippets.json` | live runtime snippets (installed app / daemon) |
 | `~/.local/KeyPop.app` | app bundle (TCC target) |
-| `kits/` | shareable snippet kits |
-| `backups/` | pre-apply import backups |
+| `kits/` | shareable snippet kits (repo) |
+| `private/` | gitignored personal guide, mirrors, backups, private kits |
+| `private/backups/` | pre-apply import backups |
