@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Multiple Choice Me",
+    "keyword": ";wlmc",
+    "text": "Give me multiple choice for simple choices, open-ended for nuance."
+  },
+  {
+    "name": "Premortem",
+    "keyword": ";wlpremortem",
+    "text": "Premortem this. Assume this approach failed. What were the most likely reasons?"
+  },
+  {
+    "name": "Weigh the Options",
+    "keyword": ";wloptions",
+    "text": "Help me consider the options. Lay out 3 possible approaches, the tradeoffs, and when each one makes sense."
+  },
+  {
+    "name": "Decision Summary",
+    "keyword": ";wldecision",
+    "text": "Turn this into a decision summary for [audience]. Include: decision needed, recommended option, rationale, risks, owner, deadline, and open questions. Keep it under 250 words. Flag any missing information instead of guessing."
+  }
+]

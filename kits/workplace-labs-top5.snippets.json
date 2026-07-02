@@ -1,0 +1,27 @@
+[
+  {
+    "name": "Persona SuperPrompt",
+    "keyword": ";wlpersona",
+    "text": "I am working on [goal or problem]. What persona should you assume to help me? Assume this persona and start by asking me questions."
+  },
+  {
+    "name": "Interview Me First",
+    "keyword": ";wlask",
+    "text": "Ask me the 3 questions that would most improve your answer."
+  },
+  {
+    "name": "Multiple Choice Me",
+    "keyword": ";wlmc",
+    "text": "Give me multiple choice for simple choices, open-ended for nuance."
+  },
+  {
+    "name": "Red Team It",
+    "keyword": ";wlredteam",
+    "text": "Red-team this. What would a skeptical stakeholder, SME, or reviewer push back on?"
+  },
+  {
+    "name": "Bottle That Prompt",
+    "keyword": ";wlextract",
+    "text": "Turn what worked in this conversation into a reusable prompt I can paste next time. Match the structure of my other saved prompts."
+  }
+]

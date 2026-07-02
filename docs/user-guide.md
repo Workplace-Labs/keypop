@@ -101,6 +101,12 @@ Example team: **Lab Rats** (`;lab`)
 
 Starter kit: `kits/prompts-core.snippets.json`. Keep prompts as **plain static text** (no `{clipboard}`) so iOS and Mac stay in sync.
 
+### Branded prompt kits: `;wl` (Workplace Labs)
+
+Curated prompt collections get their own zone so they stay easy to browse and import as a set. Workplace Labs prompts live under `;wl` + task (`;wlpersona`, `;wlredteam`, `;wlexec`).
+
+Kit: `kits/workplace-labs.snippets.json`. Because `;wl` is a **prompt** zone, do not also use it for org contacts — a contact like `;wle` would collide with `;wlexec`. Give teams their own org zone instead (e.g. Lab Rats uses `;lab`).
+
 ---
 
 ## Team sharing

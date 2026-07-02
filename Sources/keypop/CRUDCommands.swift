@@ -152,6 +152,20 @@ enum CRUDCommands {
         return try KitFormat.parseReplacements(from: data)
     }
 
+    static func readImportEntries(_ path: String) throws -> [SnippetEntry] {
+        let data: Data
+        if path == "-" {
+            data = FileHandle.standardInput.readDataToEndOfFile()
+        } else {
+            data = try Data(contentsOf: URL(fileURLWithPath: path))
+        }
+        do {
+            return try JSONDecoder().decode([SnippetEntry].self, from: data)
+        } catch {
+            throw KitFormatError.invalidRoot
+        }
+    }
+
     static func writeKitFile(_ replacements: [Replacement], to path: String) throws {
         try KitFormat.encode(replacements).write(to: URL(fileURLWithPath: path), options: .atomic)
     }
@@ -344,11 +358,44 @@ enum CRUDCommands {
             }
             let prefix = optionalValue(after: "--prefix", in: commandArgs)
 
-            let incoming = try readImportFile(path)
-            try validateUniqueShortcuts(incoming)
+            let entries = try readImportEntries(path)
+            for (index, entry) in entries.enumerated() {
+                guard !entry.keyword.isEmpty else {
+                    throw KitFormatError.missingKeyword(index)
+                }
+                guard !entry.text.isEmpty else {
+                    throw KitFormatError.missingText(index)
+                }
+            }
+            var incoming = entries.map { $0.replacement }
+
             if let prefix {
                 try validatePrefix(incoming, prefix: prefix)
+                
+                if !entries.isEmpty {
+                    let listShortcut = "\(prefix)-list"
+                    
+                    // Filter out any pre-existing list shortcut to avoid recursion or duplicate entries
+                    incoming = incoming.filter { $0.shortcut != listShortcut }
+                    let filteredEntries = entries.filter { $0.keyword != listShortcut }
+                    
+                    let items = filteredEntries.map { entry in
+                        let shortName: String
+                        if let lastPart = entry.name.split(separator: "/").last {
+                            shortName = lastPart.trimmingCharacters(in: .whitespacesAndNewlines)
+                        } else {
+                            shortName = entry.name
+                        }
+                        return "\(entry.keyword) (\(shortName))"
+                    }.joined(separator: ", ")
+                    
+                    let listPhrase = items
+                    let listReplacement = Replacement(shortcut: listShortcut, phrase: listPhrase)
+                    incoming.append(listReplacement)
+                }
             }
+
+            try validateUniqueShortcuts(incoming)
             let existing = try filterReplacements(replacements(), prefix: prefix)
             let plan = buildImportPlan(incoming: incoming, existing: existing, conflictMode: conflictMode)
             if !plan.conflicts.isEmpty {

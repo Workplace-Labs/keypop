@@ -1,0 +1,32 @@
+[
+  {
+    "name": "HR / Mentor Me",
+    "keyword": ";wlmentor",
+    "text": "Mentor me through this. Explain what a strong version requires, then coach me one step at a time."
+  },
+  {
+    "name": "HR / Ship-Ready Check",
+    "keyword": ";wlreview",
+    "text": "Review this draft for readiness before it goes to [audience]. Check for: clarity, missing context, unsupported claims, tone, stakeholder risk, actionability, and decision readiness. Return: 1) Ready / not ready, 2) Top 5 fixes, 3) Questions the audience may ask, 4) Suggested edits. Draft: [paste draft]"
+  },
+  {
+    "name": "HR / Trust but Verify",
+    "keyword": ";wlverify",
+    "text": "Double-check this. Did the source documents or URLs actually contain that information?"
+  },
+  {
+    "name": "HR / Retention Strategy",
+    "keyword": ";wlretention",
+    "text": "I am a [your role] at a [size]-person [industry] company experiencing [specific challenge, e.g. high voluntary turnover in engineering]. Create a retention strategy focused on [2-3 priorities]. Include specific tactics for the next 90 days."
+  },
+  {
+    "name": "HR / Focus Group Summary",
+    "keyword": ";wlfocus",
+    "text": "I am attaching notes from a focus group about [topic]. Summarize the key themes in 4-5 bullet points. For each theme, include one illustrative quote if available. Audience: [senior leader who did not attend]. Flag anything that looks like a systemic risk versus a one-off concern. Keep it under 300 words."
+  },
+  {
+    "name": "HR / AI Rollout Risk",
+    "keyword": ";wlairisks",
+    "text": "I am evaluating whether to pilot [AI tool or workflow] at [organization type]. What are the most significant risks? Focus on bias, legal exposure, and employee trust. For each risk: describe it briefly, note which organizations are most exposed, and suggest one practical mitigation."
+  }
+]

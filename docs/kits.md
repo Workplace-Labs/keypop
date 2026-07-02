@@ -7,8 +7,8 @@ Kit files are JSON arrays of `{ "name", "keyword", "text" }`. The shape matches 
 ```json
 [
   {
-    "name": "Acme / Email",
-    "keyword": ";ace",
+    "name": "Lab Rats / Email",
+    "keyword": ";labe",
     "text": "team@example.com"
   }
 ]
@@ -26,14 +26,14 @@ Kit files are JSON arrays of `{ "name", "keyword", "text" }`. The shape matches 
 
 ```sh
 keypop export --output kits/my-kit.snippets.json
-keypop export --prefix ';ac' --output kits/acme-team.snippets.json
+keypop export --prefix ';lab' --output kits/lab-rats.snippets.json
 ```
 
 ### Import into Apple Text Replacements
 
 ```sh
-keypop import kits/acme-team.snippets.json --prefix ';ac' --dry-run
-keypop import kits/acme-team.snippets.json --prefix ';ac' --apply --on-conflict skip
+keypop import kits/lab-rats.snippets.json --prefix ';lab' --dry-run
+keypop import kits/lab-rats.snippets.json --prefix ';lab' --apply --on-conflict skip
 ```
 
 Requires exactly one of `--dry-run` or `--apply`. `import --apply` backs up affected rows under `private/backups/` first.
@@ -61,14 +61,16 @@ Mutations via `keypop` auto-export to `~/.config/keypop/snippets.json`; `keypop 
 | File | Prefix | Purpose |
 |------|--------|---------|
 | `kits/prompts-core.snippets.json` | `;p` | Starter AI prompt templates |
+| `kits/workplace-labs.snippets.json` | `;wl` | Workplace Labs prompt patterns (persona, red-team, decision summary, etc.) |
+| `kits/lab-rats.snippets.json` | `;lab` | Lab Rats team kit — playful adoption prompts with WL personality |
 
-Team contact kits (e.g. `kits/acme-team.snippets.json`) should stay local or gitignored.
+Team contact kits with PII should stay local or gitignored.
 
 ## Naming
 
 Use descriptive `name` values for browsing kits in git:
 
 ```
-Acme / Email
+Lab Rats / Email
 Prompt / Code review
 ```
