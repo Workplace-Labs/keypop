@@ -27,8 +27,8 @@ Already using Cursor, Claude, or another AI tool to craft your prompts? Install 
 That's it. Ask things like:
 
 - "Add a snippet `;pfix` that says 'Explain what is wrong and suggest a fix:'"
-- "Import the prompts kit with prefix `;p`"
 - "Show me all my prompt shortcuts"
+- "Create a kit from my current prompts that start with ';lab'"
 
 ## How it works
 
@@ -68,9 +68,12 @@ Installs the `keypop` CLI to `~/.local/bin`, bundles `~/.local/KeyPop.app`, and 
 ## Quick start
 
 ```sh
-keypop inspect                                                          # verify setup
-keypop import kits/prompts-core.snippets.json --prefix ';p' --dry-run  # preview the starter kit
-keypop import kits/prompts-core.snippets.json --prefix ';p' --apply    # import it
+keypop inspect
+keypop import kits/prompts-core.snippets.json --apply
+
+# Optional: add the Workplace Labs prompt kit or, for something fun, the Lab Rats kit
+keypop import kits/workplace-labs-top5.snippets.json --apply
+keypop import kits/lab-rats.snippets.json --apply
 
 # Grant TCC permissions to ~/.local/KeyPop.app, then:
 ./scripts/launch-keypop.sh restart
@@ -95,10 +98,27 @@ keypop list --prefix ';p'
 keypop export --prefix ';lab' --output kits/lab-rats.snippets.json
 ```
 
+## Available kits
+
+| Kit | Prefix | What's in it |
+|-----|--------|-------------|
+| `kits/prompts-core.snippets.json` | `;p` | Starter kit — proofread, summarize, contact info, email snippets |
+| `kits/workplace-labs-top5.snippets.json` | `;wl` | The 5 AI prompts you'll reach for most |
+| `kits/workplace-labs-thinking.snippets.json` | `;wl` | Premortems, tradeoffs, decision summaries |
+| `kits/workplace-labs-hr.snippets.json` | `;wl` | HR prompts — retention, focus groups, AI rollout risk |
+| `kits/workplace-labs-dev.snippets.json` | `;wl` | Developer prompts — pre-PR, TDD, debug, best practice |
+| `kits/lab-rats.snippets.json` | `;lab` | Workplace Labs adoption prompts, with personality |
+
+Import any kit:
+
+```sh
+keypop import kits/workplace-labs-top5.snippets.json --apply
+```
+
 ## Documentation
 
 - [User Guide](docs/user-guide.md)
 - [Kits](docs/kits.md)
 - [Architecture](docs/architecture.md) (contributors)
 
-Research (spikes, expander landscape, private API notes): [`docs/research/`](docs/research/)
+Research: [`docs/research/`](docs/research/)

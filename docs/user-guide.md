@@ -17,19 +17,15 @@ keypop inspect
 keypop list
 ```
 
-2. **Preview the starter prompt kit**
+2. **Import the starter kit**
 
 ```sh
-keypop import kits/prompts-core.snippets.json --prefix ';p' --dry-run
+keypop import kits/prompts-core.snippets.json --apply
 ```
 
-3. **Apply** (writes a backup under `private/backups/` first)
+Swap the placeholder values for your own. See [Available kits](../README.md#available-kits) in the README for what else ships with KeyPop.
 
-```sh
-keypop import kits/prompts-core.snippets.json --prefix ';p' --apply --on-conflict skip
-```
-
-4. **Start the Mac expander**
+3. **Start the Mac expander**
 
 ```sh
 ./scripts/install.sh                  # or: ./scripts/launch-keypop.sh install
@@ -69,6 +65,8 @@ Use the **same keywords** in both layers. `keypop` mutations auto-export to `~/.
 
 ## Conventions
 
+KeyPop works for anything you type repeatedly — AI prompts, email signatures, addresses, canned replies, code snippets. Use any keyword that makes sense to you. The conventions below are suggestions, not requirements.
+
 ### Start shortcuts with `;`
 
 ```
@@ -80,26 +78,17 @@ Risky: github    phone         ← can collide with real words
 
 Use `;labe` not `;lab.email` — dots are tedious on iOS.
 
-### Org zones: `;` + org + role
+### A suggested prefix scheme (optional)
 
-Example team: **Lab Rats** (`;lab`)
+If you want a browsable, collision-free library, grouping by zone helps:
 
-| Role | Letter | Example |
-|------|--------|---------|
-| email | `e` | `;labe` |
-| website | `w` | `;labw` |
-| address | `a` | `;laba` |
-| phone | `p` | `;labp` |
+| Zone | Prefix | Example use |
+|------|--------|-------------|
+| AI prompts | `;p` | `;pproof`, `;pcr`, `;psum` |
+| Branded prompt kits | `;wl`, `;lab`, etc. | `;wlpersona`, `;labobs` |
+| Org contacts | `;` + org code + role letter | `;labe` (email), `;labw` (website) |
 
-### AI prompts: `;p` + task
-
-| Code | Task |
-|------|------|
-| `cr` | code review |
-| `sum` | summarize |
-| `fx` | debug / fix |
-
-Starter kit: `kits/prompts-core.snippets.json`. Keep prompts as **plain static text** (no `{clipboard}`) so iOS and Mac stay in sync.
+Starter prompt kit: `kits/prompts-core.snippets.json`. Keep text as **plain static** (no `{clipboard}`) so iOS and Mac stay in sync.
 
 ### Branded prompt kits: `;wl` (Workplace Labs)
 

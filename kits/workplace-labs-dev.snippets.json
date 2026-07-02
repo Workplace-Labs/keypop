@@ -1,0 +1,33 @@
+[
+  {
+    "name": "Code Review",
+    "keyword": ";wlcr",
+    "text": "Great work on this! Now, reflect on the changes we made and look for things we can clean up, simplify, refactor, or finish before opening a PR. Remember that this app is in early development and we can refactor without backwards compatibility. It is important to follow the latest best practice and avoid workarounds. Research any latest best practices you are not sure about by using Context7 or Perplexity. If something is unclear, ask me."
+  },
+  {
+    "name": "TDD",
+    "keyword": ";wltdd",
+    "text": "Add a failing test, run it, verify it fails, fix the issue, verify the test passes."
+  },
+  {
+    "name": "Explain",
+    "keyword": ";wlexplain",
+    "text": "Explain what this code does, why it exists, and flag anything that looks risky or worth simplifying."
+  },
+  {
+    "name": "Debug",
+    "keyword": ";wldebug",
+    "text": "take a breath, break this down, think outside the box, and find the root issue.  Avoid workarounds."
+  },
+  {
+    "name": "Start Feature",
+    "keyword": ";wlfeat",
+    "text": "Please research the latest best practices for [topic] and teach me about the parts that are relevant to the task. Task: [task]. Then create a plan and help me understand it."
+  },
+  {
+  "name": "Security Review",
+  "keyword": ";wlsecurity",
+  "text": "Please do a security review of this code and respond with a prioritized list of concerns. Security Best Practices: Validate and Sanitize All Inputs: Never trust user input. Always validate and sanitize data on the server side to prevent injection attacks. Implement Strong Authentication and Authorization: Ensure that authentication and authorization mechanisms are robust and enforced on the backend. Do not rely solely on frontend controls. Use Parameterized Queries: When interacting with databases, use parameterized queries or prepared statements to prevent SQL injection attacks. Enforce HTTPS: Ensure all data transmitted between the client and server is encrypted by enforcing HTTPS. Protect Sensitive Data: Encrypt sensitive data both at rest and in transit to safeguard confidentiality. Manage Dependencies Securely: Regularly update and audit third-party libraries to mitigate risks from known vulnerabilities. Implement Security Logging and Monitoring: Establish logging mechanisms to detect and respond to security incidents promptly. Avoid Inline Scripts: Separate JavaScript from HTML by using external scripts and implement Content Security Policies (CSPs) to define trusted sources for scripts and resources. Implement Content Security Policy (CSP) : Define a CSP to restrict the sources of executable scripts and mitigate the risk of cross-site scripting (XSS) attacks. Prevent Cross-Site Request Forgery (CSRF) : Implement anti-CSRF tokens in your forms and verify them on the server side to prevent unauthorized commands transmitted from a user that the website trusts."
+  }
+]
+

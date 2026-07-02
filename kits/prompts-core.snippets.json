@@ -1,10 +1,5 @@
 [
   {
-    "name": "Prompt / Code review",
-    "keyword": ";pcr",
-    "text": "Great work on this!  Now, reflect on the changes we made and look for things we can clean up, simplify, refactor, or finish before opening a PR.  Remember that this app is in early development and we can refactor without backwards compatibility.  It is important to follow the latest best practice and avoid workarounds.  Research any latest best practices you are not sure about by using Context7 or Perplexity.  If something is unclear, ask me."
-  },
-  {
     "name": "Prompt / Proofread",
     "keyword": ";pproof",
     "text": "Proofread the following text for spelling and grammar, improving clarity and tone:"
@@ -13,5 +8,41 @@
     "name": "Prompt / Summarize",
     "keyword": ";psum",
     "text": "Summarize the following in clear bullet points. Lead with the most important takeaway."
+  },
+  {
+    "name": "Contact / Email",
+    "keyword": ";myemail",
+    "text": "you@example.com"
+  },
+  {
+    "name": "Contact / Phone",
+    "keyword": ";myphone",
+    "text": "+1 (555) 000-0000"
+  },
+  {
+    "name": "Contact / LinkedIn",
+    "keyword": ";mylinkedin",
+    "text": "https://linkedin.com/in/yourname"
+  },
+  {
+    "name": "Email / Signature",
+    "keyword": ";mysig",
+    "text": "Best,\nYour Name\nTitle · Company\nyou@example.com"
+  },
+  {
+    "name": "Email / Follow Up",
+    "keyword": ";followup",
+    "text": "Just following up on my previous message — happy to answer any questions or find a time to connect."
+  },
+  {
+    "name": "Email / OOO",
+    "keyword": ";ooo",
+    "text": "I am out of the office and will return on [date]. For urgent matters, please contact [name] at [email]."
+  },
+  {
+    "name": "Address / Work",
+    "keyword": ";myaddr",
+    "text": "123 Main Street, Suite 100\nCity, State 00000"
   }
+
 ]
