@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Lab Rats / Lab Maze Nudge",
+    "keyword": ";labobs",
+    "text": "Help me guide our human test subjects through the change maze. Treat them like very sophisticated lab rats. Help me design 3 lightweight behavioral nudges to encourage [habit] without them running into the plexiglass walls or sensing a corporate trap."
+  },
+  {
+    "name": "Lab Rats / Squeak Translator",
+    "keyword": ";labresist",
+    "text": "The test subjects are making high-pitched squeaking noises (resistance feedback) about our new tools: [insert]. Translate this noise into their actual underlying human needs (e.g., cage fatigue, fear of the door closing) and draft a thoughtful response free of corporate AI hype."
+  },
+  {
+    "name": "Lab Rats / PwC Hamster Wheel",
+    "keyword": ";labpwc",
+    "text": "PwC says 80% of AI value comes from redesigning work, not the tech. We bought a shiny new automated wheel, but the hamsters are still running in circles on the floor. Audit this process: [insert]. How do we redesign the actual wheel so they use it?"
+  },
+  {
+    "name": "Lab Rats / Chief Cheese Officer",
+    "keyword": ";labmentor",
+    "text": "Act as the Chief Cheese Officer of the AI for HR Mastermind. Critique this rollout plan: [insert]. Be honest: will the colony actually find the cheese on Monday morning, or is this just an elaborate setup destined to collect digital dust?"
+  },
+  {
+    "name": "Lab Rats / Monday Morning Cheese",
+    "keyword": ";labmonday",
+    "text": "Cut the academic squeaking. Translate this high-level strategy/concept into a simple, concrete action plan for Monday morning. Where exactly do we drop the cheese so the team actually eats it?"
+  },
+  {
+    "name": "Lab Rats / Out-Foxing the Cat",
+    "keyword": ";labvent",
+    "text": "I need to pitch a new AI process to our most skeptical stakeholder (the giant, sleeping cat in the room). Give me a lightweight, psych-backed strategy to win them over and get their buy-in—without rustling any papers or using a single slide deck."
+  }
+]

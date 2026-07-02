@@ -72,22 +72,24 @@ Use the **same keywords** in both layers. `keypop` mutations auto-export to `~/.
 ### Start shortcuts with `;`
 
 ```
-Good:  ;github   ;phone   ;ace
+Good:  ;github   ;phone   ;labe
 Risky: github    phone         ← can collide with real words
 ```
 
 ### Letters only after `;` (no dots)
 
-Use `;ace` not `;ac.email` — dots are tedious on iOS.
+Use `;labe` not `;lab.email` — dots are tedious on iOS.
 
 ### Org zones: `;` + org + role
 
+Example team: **Lab Rats** (`;lab`)
+
 | Role | Letter | Example |
 |------|--------|---------|
-| email | `e` | `;ace` |
-| website | `w` | `;acw` |
-| address | `a` | `;aca` |
-| phone | `p` | `;acp` |
+| email | `e` | `;labe` |
+| website | `w` | `;labw` |
+| address | `a` | `;laba` |
+| phone | `p` | `;labp` |
 
 ### AI prompts: `;p` + task
 
@@ -106,14 +108,14 @@ Starter kit: `kits/prompts-core.snippets.json`. Keep prompts as **plain static t
 Export prefix-scoped kits:
 
 ```sh
-keypop export --prefix ';ac' --output kits/acme-team.snippets.json
+keypop export --prefix ';lab' --output kits/lab-rats.snippets.json
 ```
 
 Onboarding:
 
 ```sh
-keypop import kits/acme-team.snippets.json --prefix ';ac' --dry-run
-keypop import kits/acme-team.snippets.json --prefix ';ac' --apply --on-conflict skip
+keypop import kits/lab-rats.snippets.json --prefix ';lab' --dry-run
+keypop import kits/lab-rats.snippets.json --prefix ';lab' --apply --on-conflict skip
 ./scripts/launch-keypop.sh install
 ```
 
@@ -177,10 +179,10 @@ After each mutation, stderr should include `keypop_sync|…`. If you see `keypop
 ### Prefix zones
 
 ```sh
-keypop list --prefix ';wl'    # Workplace Labs contacts
+keypop list --prefix ';lab'    # Lab Rats contacts
 keypop list --prefix ';p'     # prompt kit
 
-keypop export --prefix ';wl' --output kits/wl-team.snippets.json
+keypop export --prefix ';lab' --output kits/lab-rats.snippets.json
 keypop export --output kits/full.snippets.json
 ```
 
@@ -188,13 +190,13 @@ keypop export --output kits/full.snippets.json
 
 ```sh
 # Preview only
-keypop import kits/acme-team.snippets.json --prefix ';ac' --dry-run
+keypop import kits/lab-rats.snippets.json --prefix ';lab' --dry-run
 
 # Skip rows that already exist
-keypop import kits/acme-team.snippets.json --prefix ';ac' --apply --on-conflict skip
+keypop import kits/lab-rats.snippets.json --prefix ';lab' --apply --on-conflict skip
 
 # Overwrite conflicts
-keypop import kits/acme-team.snippets.json --prefix ';ac' --apply --on-conflict overwrite
+keypop import kits/lab-rats.snippets.json --prefix ';lab' --apply --on-conflict overwrite
 ```
 
 ### Daemon commands
@@ -223,12 +225,12 @@ keypop run --snippets ~/.config/keypop/snippets.json
 | Command | Example |
 |---------|---------|
 | List all | `keypop list` |
-| List prefix | `keypop list --prefix ';wl'` |
+| List prefix | `keypop list --prefix ';lab'` |
 | Get one | `keypop get --shortcut ';pcr'` |
-| Create | `keypop create --shortcut ';wle' --phrase 'you@example.com'` |
+| Create | `keypop create --shortcut ';labe' --phrase 'you@example.com'` |
 | Update | `keypop update --shortcut ';pcr' --phrase 'New prompt text…'` |
 | Delete | `keypop delete --shortcut ';test'` |
-| Export kit | `keypop export --prefix ';wl' --output kits/wl-team.snippets.json` |
+| Export kit | `keypop export --prefix ';lab' --output kits/lab-rats.snippets.json` |
 | Import preview | `keypop import kits/prompts-core.snippets.json --prefix ';p' --dry-run` |
 | Import apply | `keypop import kits/prompts-core.snippets.json --prefix ';p' --apply --on-conflict skip` |
 | Install daemon | `./scripts/launch-keypop.sh install` |

@@ -1,29 +1,42 @@
 # keypop
 
-Imagine your favorite prompts available everywhere — Mac and iPhone — one short keystroke away.
+Your favorite prompts, one keystroke away — on Mac and iPhone.
 
-You type `;psuper` and it expands to:
+You type `;pproof` and it expands to:
 
-> I am a `{{ your role }}` and I am working on `{{ goal or problem }}`. What persona should you assume to help me? Assume this persona and start by asking me questions.
+> Proofread the following text for spelling and grammar, improving clarity and tone:
 
-Works in Notes, Mail, Slack. Works on your iPhone. **No extra app required.**
+Works in Notes, Mail, Slack. Works on your iPhone. No extra app required.
 
-Here's the thing: this is already built into macOS and iOS. System Settings → Keyboard → Text Replacements. Apple has had it for years. It syncs over iCloud to every device on your account automatically.
+Here's the thing — this is already built into macOS and iOS. System Settings → Keyboard → Text Replacements. Apple has had it for years and it syncs over iCloud automatically.
 
-The problem is two-fold:
+Three problems though:
 
-1. **The built-in UI is painful.** One entry at a time, no search, no bulk import. Managing a library of prompts in System Settings is miserable.
-2. **It doesn't work everywhere.** Warp, VS Code, Cursor, and most terminals have custom input handling that bypasses native text replacement.
+1. **The UI is painful.** One entry at a time, no search, no bulk import. Managing a library of prompts in System Settings is miserable.
+2. **It doesn't work everywhere.** Warp, VS Code, Cursor, and most terminals bypass Apple's text replacement entirely.
+3. **No way to share.** Apple gives you no way to import or export kits to share with teammates.
 
-keypop fixes both.
+KeyPop fixes all three.
 
-## The solution
+## Use it with your AI assistant
 
-**Problem 1 — management:** `keypop` is a CLI that reads and writes Apple Text Replacements directly. Import a whole prompt kit in one command. CRUD individual snippets. Export to share with teammates. Everything stays in sync with iOS automatically.
+Already using Cursor, Claude, or another AI tool to craft your prompts? Install the KeyPop agent skill and just ask your assistant to add, update, or import snippets for you.
 
-**Problem 2 — app coverage:** `keypop run` is a background daemon that listens for your shortcuts and injects expansions at the OS level, reaching Warp, VS Code, Cursor, and any terminal that Apple's layer misses.
+**Cursor:** Copy `.agents/skills/keypop/` into your project's `.agents/skills/` folder. Your agent picks it up automatically.
 
-Same shortcuts. Same library. Works everywhere.
+That's it. Ask things like:
+
+- "Add a snippet `;pfix` that says 'Explain what is wrong and suggest a fix:'"
+- "Import the prompts kit with prefix `;p`"
+- "Show me all my prompt shortcuts"
+
+## How it works
+
+**`keypop` (CLI / agent skill)** manages your Apple Text Replacements library — import a kit, CRUD individual shortcuts, export to share. Everything syncs to iOS via iCloud automatically.
+
+**`keypop run`** is a background daemon that catches the apps Apple misses — Warp, VS Code, Cursor, and terminals.
+
+**Kits** are plain JSON files you can version, share, and import in one command.
 
 ```
 kits/*.snippets.json  ──keypop import──►  Apple Text Replacements (iOS + native apps)
@@ -33,18 +46,12 @@ kits/*.snippets.json  ──keypop import──►  Apple Text Replacements (iOS
                                                    keypop run (Warp, editors, terminals)
 ```
 
-| Command | Role |
-|---------|------|
-| `keypop` (CRUD) | Manage your library — syncs to iOS via iCloud |
-| `keypop run` | Mac daemon — covers Warp, VS Code, Cursor, terminals |
-| `keypop probe` | Diagnostics for TCC permissions and injection |
-
 ## Requirements
 
 - macOS 14+ (validated on macOS 26, Apple Silicon)
 - Swift toolchain
 - Uses private `KeyboardServices` APIs — not Mac App Store safe
-- `keypop run` requires **Input Monitoring** + **Accessibility** granted to **`~/.local/KeyPop.app`** (not Terminal)
+- `keypop run` requires **Input Monitoring** + **Accessibility** permissions
 
 ## Install
 
@@ -54,7 +61,9 @@ cd keypop
 ./scripts/install.sh
 ```
 
-Installs `keypop` to `~/.local/bin`, bundles `~/.local/KeyPop.app`, and registers a LaunchAgent.
+Installs the `keypop` CLI to `~/.local/bin`, bundles `~/.local/KeyPop.app`, and registers a LaunchAgent.
+
+**Security note:** KeyPop requires Accessibility and Input Monitoring permissions — sensitive grants that can read everything you type. This is true of any text expander. Before granting permissions, it is good practice to have your AI assistant review the source for anything unexpected. Ask it: "Review this repo for security issues before I grant Accessibility and Input Monitoring permissions."
 
 ## Quick start
 
@@ -67,13 +76,13 @@ keypop import kits/prompts-core.snippets.json --prefix ';p' --apply    # import 
 ./scripts/launch-keypop.sh restart
 ```
 
-Type `;pcr` in Warp to verify. See [User Guide](docs/user-guide.md) for full setup and permissions.
+Type `;pproof` in Warp to verify. See [User Guide](docs/user-guide.md) for full setup and permissions.
 
 ## CLI examples
 
 ```sh
 # Add a snippet
-keypop create --shortcut ';wle' --phrase 'you@example.com'
+keypop create --shortcut ';labe' --phrase 'you@example.com'
 
 # Update a prompt in place
 keypop update --shortcut ';pcr' --phrase 'Review this diff for bugs and suggest fixes.'
@@ -83,7 +92,7 @@ keypop list
 keypop list --prefix ';p'
 
 # Export a shareable team kit
-keypop export --prefix ';wl' --output kits/wl-team.snippets.json
+keypop export --prefix ';lab' --output kits/lab-rats.snippets.json
 ```
 
 ## Documentation
