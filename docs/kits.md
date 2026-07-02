@@ -61,7 +61,9 @@ Mutations via `keypop` auto-export to `~/.config/keypop/snippets.json`; `keypop 
 | File | Prefix | Purpose |
 |------|--------|---------|
 | `kits/prompts-core.snippets.json` | `;p` | Starter AI prompt templates |
-| `kits/workplace-labs.snippets.json` | `;wl` | Workplace Labs prompt patterns (persona, red-team, decision summary, etc.) |
+| `kits/workplace-labs-top5.snippets.json` | `;wl` | Daily-driver Workplace Labs prompts |
+| `kits/workplace-labs-thinking.snippets.json` | `;wl` | Premortems, tradeoffs, decision summaries |
+| `kits/workplace-labs-hr.snippets.json` | `;wl` | HR and People leader prompts |
 | `kits/lab-rats.snippets.json` | `;lab` | Lab Rats team kit — playful adoption prompts with WL personality |
 
 Team contact kits with PII should stay local or gitignored.
