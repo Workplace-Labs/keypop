@@ -5,10 +5,11 @@ description: >-
   Use when the user wants to save or update prompt shortcuts, import or export
   prompt kits (.snippets.json), share prompts with a team, expand prompts in
   Cursor, Warp, VS Code, or terminals, or manage general text replacements
-  (email signatures, contact info, boilerplate). Also covers the keypop daemon
-  and expansion troubleshooting.
+  (email signatures, contact info, boilerplate). After a fresh install, guide
+  the user through conversational post-install onboarding. Also covers the
+  keypop daemon and expansion troubleshooting.
 metadata:
-  version: "1.1"
+  version: "1.2"
   project: keypop
   repo: https://github.com/Workplace-Labs/keypop
 ---
@@ -46,6 +47,117 @@ If `keypop` is not installed yet:
 Either path builds, signs, installs the LaunchAgent, and walks through the Input Monitoring + Accessibility TCC grants.
 
 If `keypop` is already installed, use the daemon commands below rather than re-running an installer.
+
+**Just finished installing?** Start [Post-install onboarding](#post-install-onboarding) — do not dump the whole guide at once.
+
+## Post-install onboarding
+
+**When to run:** install just completed (`install.sh`, `keypop-install.sh`), user says they're new, or they ask how to get started.
+
+**How to guide (agents):**
+- **One step at a time.** Present a single step, then stop and wait for the user to try it (or say they're stuck / ready for the next one).
+- **Conversational and warm.** Short sentences. Celebrate small wins. A little personality is good — you're a friendly lab mate, not a manual.
+- **Adapt.** Skip steps they've already done. If expansion fails at step 3, troubleshoot before advancing (daemon status, TCC, log lines — see Daemon section).
+- **Five steps, then graduate.** Walk through all five below. On completion, deliver the graduation message and invite them to ask for more tips anytime.
+- **Deeper reference:** `docs/user-guide.md` for conventions, team sharing, and troubleshooting.
+
+### Step 1 — Make sure the lab is open
+
+**Goal:** confirm the CLI and daemon are alive before we load prompts.
+
+**Say something like:**
+> KeyPop's installed — nice. First thing: let's make sure the background expander is actually running. Can you run this and tell me what you get?
+>
+> `./scripts/launch-keypop.sh status`
+>
+> You want to see **running** and a path to `~/Applications/KeyPop.app`. If it's not running, `./scripts/launch-keypop.sh restart` usually fixes it.
+
+**Optional if curious:** `keypop inspect` — confirms the CLI can talk to Apple's Text Replacements layer.
+
+**Done when:** status shows running (or user restarted and it does).
+
+---
+
+### Step 2 — Load your first prompt kit
+
+**Goal:** import the starter prompts so there's something to expand.
+
+**Say something like:**
+> Time to stock the shelves. This imports a handful of useful prompts (`;pproof`, `;psum`, plus contact boilerplate like `;myemail`):
+>
+> `keypop import kits/prompts-core.snippets.json --apply --on-conflict skip`
+>
+> Run that, then `keypop list --prefix ';p'` — you should see your new `;p` prompts. (Contact shortcuts like `;myemail` land too; we'll personalize those in a minute.)
+
+**Done when:** import succeeds and `keypop list --prefix ';p'` shows shortcuts.
+
+---
+
+### Step 3 — The magic moment
+
+**Goal:** feel expansion work in a real app.
+
+**Say something like:**
+> This is the fun part. Open **Cursor**, **Warp**, or **VS Code** — somewhere you actually chat with AI — click into a text field, and type:
+>
+> `;pproof`
+>
+> …then keep typing or hit space. The full proofread prompt should appear like you pasted it. Did it work?
+
+**If no:** check `./scripts/launch-keypop.sh status`, then `tail -5 ~/.local/log/keypop.log` for `listen_ready|tap_installed`. Missing? TCC grants to `~/Applications/KeyPop.app` — both Input Monitoring and Accessibility. `./scripts/fix-keypop-tcc.sh` is the nuclear option.
+
+**Bonus:** try the same shortcut in **Notes** — that's Apple's layer (syncs to iPhone via iCloud). Warp/Cursor need the KeyPop daemon; Notes doesn't.
+
+**Done when:** `;pproof` expands in at least one app.
+
+---
+
+### Step 4 — Make one shortcut yours
+
+**Goal:** personalize a placeholder or save a prompt they'll actually use.
+
+**Say something like:**
+> You've got the kit — now make it yours. Pick one:
+>
+> **A)** Swap the placeholder email: `keypop update --shortcut ';myemail' --phrase 'you@yourdomain.com'`
+>
+> **B)** Save a prompt you reach for often: `keypop create --shortcut ';pmy' --phrase 'Your go-to prompt here…'`
+>
+> Which one sounds useful? Run it, then try typing your shortcut in an app.
+
+**Tip:** shortcuts start with `;` so you don't accidentally fire them mid-word (`;pproof` good, `proof` risky).
+
+**Done when:** they've updated or created one shortcut and confirmed it expands.
+
+---
+
+### Step 5 — Meet the team prompts (or bottle your first)
+
+**Goal:** show kits scale beyond the starter set — import WL favorites or save from the current chat.
+
+**Say something like:**
+> Last step — the good stuff. Workplace Labs ships a "top 5" prompt kit. Import it:
+>
+> `keypop import kits/workplace-labs-top5.snippets.json --apply --on-conflict skip`
+>
+> Then try `;wlask` in a chat — it tells the AI to interview you before answering. Or `;wlredteam` to stress-test an idea.
+>
+> **Or**, if something in *this* conversation already worked well: let's bottle it. Give me the prompt text and a shortcut name (like `;pstandup`) and I'll help you save it — that's the `;wlx` energy without the middleman.
+
+**Done when:** they've imported the WL kit and tried one `;wl` shortcut, **or** saved a custom prompt from the session.
+
+---
+
+### Graduation
+
+**Say something like (after all 5 steps):**
+> You did it — five for five. You imported kits, fired a prompt in Cursor/Warp, made a shortcut yours, and leveled up with team prompts. That's the whole loop: **manage, use, share.**
+>
+> Your prompts also sync to iPhone/iPad through Apple Text Replacements (System Settings → Keyboard → Text Replacements) — same keywords, no extra app on iOS.
+>
+> Whenever you want more — prefix zones, sharing kits with teammates, troubleshooting, or bottling prompts from a great chat — just ask. Happy expanding. 🧪
+
+**Do not** re-run onboarding unless they ask to start over.
 
 ## How it works
 
