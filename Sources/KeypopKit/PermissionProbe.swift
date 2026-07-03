@@ -17,6 +17,10 @@ public struct PermissionSnapshot: Codable, Equatable, Sendable {
 }
 
 public enum PermissionProbe {
+    private static func appBundlePath() -> String {
+        Bundle.main.bundlePath
+    }
+
     public static func snapshot() -> PermissionSnapshot {
         let axTrusted = AXIsProcessTrusted()
         let listenPreflight = CGPreflightListenEventAccess()
@@ -65,7 +69,7 @@ public enum PermissionProbe {
 
         if !snapshot.readyForListen {
             fputs(
-                "permission_hint|Grant Input Monitoring to ~/.local/KeyPop.app (remove old entry, re-add via Cmd+Shift+G)\n",
+                "permission_hint|Grant Input Monitoring to \(appBundlePath()) (remove old entry, re-add via Cmd+Shift+G)\n",
                 stream
             )
         }
@@ -89,7 +93,7 @@ public enum PermissionProbe {
         }
         if !snapshot.postEventPreflight {
             fputs(
-                "permission_hint|Grant Accessibility to ~/.local/KeyPop.app for text injection\n",
+                "permission_hint|Grant Accessibility to \(appBundlePath()) for text injection\n",
                 stream
             )
         }

@@ -33,10 +33,10 @@ Swap the placeholder values for your own. See [Available kits](../README.md#avai
 
 ### Permissions
 
-Grant **Input Monitoring** and **Accessibility** to **`~/.local/KeyPop.app`** (the app bundle, not Terminal and not the bare `keypop` exec):
+Grant **Input Monitoring** and **Accessibility** to **`~/Applications/KeyPop.app`** (user Applications folder — not Terminal and not the bare `keypop` exec):
 
 1. System Settings → Privacy & Security → Input Monitoring (and Accessibility)
-2. Click **+** → **Cmd+Shift+G** → paste: `~/.local/KeyPop.app`
+2. Click **+** → **Cmd+Shift+G** → paste: `~/Applications/KeyPop.app`
 3. Remove any old **keypop** bare-exec entry with a black icon if present
 
 Then restart:
@@ -44,12 +44,12 @@ Then restart:
 ```sh
 ./scripts/launch-keypop.sh restart
 ./scripts/launch-keypop.sh status     # expect: running + KeyPop.app path
-~/.local/KeyPop.app/Contents/MacOS/keypop probe permissions   # liveTapCreates=true
+~/Applications/KeyPop.app/Contents/MacOS/keypop probe permissions   # liveTapCreates=true
 ```
 
 Type `;pcr` in Warp to verify.
 
-**Stable signing (recommended):** run `./scripts/create-keypop-signing-cert.sh` once before `install.sh`. Rebuilds then keep the same signature so TCC grants survive. Without it, ad-hoc signing orphans grants on every rebuild — use `./scripts/fix-keypop-tcc.sh --rebundle` to reset.
+**Stable signing (recommended):** run `./scripts/create-keypop-signing-cert.sh` once before `install.sh`. Rebuilds then keep the same signature so TCC grants survive. Without it, ad-hoc signing orphans grants on every rebuild — run `./scripts/fix-keypop-tcc.sh` to reset.
 
 Replacements also sync to iPhone/iPad via iCloud (System Settings → Keyboard → Text Replacements).
 
@@ -97,7 +97,7 @@ Starter prompt kit: `kits/prompts-core.snippets.json`. Keep text as **plain stat
 
 Curated prompt collections get their own zone so they stay easy to browse and import as a set. Workplace Labs prompts live under `;wl` + task (`;wlpersona`, `;wlredteam`, `;wlexec`).
 
-Kit: `kits/workplace-labs.snippets.json`. Because `;wl` is a **prompt** zone, do not also use it for org contacts — a contact like `;wle` would collide with `;wlexec`. Give teams their own org zone instead (e.g. Lab Rats uses `;lab`).
+Kit: `kits/workplace-labs.snippets.json`. Because `;wl` is a **prompt** zone, do not also use it for org contacts. Keep shortcuts in the same zone non-overlapping so one prompt cannot shadow another. For example, `;wle` used to collide with `;wlx` before we split the names up. Give teams their own org zone instead (e.g. Lab Rats uses `;lab`).
 
 ---
 
@@ -135,10 +135,12 @@ Keep PII kits out of public repos (gitignored).
 **No expansion in Warp / VS Code / Cursor**
 
 ```sh
-./scripts/launch-keypop.sh status   # is keypop run loaded?
+./scripts/launch-keypop.sh status   # running? correct binary path?
 ./scripts/sync-keypop.sh            # re-export snippets
-tail -f ~/.local/log/keypop.log     # expansion / tap health logs
+tail -f ~/.local/log/keypop.log     # listen_ready|tap_installed, expanded|…
 ```
+
+Look for `listen_ready|tap_installed` in the log. If missing, Input Monitoring is not granted to the daemon.
 
 **No expansion on iPhone** — check System Settings → Keyboard → Text Replacements; wait for iCloud sync.
 
@@ -146,7 +148,9 @@ tail -f ~/.local/log/keypop.log     # expansion / tap health logs
 
 **Daemon stopped after sleep** — check log for `tap_health` lines; restart: `./scripts/launch-keypop.sh restart`
 
-**TCC not working after rebuild** — run `./scripts/fix-keypop-tcc.sh --rebundle`, re-grant both permissions to `~/.local/KeyPop.app`, remove stale bare `keypop` exec entries, then `./scripts/launch-keypop.sh restart`. Probe: `keypop probe permissions` must show `readyForListen: true`.
+**TCC not working after rebuild** — run `./scripts/fix-keypop-tcc.sh`, re-grant both permissions to `~/Applications/KeyPop.app`, remove stale entries (black `keypop` exec, legacy `~/.local/KeyPop.app`), then `./scripts/launch-keypop.sh restart`. Confirm log shows `listen_ready|tap_installed`.
+
+**Probe from Terminal shows listen=false but Accessibility=true** — normal. Terminal and the LaunchAgent daemon have different TCC contexts. Trust the daemon log, not `keypop probe permissions` run from a shell, for Input Monitoring.
 
 **Probe says listen preflight true but tap fails** — stale TCC grant from an old signature. `./scripts/fix-keypop-tcc.sh` resets and re-prompts.
 

@@ -38,9 +38,20 @@ KeyPop is a practical tool with a little personality. When writing prose (README
 
 Mutations auto-export to `~/.config/keypop/snippets.json` unless `--no-sync`. Running `keypop run` reloads from that file via directory watch (~200ms debounce).
 
-Scripts: `install.sh`, `bundle-keypop-app.sh`, `launch-keypop.sh`, `sync-keypop.sh`, `probes/run-sprint0.sh`
+Scripts: `install.sh`, `bundle-keypop-app.sh`, `launch-keypop.sh`, `sync-keypop.sh`, `fix-keypop-tcc.sh`, `generate-app-icon.sh`, `keypop-paths.sh`
 
-**TCC:** LaunchAgent runs `~/.local/KeyPop.app/Contents/MacOS/keypop run`. Grant **Input Monitoring** + **Accessibility** to **`~/.local/KeyPop.app`**, not Terminal. Re-grant after `install.sh` rebuilds the bundle. Sign with `./scripts/create-keypop-signing-cert.sh` (`KeyPop Dev` self-signed cert — not client Apple Dev accounts).
+**Install layout:** CLI → `~/.local/bin/keypop`. App bundle → `~/Applications/KeyPop.app`. Override app path: `KEYPOP_APP=... ./scripts/install.sh`.
+
+**TCC:** LaunchAgent runs `~/Applications/KeyPop.app/Contents/MacOS/keypop run`. Grant **Input Monitoring** + **Accessibility** to **`~/Applications/KeyPop.app`**, not Terminal or Cursor. Both panes need the `.app` bundle (use **+** → **Cmd+Shift+G**). Sign with `./scripts/create-keypop-signing-cert.sh` once (`KeyPop Dev` self-signed cert — not client Apple Dev accounts). Re-grant after rebuilds that change the signature.
+
+**TCC troubleshooting (agents):**
+- `./scripts/fix-keypop-tcc.sh` — full rebuild, reset TCC, open System Settings. Use when grants go stale or after moving the app bundle.
+- Trust the **daemon log** over `keypop probe permissions` from Terminal for Input Monitoring — Terminal context can show `listen=false` while the LaunchAgent daemon has a working tap.
+- Log lines: `listen_ready|tap_installed` (tap OK), `expanded|keyword|…` (match fired), `tap_reinstall_failed|…` (re-grant TCC + restart).
+- Kill zombie daemons: `pkill -f "keypop run --snippets"` then `./scripts/launch-keypop.sh restart`. Stale processes from legacy `~/.local/KeyPop.app` block expansion even when new grants look correct.
+- Remove old TCC entries (black `keypop` exec, legacy `~/.local/KeyPop.app`, accidental Terminal/Cursor grants) before re-adding `~/Applications/KeyPop.app`.
+
+**Icon:** Source SVG `assets/icons/keypop-icon-orbit-tilt.svg` → `./scripts/generate-app-icon.sh` → `assets/AppIcon.icns` (bundled on install).
 
 `keypop` prints `keypop_hint|` on stderr when sync succeeds but the daemon is not running.
 

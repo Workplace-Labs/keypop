@@ -81,19 +81,27 @@ keypop import kits/prompts-core.snippets.json --prefix ';p' --apply --on-conflic
 ./scripts/launch-keypop.sh status
 ./scripts/launch-keypop.sh restart
 ./scripts/install.sh
+./scripts/fix-keypop-tcc.sh          # rebuild + reset TCC + open System Settings
 ```
 
-**TCC:** Grant Input Monitoring + Accessibility to `~/.local/KeyPop.app`.
+**Install layout:** CLI at `~/.local/bin/keypop`, app bundle at `~/Applications/KeyPop.app`.
+
+**TCC:** Grant Input Monitoring + Accessibility to `~/Applications/KeyPop.app` (the `.app` bundle — not Terminal, not the bare `keypop` binary). Use **+** → **Cmd+Shift+G** in each pane.
 
 **Signing:** `./scripts/create-keypop-signing-cert.sh` once, then `install.sh` signs with `KeyPop Dev` so TCC survives rebuilds.
 
-**Troubleshooting Warp / no expansion:**
+**Troubleshooting expansion:**
 ```sh
 ./scripts/launch-keypop.sh status
-~/.local/KeyPop.app/Contents/MacOS/keypop probe permissions   # readyForListen must be true
-./scripts/fix-keypop-tcc.sh --rebundle   # after rebuild if grants went stale
-tail -f ~/.local/log/keypop.log          # expanded| lines confirm matches
+tail -f ~/.local/log/keypop.log          # listen_ready|tap_installed, expanded|…
+./scripts/fix-keypop-tcc.sh              # when grants go stale after rebuild
 ```
+
+**Tips for agents:**
+- Trust the **daemon log** over `keypop probe permissions` from Terminal for Input Monitoring — shell context often shows `listen=false` while the LaunchAgent tap works.
+- `listen_ready|tap_installed` = tap OK. `expanded|keyword|…` = match fired. `tap_reinstall_failed|…` = re-grant TCC + restart.
+- Stale daemons from legacy `~/.local/KeyPop.app` block expansion — `launch-keypop.sh restart` kills them; check `status` for warnings.
+- After `./scripts/install.sh`, re-grant TCC if the signature changed. Remove old entries (black exec `keypop`, legacy path) before re-adding the app.
 
 **stderr signals:**
 - `keypop_sync|<path>|<count>` — export succeeded
@@ -163,7 +171,7 @@ Fill in their actual prefix zones, example shortcuts, and kit paths. Do not comm
 | Path | Purpose |
 |------|---------|
 | `~/.config/keypop/snippets.json` | live runtime snippets (installed app / daemon) |
-| `~/.local/KeyPop.app` | app bundle (TCC target) |
+| `~/Applications/KeyPop.app` | app bundle (TCC target) |
 | `kits/` | shareable snippet kits (repo) |
 | `private/` | gitignored personal guide, mirrors, backups, private kits |
 | `private/backups/` | pre-apply import backups |

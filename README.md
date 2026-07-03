@@ -61,7 +61,7 @@ cd keypop
 ./scripts/install.sh
 ```
 
-Installs the `keypop` CLI to `~/.local/bin`, bundles `~/.local/KeyPop.app`, and registers a LaunchAgent.
+Installs the `keypop` CLI to `~/.local/bin`, bundles `~/Applications/KeyPop.app`, and registers a LaunchAgent.
 
 **Security note:** KeyPop requires Accessibility and Input Monitoring permissions — sensitive grants that can read everything you type. This is true of any text expander. Before granting permissions, it is good practice to have your AI assistant review the source for anything unexpected. Ask it: "Review this repo for security issues before I grant Accessibility and Input Monitoring permissions."
 
@@ -79,7 +79,7 @@ keypop import kits/lab-rats.snippets.json --apply
 ./scripts/create-keypop-signing-cert.sh
 ./scripts/install.sh
 
-# Grant TCC permissions to ~/.local/KeyPop.app, then:
+# Grant TCC permissions to ~/Applications/KeyPop.app, then:
 ./scripts/launch-keypop.sh restart
 ```
 

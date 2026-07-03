@@ -218,7 +218,7 @@ enum CRUDCommands {
         guard !daemonProcessIsRunning() else { return }
         let home = FileManager.default.homeDirectoryForCurrentUser.path
         fputs("keypop_hint|daemon not running; run: ./scripts/launch-keypop.sh restart\n", stderr)
-        fputs("keypop_hint|grant Input Monitoring + Accessibility to \(home)/.local/KeyPop.app\n", stderr)
+        fputs("keypop_hint|grant Input Monitoring + Accessibility to \(home)/Applications/KeyPop.app\n", stderr)
     }
 
     static func validateUniqueShortcuts(_ rows: [Replacement]) throws {
@@ -234,6 +234,21 @@ enum CRUDCommands {
         }
         if !duplicates.isEmpty {
             throw CLIError.usage("Import contains duplicate shortcuts: \(duplicates.sorted().joined(separator: ", "))")
+        }
+    }
+
+    static func validateNoPrefixCollision(_ shortcut: String, against keywords: [String], context: String) throws {
+        let collisions = KeywordMatcher.collisions(for: shortcut, among: keywords)
+        guard !collisions.isEmpty else {
+            return
+        }
+        let details = collisions.map { $0.collidesWith }.joined(separator: ", ")
+        throw CLIError.usage("\(context) shortcut \(shortcut) collides with: \(details)")
+    }
+
+    static func validateNoPrefixCollisions(_ rows: [Replacement], against keywords: [String], context: String) throws {
+        for row in rows {
+            try validateNoPrefixCollision(row.shortcut, against: keywords, context: context)
         }
     }
 
@@ -320,18 +335,25 @@ enum CRUDCommands {
         case "create":
             let shortcut = try value(after: "--shortcut", in: commandArgs)
             let phrase = try value(after: "--phrase", in: commandArgs)
-            if try replacements().contains(where: { $0.shortcut == shortcut }) {
+            let current = try replacements()
+            if current.contains(where: { $0.shortcut == shortcut }) {
                 throw CLIError.runtime("Replacement already exists for shortcut \(shortcut)")
             }
+            try validateNoPrefixCollision(shortcut, against: current.map(\.shortcut), context: "Create")
             try createReplacement(shortcut: shortcut, phrase: phrase)
             syncIfEnabled(commandArgs: commandArgs)
             try printJSON(["created": shortcut])
         case "update":
             let shortcut = try value(after: "--shortcut", in: commandArgs)
             let phrase = try value(after: "--phrase", in: commandArgs)
-            if try !replacements().contains(where: { $0.shortcut == shortcut }) {
+            let current = try replacements()
+            guard current.contains(where: { $0.shortcut == shortcut }) else {
                 throw CLIError.runtime("No replacement found for shortcut \(shortcut)")
             }
+            let updated = current.map { row in
+                row.shortcut == shortcut ? Replacement(shortcut: shortcut, phrase: phrase) : row
+            }
+            try validateNoPrefixCollision(shortcut, against: updated.map(\.shortcut), context: "Update")
             try updateReplacement(shortcut: shortcut, phrase: phrase)
             syncIfEnabled(commandArgs: commandArgs)
             try printJSON(["updated": shortcut])
@@ -396,7 +418,10 @@ enum CRUDCommands {
             }
 
             try validateUniqueShortcuts(incoming)
-            let existing = try filterReplacements(replacements(), prefix: prefix)
+            let current = try replacements()
+            try validateNoPrefixCollisions(incoming, against: current.map(\.shortcut), context: "Import")
+            try validateNoPrefixCollisions(incoming, against: incoming.map(\.shortcut), context: "Import")
+            let existing = filterReplacements(current, prefix: prefix)
             let plan = buildImportPlan(incoming: incoming, existing: existing, conflictMode: conflictMode)
             if !plan.conflicts.isEmpty {
                 try printJSON(plan)

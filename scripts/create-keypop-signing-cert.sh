@@ -6,13 +6,19 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=keypop-paths.sh
+source "${SCRIPT_DIR}/keypop-paths.sh"
+
 CERT_NAME="KeyPop Dev"
 KEYCHAIN="${HOME}/Library/Keychains/login.keychain-db"
 
 if security find-certificate -c "${CERT_NAME}" -a 2>/dev/null | grep -q "keychain:"; then
   echo "Certificate already exists: ${CERT_NAME}"
-  codesign -dv --verbose=2 "${HOME}/.local/KeyPop.app" 2>&1 | grep "Authority=${CERT_NAME}" && \
-    echo "KeyPop.app is signed with ${CERT_NAME}" || true
+  if [[ -d "$KEYPOP_APP" ]]; then
+    codesign -dv --verbose=2 "$KEYPOP_APP" 2>&1 | grep "Authority=${CERT_NAME}" && \
+      echo "KeyPop.app is signed with ${CERT_NAME}" || true
+  fi
   exit 0
 fi
 

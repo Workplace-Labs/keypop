@@ -21,7 +21,7 @@
   },
   {
     "name": "Bottle That Prompt",
-    "keyword": ";wlextract",
+    "keyword": ";wlx",
     "text": "Turn what worked in this conversation into a reusable prompt I can paste next time. Match the structure of my other saved prompts."
   }
 ]

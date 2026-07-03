@@ -3,6 +3,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=keypop-paths.sh
+source "${SCRIPT_DIR}/keypop-paths.sh"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 INSTALL_PREFIX="${HOME}/.local/bin"
 
@@ -45,6 +47,17 @@ echo "Installed: ${INSTALL_PREFIX}/keypop"
 
 "${PROJECT_DIR}/scripts/bundle-keypop-app.sh" "${INSTALL_PREFIX}/keypop"
 
+if [[ ! -f "${PROJECT_DIR}/assets/AppIcon.icns" ]]; then
+  echo "Generating AppIcon.icns..."
+  "${PROJECT_DIR}/scripts/generate-app-icon.sh"
+fi
+
+if [[ -d "${KEYPOP_APP_LEGACY}" && "${KEYPOP_APP}" != "${KEYPOP_APP_LEGACY}" ]]; then
+  echo ""
+  echo "App moved to ${KEYPOP_APP}. Re-grant Input Monitoring + Accessibility there."
+  echo "Remove any stale TCC entry for ${KEYPOP_APP_LEGACY}."
+fi
+
 case ":${PATH}:" in
   *":${INSTALL_PREFIX}:"*) ;;
   *)
@@ -68,7 +81,7 @@ echo "Installing LaunchAgent for keypop..."
 echo ""
 echo "Next steps:"
 echo "  One-time: ./scripts/create-keypop-signing-cert.sh   # stable TCC across rebuilds"
-echo "  Grant Input Monitoring + Accessibility to: ${HOME}/.local/KeyPop.app"
+echo "  Grant Input Monitoring + Accessibility to: ${KEYPOP_APP}"
 echo "  System Settings → Privacy & Security → click + → Cmd+Shift+G → paste app path"
 echo "  keypop import kits/prompts-core.snippets.json --prefix ';p' --dry-run"
 echo "  ./scripts/launch-keypop.sh restart   # after TCC grants"

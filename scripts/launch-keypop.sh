@@ -2,16 +2,18 @@
 # Manage keypop via a LaunchAgent so it survives terminal/session exit.
 #
 # Usage:
-#   ./scripts/launch-keypop.sh [start|stop|restart|status|install|uninstall]
+#   ./scripts/launch-keypop.sh [start|stop|restart|status|install|uninstall|uninstall-clean]
 #
 # Override binary: KEYPOP_BIN=/path/to/keypop
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=keypop-paths.sh
+source "${SCRIPT_DIR}/keypop-paths.sh"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-SNIPPETS="${HOME}/.config/keypop/snippets.json"
-LOG_FILE="${HOME}/.local/log/keypop.log"
+SNIPPETS="${KEYPOP_SNIPPETS}"
+LOG_FILE="${KEYPOP_LOG}"
 
 LABEL="io.keypop.daemon"
 PLIST_DIR="${HOME}/Library/LaunchAgents"
@@ -24,12 +26,17 @@ resolve_keypop_binary() {
     echo "${KEYPOP_BIN}"
     return 0
   fi
-  local app_binary="${HOME}/.local/KeyPop.app/Contents/MacOS/keypop"
+  local app_binary="${KEYPOP_APP}/Contents/MacOS/keypop"
   if [[ -x "$app_binary" ]]; then
     echo "$app_binary"
     return 0
   fi
-  local installed="${HOME}/.local/bin/keypop"
+  local legacy_binary="${KEYPOP_APP_LEGACY}/Contents/MacOS/keypop"
+  if [[ -x "$legacy_binary" ]]; then
+    echo "$legacy_binary"
+    return 0
+  fi
+  local installed="${KEYPOP_CLI}"
   if [[ -x "$installed" ]]; then
     echo "$installed"
     return 0
@@ -60,6 +67,20 @@ ensure_snippets() {
   if [[ ! -f "$SNIPPETS" ]]; then
     "${PROJECT_DIR}/scripts/sync-keypop.sh"
   fi
+}
+
+kill_stale_keypop_processes() {
+  local expected="$1"
+  local line pid cmd
+  while IFS= read -r line; do
+    [[ -z "$line" ]] && continue
+    pid="${line%% *}"
+    cmd="${line#* }"
+    if [[ "$cmd" == *"keypop run --snippets"* && "$cmd" != *"$expected"* ]]; then
+      echo "Stopping stale keypop (pid ${pid}): ${cmd}" >&2
+      kill "$pid" 2>/dev/null || true
+    fi
+  done < <(pgrep -fl "keypop run --snippets" 2>/dev/null || true)
 }
 
 plist_binary() {
@@ -106,7 +127,7 @@ write_plist() {
 PLIST
   echo "Wrote ${PLIST}"
   echo "TCC: grant Input Monitoring + Accessibility to app bundle:"
-  echo "  ${HOME}/.local/KeyPop.app"
+  echo "  ${KEYPOP_APP}"
 }
 
 is_loaded() {
@@ -141,7 +162,9 @@ case "$cmd" in
   install)
     ensure_binary
     ensure_snippets
-    write_plist "$(resolve_keypop_binary)"
+    binary="$(resolve_keypop_binary)"
+    kill_stale_keypop_processes "$binary"
+    write_plist "$binary"
     load_agent
     echo "keypop installed and started"
     echo "log: $LOG_FILE"
@@ -155,10 +178,30 @@ case "$cmd" in
     echo "keypop uninstalled"
     ;;
 
+  uninstall-clean)
+    if is_loaded; then
+      unload_agent
+    fi
+    rm -f "$PLIST"
+    rm -rf "${KEYPOP_APP}" "${KEYPOP_APP_LEGACY}"
+    rm -f "${KEYPOP_CLI}"
+    tccutil reset ListenEvent io.keypop.app 2>/dev/null || true
+    tccutil reset PostEvent io.keypop.app 2>/dev/null || true
+    tccutil reset Accessibility io.keypop.app 2>/dev/null || true
+    echo "keypop clean-uninstalled"
+    echo "Reset TCC for io.keypop.app"
+    ;;
+
   start)
     ensure_binary
     ensure_snippets
-    ensure_plist
+    binary="$(resolve_keypop_binary)"
+    kill_stale_keypop_processes "$binary"
+    if needs_plist_refresh "$binary"; then
+      write_plist "$binary"
+    else
+      ensure_plist
+    fi
     if is_loaded; then
       echo "keypop already loaded"
     else
@@ -183,7 +226,9 @@ case "$cmd" in
     fi
     ensure_binary
     ensure_snippets
-    write_plist "$(resolve_keypop_binary)"
+    binary="$(resolve_keypop_binary)"
+    kill_stale_keypop_processes "$binary"
+    write_plist "$binary"
     load_agent
     echo "keypop restarted"
     echo "log: $LOG_FILE"
@@ -192,6 +237,11 @@ case "$cmd" in
   status)
     if is_loaded; then
       BINARY="$(resolve_keypop_binary)"
+      STALE="$(pgrep -fl "keypop run --snippets" 2>/dev/null | grep -v "$BINARY" || true)"
+      if [[ -n "$STALE" ]]; then
+        echo "warning: stale keypop process (not ${BINARY}):" >&2
+        echo "$STALE" >&2
+      fi
       PID="$(pgrep -f "${BINARY} run --snippets" 2>/dev/null | head -1 || true)"
       if [[ -n "$PID" ]]; then
         echo "running (pid $PID)"
@@ -208,7 +258,7 @@ case "$cmd" in
     ;;
 
   *)
-    echo "Usage: $0 {start|stop|restart|status|install|uninstall}"
+    echo "Usage: $0 {start|stop|restart|status|install|uninstall|uninstall-clean}"
     exit 1
     ;;
 esac

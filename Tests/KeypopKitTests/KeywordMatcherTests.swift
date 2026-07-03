@@ -13,6 +13,11 @@ final class KeywordMatcherTests: XCTestCase {
         XCTAssertEqual(matcher.match(in: ";wle"), ";wle")
     }
 
+    func testReportsPrefixCollisions() {
+        let collisions = KeywordMatcher.collisions(for: ";wle", among: [";wle", ";wlextract", ";wlmc"])
+        XCTAssertEqual(collisions, [KeywordCollision(keyword: ";wle", collidesWith: ";wlextract")])
+    }
+
     func testNoPartialMatch() {
         let matcher = KeywordMatcher(keywords: [";wle"])
         XCTAssertNil(matcher.match(in: ";wl"))

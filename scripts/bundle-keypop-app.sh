@@ -6,20 +6,31 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=keypop-paths.sh
+source "${SCRIPT_DIR}/keypop-paths.sh"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-SOURCE_BIN="${1:-${HOME}/.local/bin/keypop}"
-APP_ROOT="${HOME}/.local/KeyPop.app"
+SOURCE_BIN="${1:-${KEYPOP_CLI}}"
+APP_ROOT="${KEYPOP_APP}"
 APP_MACOS="${APP_ROOT}/Contents/MacOS"
+APP_RESOURCES="${APP_ROOT}/Contents/Resources"
 APP_PLIST="${APP_ROOT}/Contents/Info.plist"
+SOURCE_ICNS="${PROJECT_DIR}/assets/AppIcon.icns"
+ENTITLEMENTS="${PROJECT_DIR}/assets/KeyPop.entitlements"
 
 if [[ ! -x "$SOURCE_BIN" ]]; then
   echo "error: keypop binary not found: $SOURCE_BIN" >&2
   exit 1
 fi
 
-mkdir -p "$APP_MACOS"
+mkdir -p "$APP_MACOS" "$APP_RESOURCES" "$(dirname "$APP_ROOT")"
 cp -f "$SOURCE_BIN" "${APP_MACOS}/keypop"
 chmod +x "${APP_MACOS}/keypop"
+
+if [[ -f "$SOURCE_ICNS" ]]; then
+  cp -f "$SOURCE_ICNS" "${APP_RESOURCES}/AppIcon.icns"
+else
+  echo "warning: ${SOURCE_ICNS} missing; run ./scripts/generate-app-icon.sh" >&2
+fi
 
 cat >"$APP_PLIST" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -29,11 +40,12 @@ cat >"$APP_PLIST" <<'PLIST'
 <dict>
   <key>CFBundleDevelopmentRegion</key><string>en</string>
   <key>CFBundleExecutable</key><string>keypop</string>
+  <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundleIdentifier</key><string>io.keypop.app</string>
   <key>CFBundleName</key><string>KeyPop</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>0.2.0</string>
-  <key>CFBundleVersion</key><string>2</string>
+  <key>CFBundleShortVersionString</key><string>0.2.1</string>
+  <key>CFBundleVersion</key><string>3</string>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>LSUIElement</key><true/>
   <key>NSInputMonitoringUsageDescription</key>
@@ -61,16 +73,27 @@ resolve_signing_identity() {
 }
 
 SIGNING_IDENTITY=""
+sign_app() {
+  local identity="$1"
+  local args=(--force --sign "$identity" --deep)
+  if [[ -f "$ENTITLEMENTS" ]]; then
+    args+=(--entitlements "$ENTITLEMENTS")
+  fi
+  codesign "${args[@]}" "$APP_ROOT" >/dev/null
+}
+
 if SIGNING_IDENTITY="$(resolve_signing_identity)"; then
-  codesign --force --sign "$SIGNING_IDENTITY" --deep "$APP_ROOT" >/dev/null
+  sign_app "$SIGNING_IDENTITY"
   echo "Signed with: ${SIGNING_IDENTITY}"
 else
   echo "warning: no KeyPop Dev certificate; using ad-hoc signing (TCC grants break on every rebuild)" >&2
   echo "  Run: ./scripts/create-keypop-signing-cert.sh" >&2
-  codesign --force --sign - --deep "$APP_ROOT" >/dev/null
+  sign_app -
 fi
 
 codesign -dv --verbose=2 "$APP_ROOT" 2>&1 | awk -F= '/Authority=|Identifier=|TeamIdentifier=/{print}'
+
+remove_legacy_app_bundle
 
 echo "Bundled: ${APP_MACOS}/keypop"
 echo "Grant TCC to: ${APP_ROOT}"

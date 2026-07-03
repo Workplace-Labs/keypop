@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="KeyPop icon: orbit tilt">
+  <title>KeyPop icon: orbit tilt</title>
+  <rect width="1024" height="1024" rx="224" fill="#171B2E"/>
+  <g transform="rotate(-45 512 512)">
+    <path fill="none" stroke="#F8FAFC" stroke-width="140" stroke-linecap="round"
+          d="M 696 358 A 240 240 0 1 0 696 666"/>
+    <circle cx="700" cy="512" r="66" fill="#FF6B5B"/>
+  </g>
+</svg>

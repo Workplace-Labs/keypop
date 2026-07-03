@@ -195,6 +195,7 @@ public final class ExpanderEngine {
         )
         eventTap = installed.tap
         runLoopSource = installed.source
+        fputs("listen_ready|tap_installed\n", stderr)
     }
 
     private func teardownTap() {
@@ -270,6 +271,8 @@ public final class ExpanderEngine {
             fputs("tap_reinstalled|scheduled_health\n", stderr)
         } catch {
             fputs("tap_reinstall_failed|\(error.localizedDescription)\n", stderr)
+            fputs("tap_reinstall_hint|re-grant Input Monitoring to KeyPop.app, then: ./scripts/launch-keypop.sh restart\n", stderr)
+            exit(1)
         }
     }
 

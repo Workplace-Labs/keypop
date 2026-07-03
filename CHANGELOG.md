@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-07-03
+
+### Fixed
+
+- Mac runtime expansion — CGEventTap-only listen, stable `KeyPop Dev` signing, and clearer TCC diagnostics when grants go stale after rebuilds.
+- Daemon exits when the event tap cannot be restored (no more zombie processes after permission loss).
+- App bundle installs to `~/Applications/KeyPop.app` with orbit-tilt icon.
+
+### Changed
+
+- `fix-keypop-tcc.sh` does a full rebuild + TCC reset by default; install paths centralized in `keypop-paths.sh`.
+
 ## [0.2.0] - 2026-07-01
 
 ### Added
