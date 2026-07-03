@@ -5,11 +5,12 @@ description: >-
   Use when the user wants to save or update prompt shortcuts, import or export
   prompt kits (.snippets.json), share prompts with a team, expand prompts in
   Cursor, Warp, VS Code, or terminals, or manage general text replacements
-  (email signatures, contact info, boilerplate). After a fresh install, guide
-  the user through conversational post-install onboarding. Also covers the
-  keypop daemon and expansion troubleshooting.
+  (email signatures, contact info, boilerplate). Always mutate shortcuts via
+  keypop CLI (create/update/delete/import) — never edit snippets.json directly.
+  After a fresh install, guide the user through conversational post-install
+  onboarding. Also covers the keypop daemon and expansion troubleshooting.
 metadata:
-  version: "1.6"
+  version: "1.7"
   project: keypop
   repo: https://github.com/Workplace-Labs/keypop
 ---
@@ -37,6 +38,22 @@ Canonical repo: [Workplace-Labs/keypop](https://github.com/Workplace-Labs/keypop
 
 **macOS only** for the Mac expander. Prompt shortcuts sync to **iOS** via Apple Text Replacements. Requires **Xcode Command Line Tools** (`xcode-select --install` — not the full Xcode app) and Input Monitoring + Accessibility TCC grants to the app bundle.
 
+## For agents — CLI only, never edit JSON
+
+**All shortcut changes go through `keypop` CLI commands.** Do not open, read-and-patch, or write `~/.config/keypop/snippets.json`. Do not hand-edit kit files to update the user's live library.
+
+| Goal | Do this | Never do this |
+|------|---------|---------------|
+| Add a shortcut | `keypop create --shortcut '…' --phrase '…'` | Edit `snippets.json` |
+| Change prompt text | `keypop update --shortcut '…' --phrase '…'` | Edit `snippets.json` |
+| Remove a shortcut | `keypop delete --shortcut '…'` | Edit `snippets.json` |
+| See what's installed | `keypop list` or `keypop get --shortcut '…'` | Read JSON to plan a manual edit |
+| Add many from a kit | `keypop import <kit> --apply` | Merge kit JSON into `snippets.json` |
+
+`snippets.json` is **CLI-managed output** — `create`/`update`/`delete`/`import` write it and sync to Apple Text Replacements. Hand-edits skip that sync, can race with the daemon's file watcher, and break iOS parity.
+
+Kit files in `kits/` are import **sources** — still run `keypop import`, not a direct copy into `snippets.json`.
+
 ## Install
 
 If `keypop` is not installed yet:
@@ -55,7 +72,7 @@ If `keypop` is already installed, use the daemon commands below rather than re-r
 **When to run:** install just completed (`install.sh`, `keypop-install.sh`), user says they're new, or they ask how to get started.
 
 **How to guide (agents):**
-- **You handle the CLI.** Run status checks, imports, and shortcut creation yourself in the background — don't hand the user terminal commands to type. They should never see a command unless it's genuinely theirs to run (there isn't one in this flow).
+- **You handle the CLI.** Run `keypop create`/`update`/`delete`/`import`/`list` yourself in the background — never edit `snippets.json` or kit files on disk. Don't hand the user terminal commands to type unless it's genuinely theirs to run.
 - **The user does the human parts.** Typing a shortcut into an app, clicking two permission toggles once, telling you a phrase they say all the time. That's the whole ask.
 - **One step at a time.** Wait for a real signal (they saw it expand, they told you the phrase, they reacted) before moving on.
 - **Warm, short, a little personality.** Guide a friend through a good party trick, not a manual.
@@ -165,7 +182,7 @@ Two layers, one keyword library:
 | Apple Text Replacements | `keypop list/create/...` | iOS, Notes, Mail, Messages, Safari, Slack |
 | Mac expander (daemon) | `keypop run` | Warp, VS Code, Cursor, Terminal |
 
-Mutations auto-export to `~/.config/keypop/snippets.json`. The daemon watches that file (~200ms debounce) and reloads automatically.
+Mutations auto-export to `~/.config/keypop/snippets.json`. The daemon watches that file (~200ms debounce) and reloads automatically. Agents: that file is output — use CLI commands above, not the editor.
 
 **Kits** are the sharing format: JSON arrays of `{ "name", "keyword", "text" }` files (`.snippets.json`). Repo kits live in `kits/`; team or personal kits can live in `private/kits/`.
 
@@ -181,7 +198,7 @@ Shipped prompt kits (import with `--prefix` as needed). `;p` is the recommended 
 
 ## Common commands
 
-Mutations auto-export to `~/.config/keypop/snippets.json` and the daemon reloads automatically. Disable sync with `--no-sync` or `KEYPOP_SYNC=0`.
+Run these in the shell. They update Apple Text Replacements and auto-export to `~/.config/keypop/snippets.json` (do not edit that file yourself).
 
 ### List shortcuts
 
@@ -273,6 +290,7 @@ tail -f ~/.local/log/keypop.log      # listen_ready|tap_installed, expanded|…
 
 ## Safety
 
+- **Never edit `~/.config/keypop/snippets.json` directly** — use `keypop create`/`update`/`delete`/`import`
 - Never write directly to `~/Library/KeyboardServices/TextReplacements.db`
 - Always `--dry-run` before `import --apply`
 
@@ -280,7 +298,7 @@ tail -f ~/.local/log/keypop.log      # listen_ready|tap_installed, expanded|…
 
 | Path | Purpose |
 |------|---------|
-| `~/.config/keypop/snippets.json` | live runtime snippets (daemon reads this) |
+| `~/.config/keypop/snippets.json` | CLI-managed runtime export — `keypop list` to read; never edit directly |
 | `~/Applications/KeyPop.app` | app bundle (TCC target) |
 | `kits/` | shareable prompt kits in the repo |
 | `private/` | gitignored local kits, mirrors, import backups |
