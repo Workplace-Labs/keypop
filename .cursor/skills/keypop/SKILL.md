@@ -31,8 +31,8 @@ Canonical repo: [Workplace-Labs/keypop](https://github.com/Workplace-Labs/keypop
 
 If `keypop` is not installed yet:
 
-- **From this repo:** `./scripts/install.sh` (see Daemon section below)
-- **From the wl-agent-toolkit**, without a local checkout: `scripts/keypop-install.sh` — clones (or updates) the repo, then runs the same installer. Accepts `--repo <path>` / `$KEYPOP_REPO_PATH`, and `--yes` to skip the interactive TCC pause for scripted/agent runs.
+- **From this repo:** `./scripts/create-keypop-signing-cert.sh` once (stable local signing — skip this and `install.sh` falls back to ad-hoc signing, which breaks TCC grants on every rebuild), then `./scripts/install.sh` (see Daemon section below)
+- **From the wl-agent-toolkit**, without a local checkout: `scripts/keypop-install.sh` — clones (or updates) the repo, then runs both of the above in order automatically. Accepts `--repo <path>` / `$KEYPOP_REPO_PATH`, and `--yes` to skip the interactive TCC pause for scripted/agent runs.
 
 Either path builds, signs, installs the LaunchAgent, and walks through the Input Monitoring + Accessibility TCC grants.
 
@@ -60,6 +60,9 @@ keypop update --shortcut <shortcut> --phrase <phrase>
 keypop delete --shortcut <shortcut>
 keypop import <path|-> [--prefix <prefix>] [--dry-run|--apply] [--on-conflict fail|skip|overwrite] [--no-sync]
 
+keypop stats [--prefix <prefix>]
+keypop stats reset [--shortcut <shortcut>|--all]
+
 keypop run [--snippets ~/.config/keypop/snippets.json]
 
 keypop probe permissions|listen|inject|bridge
@@ -69,7 +72,7 @@ keypop read-sources
 keypop db-summary
 ```
 
-Disable runtime sync: `--no-sync` or `KEYPOP_SYNC=0`.
+Disable runtime sync: `--no-sync` or `KEYPOP_SYNC=0`. `stats` shows real usage counts per shortcut (tracked by the daemon) — useful for finding dead shortcuts to prune from a kit.
 
 ## Workflows
 
@@ -106,22 +109,13 @@ keypop import kits/prompts-core.snippets.json --prefix ';p' --apply --on-conflic
 ```sh
 ./scripts/launch-keypop.sh status
 ./scripts/launch-keypop.sh restart
-./scripts/install.sh
 ./scripts/fix-keypop-tcc.sh          # rebuild + reset TCC + open System Settings
+tail -f ~/.local/log/keypop.log      # listen_ready|tap_installed, expanded|…
 ```
-
-**Install layout:** CLI at `~/.local/bin/keypop`, app bundle at `~/Applications/KeyPop.app`.
 
 **TCC:** Grant Input Monitoring + Accessibility to `~/Applications/KeyPop.app` (the `.app` bundle — not Terminal, not the bare `keypop` binary). Use **+** → **Cmd+Shift+G** in each pane.
 
 **Signing:** `./scripts/create-keypop-signing-cert.sh` once, then `install.sh` signs with `KeyPop Dev` so TCC survives rebuilds.
-
-**Troubleshooting expansion:**
-```sh
-./scripts/launch-keypop.sh status
-tail -f ~/.local/log/keypop.log          # listen_ready|tap_installed, expanded|…
-./scripts/fix-keypop-tcc.sh              # when grants go stale after rebuild
-```
 
 **Tips for agents:**
 - Trust the **daemon log** over `keypop probe permissions` from Terminal for Input Monitoring — shell context often shows `listen=false` while the LaunchAgent tap works.
