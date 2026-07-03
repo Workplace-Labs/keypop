@@ -1,12 +1,12 @@
 import Foundation
 
 public struct KeywordCollision: Sendable, Equatable {
+    public let prefix: String
     public let keyword: String
-    public let collidesWith: String
 
-    public init(keyword: String, collidesWith: String) {
+    public init(prefix: String, keyword: String) {
+        self.prefix = prefix
         self.keyword = keyword
-        self.collidesWith = collidesWith
     }
 }
 
@@ -35,15 +35,28 @@ public struct KeywordMatcher: Sendable {
     }
 
     public static func collisions(for keyword: String, among keywords: [String]) -> [KeywordCollision] {
-        let normalized = Set(keywords.filter { !$0.isEmpty && $0 != keyword })
-        return normalized.compactMap { other in
-            guard keyword.hasPrefix(other) || other.hasPrefix(keyword) else {
-                return nil
-            }
-            return KeywordCollision(keyword: keyword, collidesWith: other)
+        collisions(among: keywords + [keyword]).filter { collision in
+            collision.prefix == keyword || collision.keyword == keyword
         }
-        .sorted { left, right in
-            left.collidesWith.localizedStandardCompare(right.collidesWith) == .orderedAscending
+    }
+
+    public static func collisions(among keywords: [String]) -> [KeywordCollision] {
+        let normalized = Set(keywords.filter { !$0.isEmpty }).sorted {
+            $0.localizedStandardCompare($1) == .orderedAscending
+        }
+
+        var collisions: [KeywordCollision] = []
+        for (index, prefix) in normalized.enumerated() {
+            for keyword in normalized.dropFirst(index + 1) where keyword.hasPrefix(prefix) {
+                collisions.append(KeywordCollision(prefix: prefix, keyword: keyword))
+            }
+        }
+
+        return collisions.sorted { left, right in
+            if left.prefix == right.prefix {
+                return left.keyword.localizedStandardCompare(right.keyword) == .orderedAscending
+            }
+            return left.prefix.localizedStandardCompare(right.prefix) == .orderedAscending
         }
     }
 

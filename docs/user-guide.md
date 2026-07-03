@@ -95,9 +95,9 @@ Starter prompt kit: `kits/prompts-core.snippets.json`. Keep text as **plain stat
 
 ### Branded prompt kits: `;wl` (Workplace Labs)
 
-Curated prompt collections get their own zone so they stay easy to browse and import as a set. Workplace Labs prompts live under `;wl` + task (`;wlpersona`, `;wlredteam`, `;wlexec`).
+Curated prompt collections get their own zone so they stay easy to browse and import as a set. Workplace Labs prompts live under `;wl` + task (`;wlpersona`, `;wlredteam`, `;wldoc`).
 
-Kit: `kits/workplace-labs.snippets.json`. Because `;wl` is a **prompt** zone, do not also use it for org contacts. Keep shortcuts in the same zone non-overlapping so one prompt cannot shadow another. For example, `;wle` used to collide with `;wlx` before we split the names up. Give teams their own org zone instead (e.g. Lab Rats uses `;lab`).
+Kit: `kits/workplace-labs.snippets.json`. Because `;wl` is a **prompt** zone, do not also use it for org contacts. Keep shortcuts in the same zone non-overlapping so one prompt cannot shadow another. For example, `;wle` collides with any longer shortcut that starts with `;wle`, such as `;wlexplain`. Give teams their own org zone instead (e.g. Lab Rats uses `;lab`).
 
 ---
 

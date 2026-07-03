@@ -11,7 +11,7 @@
   },
   {
     "name": "Explain",
-    "keyword": ";wlexplain",
+    "keyword": ";wldoc",
     "text": "Explain what this code does, why it exists, and flag anything that looks risky or worth simplifying."
   },
   {
@@ -30,4 +30,3 @@
   "text": "Please do a security review of this code and respond with a prioritized list of concerns. Security Best Practices: Validate and Sanitize All Inputs: Never trust user input. Always validate and sanitize data on the server side to prevent injection attacks. Implement Strong Authentication and Authorization: Ensure that authentication and authorization mechanisms are robust and enforced on the backend. Do not rely solely on frontend controls. Use Parameterized Queries: When interacting with databases, use parameterized queries or prepared statements to prevent SQL injection attacks. Enforce HTTPS: Ensure all data transmitted between the client and server is encrypted by enforcing HTTPS. Protect Sensitive Data: Encrypt sensitive data both at rest and in transit to safeguard confidentiality. Manage Dependencies Securely: Regularly update and audit third-party libraries to mitigate risks from known vulnerabilities. Implement Security Logging and Monitoring: Establish logging mechanisms to detect and respond to security incidents promptly. Avoid Inline Scripts: Separate JavaScript from HTML by using external scripts and implement Content Security Policies (CSPs) to define trusted sources for scripts and resources. Implement Content Security Policy (CSP) : Define a CSP to restrict the sources of executable scripts and mitigate the risk of cross-site scripting (XSS) attacks. Prevent Cross-Site Request Forgery (CSRF) : Implement anti-CSRF tokens in your forms and verify them on the server side to prevent unauthorized commands transmitted from a user that the website trusts."
   }
 ]
-

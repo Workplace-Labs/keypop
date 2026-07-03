@@ -237,18 +237,30 @@ enum CRUDCommands {
         }
     }
 
+    static func prefixCollisionDetails(_ collisions: [KeywordCollision]) -> String {
+        collisions
+            .map { "\($0.prefix) shadows \($0.keyword)" }
+            .joined(separator: ", ")
+    }
+
     static func validateNoPrefixCollision(_ shortcut: String, against keywords: [String], context: String) throws {
         let collisions = KeywordMatcher.collisions(for: shortcut, among: keywords)
-        guard !collisions.isEmpty else {
-            return
+        guard collisions.isEmpty else {
+            throw CLIError.usage("\(context) shortcut \(shortcut) collides: \(prefixCollisionDetails(collisions))")
         }
-        let details = collisions.map { $0.collidesWith }.joined(separator: ", ")
-        throw CLIError.usage("\(context) shortcut \(shortcut) collides with: \(details)")
     }
 
     static func validateNoPrefixCollisions(_ rows: [Replacement], against keywords: [String], context: String) throws {
-        for row in rows {
-            try validateNoPrefixCollision(row.shortcut, against: keywords, context: context)
+        guard !rows.isEmpty else {
+            return
+        }
+        let incoming = rows.map(\.shortcut)
+        let touched = Set(incoming)
+        let collisions = KeywordMatcher.collisions(among: keywords + incoming).filter { collision in
+            touched.contains(collision.prefix) || touched.contains(collision.keyword)
+        }
+        guard collisions.isEmpty else {
+            throw CLIError.usage("\(context) has prefix-colliding shortcuts: \(prefixCollisionDetails(collisions))")
         }
     }
 
@@ -350,10 +362,6 @@ enum CRUDCommands {
             guard current.contains(where: { $0.shortcut == shortcut }) else {
                 throw CLIError.runtime("No replacement found for shortcut \(shortcut)")
             }
-            let updated = current.map { row in
-                row.shortcut == shortcut ? Replacement(shortcut: shortcut, phrase: phrase) : row
-            }
-            try validateNoPrefixCollision(shortcut, against: updated.map(\.shortcut), context: "Update")
             try updateReplacement(shortcut: shortcut, phrase: phrase)
             syncIfEnabled(commandArgs: commandArgs)
             try printJSON(["updated": shortcut])
@@ -419,14 +427,13 @@ enum CRUDCommands {
 
             try validateUniqueShortcuts(incoming)
             let current = try replacements()
-            try validateNoPrefixCollisions(incoming, against: current.map(\.shortcut), context: "Import")
-            try validateNoPrefixCollisions(incoming, against: incoming.map(\.shortcut), context: "Import")
             let existing = filterReplacements(current, prefix: prefix)
             let plan = buildImportPlan(incoming: incoming, existing: existing, conflictMode: conflictMode)
             if !plan.conflicts.isEmpty {
                 try printJSON(plan)
                 throw CLIError.runtime("Import has conflicts; rerun with --on-conflict skip or --on-conflict overwrite")
             }
+            try validateNoPrefixCollisions(plan.create, against: current.map(\.shortcut), context: "Import")
             if dryRun {
                 try printJSON(plan)
                 return

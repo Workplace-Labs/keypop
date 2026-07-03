@@ -15,7 +15,15 @@ final class KeywordMatcherTests: XCTestCase {
 
     func testReportsPrefixCollisions() {
         let collisions = KeywordMatcher.collisions(for: ";wle", among: [";wle", ";wlextract", ";wlmc"])
-        XCTAssertEqual(collisions, [KeywordCollision(keyword: ";wle", collidesWith: ";wlextract")])
+        XCTAssertEqual(collisions, [KeywordCollision(prefix: ";wle", keyword: ";wlextract")])
+    }
+
+    func testReportsAllPrefixCollisionsInSet() {
+        let collisions = KeywordMatcher.collisions(among: [";wle", ";wlextract", ";wlmc", ";wlmca"])
+        XCTAssertEqual(collisions, [
+            KeywordCollision(prefix: ";wle", keyword: ";wlextract"),
+            KeywordCollision(prefix: ";wlmc", keyword: ";wlmca")
+        ])
     }
 
     func testNoPartialMatch() {
