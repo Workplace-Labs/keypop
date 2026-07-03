@@ -12,7 +12,7 @@
   {
     "name": "Multiple Choice Me",
     "keyword": ";wlmc",
-    "text": "Give me multiple choice for simple choices, open-ended for nuance."
+    "text": "Give me multiple choice for simple choices (1a, 2c, 3b), open-ended for nuance."
   },
   {
     "name": "Red Team It",

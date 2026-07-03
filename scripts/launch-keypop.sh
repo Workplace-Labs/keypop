@@ -193,8 +193,14 @@ case "$cmd" in
     if is_loaded; then
       BINARY="$(resolve_keypop_binary)"
       PID="$(pgrep -f "${BINARY} run --snippets" 2>/dev/null | head -1 || true)"
-      echo "running${PID:+ (pid $PID)}"
-      echo "binary: ${BINARY}"
+      if [[ -n "$PID" ]]; then
+        echo "running (pid $PID)"
+        echo "binary: ${BINARY}"
+      else
+        echo "loaded but not running (check log: $LOG_FILE)"
+        echo "binary: ${BINARY}"
+        exit 1
+      fi
     else
       echo "not running"
       exit 1

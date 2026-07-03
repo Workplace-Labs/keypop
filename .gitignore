@@ -9,3 +9,4 @@ kits/full.raycast.json
 kits/acme-team.snippets.json
 docs/research/spike-results.generated.md
 *.local.json
+backups/*

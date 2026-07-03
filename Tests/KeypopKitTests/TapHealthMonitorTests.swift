@@ -9,9 +9,13 @@ final class TapHealthMonitorTests: XCTestCase {
             postEventPreflight: true,
             liveTapCreates: true,
             liveTapEnabled: true,
-            staleAxCacheSuspected: false,
+            staleTCCSuspected: false,
             readyForListen: true,
-            readyForInject: true
+            readyForInject: true,
+            bundleIdentifier: "io.keypop.app",
+            executablePath: "/test/keypop",
+            hasInputMonitoringUsageDescription: true,
+            hasAccessibilityUsageDescription: true
         )
         let issues = TapHealthMonitor.evaluate(
             tapEnabled: false,
@@ -21,16 +25,20 @@ final class TapHealthMonitorTests: XCTestCase {
         XCTAssertEqual(issues, [.tapDisabled])
     }
 
-    func testPermissionProbeFindsStaleCache() {
+    func testPermissionProbeFindsStaleTCC() {
         let snapshot = PermissionSnapshot(
             axIsProcessTrusted: true,
             listenEventPreflight: true,
             postEventPreflight: true,
             liveTapCreates: false,
             liveTapEnabled: false,
-            staleAxCacheSuspected: true,
+            staleTCCSuspected: true,
             readyForListen: false,
-            readyForInject: true
+            readyForInject: true,
+            bundleIdentifier: "io.keypop.app",
+            executablePath: "/test/keypop",
+            hasInputMonitoringUsageDescription: true,
+            hasAccessibilityUsageDescription: true
         )
         let issues = TapHealthMonitor.evaluate(
             tapEnabled: true,
@@ -38,7 +46,7 @@ final class TapHealthMonitorTests: XCTestCase {
             includePermissionProbe: true
         )
         XCTAssertTrue(issues.contains(.listenPermissionLost))
-        XCTAssertTrue(issues.contains(.staleAxCacheSuspected))
+        XCTAssertTrue(issues.contains(.staleTCCSuspected))
     }
 
     func testDefaultIntervalsAreInfrequent() {

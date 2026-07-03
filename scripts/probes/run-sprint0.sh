@@ -40,7 +40,7 @@ Interpretation:
 
 - \`readyForListen\` → R1 event tap viability
 - \`readyForInject\` → R2/R3 injection preflight
-- \`staleAxCacheSuspected\` → R6 TCC stale cache
+- \`staleTCCSuspected\` → R6 TCC stale cache (preflight true, tap create failed)
 
 ### R4 — Bridge read from probe process
 
@@ -81,4 +81,4 @@ EOF
 echo "Wrote ${RESULTS}"
 echo ""
 echo "Permissions:"
-echo "$PERMS" | jq '{readyForListen, readyForInject, staleAxCacheSuspected}' 2>/dev/null || echo "$PERMS"
+echo "$PERMS" | jq '{readyForListen, readyForInject, staleTCCSuspected}' 2>/dev/null || echo "$PERMS"

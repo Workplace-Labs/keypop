@@ -7,54 +7,91 @@ public struct PermissionSnapshot: Codable, Equatable, Sendable {
     public let postEventPreflight: Bool
     public let liveTapCreates: Bool
     public let liveTapEnabled: Bool
-    public let staleAxCacheSuspected: Bool
+    public let staleTCCSuspected: Bool
     public let readyForListen: Bool
     public let readyForInject: Bool
-}
-
-private func listenOnlyTapCallback(
-    proxy: CGEventTapProxy,
-    type: CGEventType,
-    event: CGEvent,
-    userInfo: UnsafeMutableRawPointer?
-) -> Unmanaged<CGEvent>? {
-    Unmanaged.passUnretained(event)
+    public let bundleIdentifier: String
+    public let executablePath: String
+    public let hasInputMonitoringUsageDescription: Bool
+    public let hasAccessibilityUsageDescription: Bool
 }
 
 public enum PermissionProbe {
     public static func snapshot() -> PermissionSnapshot {
         let axTrusted = AXIsProcessTrusted()
-        let listenOK = CGPreflightListenEventAccess()
-        let postOK = CGPreflightPostEventAccess()
-        let tapState = liveTapProbe()
+        let listenPreflight = CGPreflightListenEventAccess()
+        let postPreflight = CGPreflightPostEventAccess()
+        let tapState = CGEventTapListen.probe()
+        let bundle = Bundle.main
+        let info = bundle.infoDictionary ?? [:]
+
+        let tapReady = tapState.created && tapState.enabled
 
         return PermissionSnapshot(
             axIsProcessTrusted: axTrusted,
-            listenEventPreflight: listenOK,
-            postEventPreflight: postOK,
+            listenEventPreflight: listenPreflight,
+            postEventPreflight: postPreflight,
             liveTapCreates: tapState.created,
             liveTapEnabled: tapState.enabled,
-            staleAxCacheSuspected: axTrusted && (!tapState.created || !tapState.enabled),
-            readyForListen: listenOK && tapState.created && tapState.enabled,
-            readyForInject: postOK
+            staleTCCSuspected: listenPreflight && !tapReady,
+            readyForListen: tapReady,
+            readyForInject: postPreflight,
+            bundleIdentifier: bundle.bundleIdentifier ?? "(none)",
+            executablePath: bundle.executableURL?.path ?? ProcessInfo.processInfo.arguments.first ?? "(unknown)",
+            hasInputMonitoringUsageDescription: info["NSInputMonitoringUsageDescription"] != nil,
+            hasAccessibilityUsageDescription: info["NSAccessibilityUsageDescription"] != nil
         )
     }
 
-    private static func liveTapProbe() -> (created: Bool, enabled: Bool) {
-        let mask = (1 << CGEventType.keyDown.rawValue)
-        guard let tap = CGEvent.tapCreate(
-            tap: .cgSessionEventTap,
-            place: .tailAppendEventTap,
-            options: .listenOnly,
-            eventsOfInterest: CGEventMask(mask),
-            callback: listenOnlyTapCallback,
-            userInfo: nil
-        ) else {
-            return (false, false)
-        }
+    public static func requestListenAccess() -> Bool {
+        CGRequestListenEventAccess()
+    }
 
-        let enabled = CGEvent.tapIsEnabled(tap: tap)
-        CFMachPortInvalidate(tap)
-        return (true, enabled)
+    public static func requestPostAccess() -> Bool {
+        CGRequestPostEventAccess()
+    }
+
+    public static func logDiagnostics(_ snapshot: PermissionSnapshot, to stream: UnsafeMutablePointer<FILE>) {
+        fputs("permission_debug|bundle=\(snapshot.bundleIdentifier)\n", stream)
+        fputs("permission_debug|executable=\(snapshot.executablePath)\n", stream)
+        fputs(
+            "permission_debug|tap_creates=\(snapshot.liveTapCreates) tap_enabled=\(snapshot.liveTapEnabled) listen_preflight=\(snapshot.listenEventPreflight)\n",
+            stream
+        )
+        fputs(
+            "permission_debug|post_preflight=\(snapshot.postEventPreflight) ax_trusted=\(snapshot.axIsProcessTrusted)\n",
+            stream
+        )
+
+        if !snapshot.readyForListen {
+            fputs(
+                "permission_hint|Grant Input Monitoring to ~/.local/KeyPop.app (remove old entry, re-add via Cmd+Shift+G)\n",
+                stream
+            )
+        }
+        if snapshot.staleTCCSuspected {
+            fputs(
+                "permission_hint|TCC preflight true but tap failed — stale grant from old signature; run ./scripts/fix-keypop-tcc.sh\n",
+                stream
+            )
+        }
+        if !snapshot.hasInputMonitoringUsageDescription {
+            fputs(
+                "permission_hint|Rebuild KeyPop.app with ./scripts/install.sh (missing NSInputMonitoringUsageDescription)\n",
+                stream
+            )
+        }
+        if !snapshot.hasAccessibilityUsageDescription {
+            fputs(
+                "permission_hint|Rebuild KeyPop.app with ./scripts/install.sh (missing NSAccessibilityUsageDescription)\n",
+                stream
+            )
+        }
+        if !snapshot.postEventPreflight {
+            fputs(
+                "permission_hint|Grant Accessibility to ~/.local/KeyPop.app for text injection\n",
+                stream
+            )
+        }
     }
 }

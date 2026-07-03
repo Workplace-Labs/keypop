@@ -85,6 +85,16 @@ keypop import kits/prompts-core.snippets.json --prefix ';p' --apply --on-conflic
 
 **TCC:** Grant Input Monitoring + Accessibility to `~/.local/KeyPop.app`.
 
+**Signing:** `./scripts/create-keypop-signing-cert.sh` once, then `install.sh` signs with `KeyPop Dev` so TCC survives rebuilds.
+
+**Troubleshooting Warp / no expansion:**
+```sh
+./scripts/launch-keypop.sh status
+~/.local/KeyPop.app/Contents/MacOS/keypop probe permissions   # readyForListen must be true
+./scripts/fix-keypop-tcc.sh --rebundle   # after rebuild if grants went stale
+tail -f ~/.local/log/keypop.log          # expanded| lines confirm matches
+```
+
 **stderr signals:**
 - `keypop_sync|<path>|<count>` — export succeeded
 - `keypop_hint|daemon not running` — run `./scripts/launch-keypop.sh restart`

@@ -9,29 +9,23 @@ public enum ExpanderEngineError: Error, LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .listenNotReady:
-            return "Input Monitoring not granted. Enable keypop in System Settings → Input Monitoring."
+            return "Input Monitoring not granted. Enable KeyPop.app in System Settings → Input Monitoring."
         case .injectNotReady:
-            return "Post-event access not granted. Enable keypop in System Settings → Accessibility."
+            return "Accessibility not granted. Enable KeyPop.app in System Settings → Accessibility."
         case .tapCreateFailed:
             return "Failed to create keyboard event tap."
         }
     }
 }
 
-private let keyboardEventMask: CGEventMask = {
-    let keyDown = 1 << CGEventType.keyDown.rawValue
-    let timeout = 1 << CGEventType.tapDisabledByTimeout.rawValue
-    let userInput = 1 << CGEventType.tapDisabledByUserInput.rawValue
-    return CGEventMask(keyDown | timeout | userInput)
-}()
-
-private final class EngineState {
+fileprivate final class EngineState {
     var buffer = ""
     var matcher: KeywordMatcher
     var phrases: [String: String]
     let injector = ClipboardInjector()
     var enabled = true
     var isExpanding = false
+    var debugKeys = false
     var onTapDisabled: ((CGEventType) -> Void)?
 
     init(phrases: [String: String]) {
@@ -44,50 +38,21 @@ private final class EngineState {
         self.matcher = KeywordMatcher(keywords: Array(phrases.keys))
         self.buffer = ""
     }
-}
 
-private func expanderTapCallback(
-    proxy: CGEventTapProxy,
-    type: CGEventType,
-    event: CGEvent,
-    userInfo: UnsafeMutableRawPointer?
-) -> Unmanaged<CGEvent>? {
-    guard let userInfo else {
-        return Unmanaged.passUnretained(event)
-    }
-
-    let state = Unmanaged<EngineState>.fromOpaque(userInfo).takeUnretainedValue()
-
-    if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
-        state.onTapDisabled?(type)
-        return nil
-    }
-
-    guard state.enabled, !state.isExpanding, type == .keyDown else {
-        return Unmanaged.passUnretained(event)
-    }
-
-    if let keyword = state.processKeyDown(event) {
-        DispatchQueue.main.async {
-            state.performExpansion(keyword: keyword)
-        }
-    }
-
-    return Unmanaged.passUnretained(event)
-}
-
-extension EngineState {
-    fileprivate func processKeyDown(_ event: CGEvent) -> String? {
-        let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
-
-        if shouldReset(forKeyCode: Int(keyCode)) {
+    func processKeyDown(_ event: CGEvent) -> String? {
+        let keyCode = Int(event.getIntegerValueField(.keyboardEventKeycode))
+        if shouldReset(forKeyCode: keyCode) {
             buffer = ""
             return nil
         }
 
-        guard let character = character(from: event) else {
-            return nil
-        }
+        var length = 0
+        var units = [UniChar](repeating: 0, count: 8)
+        event.keyboardGetUnicodeString(maxStringLength: 8, actualStringLength: &length, unicodeString: &units)
+        guard length > 0 else { return nil }
+
+        let string = String(utf16CodeUnits: units, count: length)
+        guard string.count == 1, let character = string.first else { return nil }
 
         if matcher.shouldResetBuffer(for: character) {
             buffer = ""
@@ -102,7 +67,7 @@ extension EngineState {
         return matcher.match(in: buffer)
     }
 
-    fileprivate func performExpansion(keyword: String) {
+    func performExpansion(keyword: String) {
         guard !isExpanding, let phrase = phrases[keyword] else {
             return
         }
@@ -131,32 +96,56 @@ extension EngineState {
             return false
         }
     }
+}
 
-    private func character(from event: CGEvent) -> Character? {
-        var length = 0
-        var units = [UniChar](repeating: 0, count: 8)
-        event.keyboardGetUnicodeString(maxStringLength: 8, actualStringLength: &length, unicodeString: &units)
-        guard length > 0 else { return nil }
-        let string = String(utf16CodeUnits: units, count: length)
-        guard string.count == 1, let character = string.first else { return nil }
-        return character
+private func expanderTapCallback(
+    proxy: CGEventTapProxy,
+    type: CGEventType,
+    event: CGEvent,
+    userInfo: UnsafeMutableRawPointer?
+) -> Unmanaged<CGEvent>? {
+    guard let userInfo else {
+        return Unmanaged.passUnretained(event)
     }
+
+    let state = Unmanaged<EngineState>.fromOpaque(userInfo).takeUnretainedValue()
+
+    if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+        state.onTapDisabled?(type)
+        return nil
+    }
+
+    guard state.enabled, !state.isExpanding, type == .keyDown else {
+        return Unmanaged.passUnretained(event)
+    }
+
+    if state.debugKeys {
+        let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
+        fputs("key_seen|keycode=\(keyCode)\n", stderr)
+    }
+
+    if let keyword = state.processKeyDown(event) {
+        DispatchQueue.main.async {
+            state.performExpansion(keyword: keyword)
+        }
+    }
+
+    return Unmanaged.passUnretained(event)
 }
 
 public final class ExpanderEngine {
     private let state: EngineState
-    private var tap: CFMachPort?
+    private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
     private var healthTimer: DispatchSourceTimer?
     private var healthCheckCount: UInt = 0
     private let healthConfig: TapHealthMonitorConfig
+    private let debugKeys: Bool
 
     public init(phrases: [String: String], healthConfig: TapHealthMonitorConfig = .default) {
         state = EngineState(phrases: phrases)
         self.healthConfig = healthConfig
-        state.onTapDisabled = { [weak self] reason in
-            self?.reenableTap(reason: reason)
-        }
+        debugKeys = ProcessInfo.processInfo.environment["KEYPOP_DEBUG"] == "1"
     }
 
     public func reload(phrases: [String: String]) {
@@ -170,8 +159,14 @@ public final class ExpanderEngine {
 
     public func start() throws {
         let snapshot = PermissionProbe.snapshot()
-        guard snapshot.readyForListen else { throw ExpanderEngineError.listenNotReady }
-        guard snapshot.readyForInject else { throw ExpanderEngineError.injectNotReady }
+        guard snapshot.readyForInject else {
+            PermissionProbe.logDiagnostics(snapshot, to: stderr)
+            throw ExpanderEngineError.injectNotReady
+        }
+        guard snapshot.readyForListen else {
+            PermissionProbe.logDiagnostics(snapshot, to: stderr)
+            throw ExpanderEngineError.listenNotReady
+        }
 
         try installTap()
         startHealthMonitor()
@@ -187,43 +182,32 @@ public final class ExpanderEngine {
         CFRunLoopRun()
     }
 
-    private func reenableTap(reason: CGEventType) {
-        guard let tap else { return }
-        CGEvent.tapEnable(tap: tap, enable: true)
-        let label = reason == .tapDisabledByTimeout ? "timeout" : "user_input"
-        fputs("tap_reenabled|\(label)\n", stderr)
-    }
-
     private func installTap() throws {
         teardownTap()
-
-        let userInfo = Unmanaged.passUnretained(state).toOpaque()
-        guard let tap = CGEvent.tapCreate(
-            tap: .cgSessionEventTap,
-            place: .tailAppendEventTap,
-            options: .listenOnly,
-            eventsOfInterest: keyboardEventMask,
-            callback: expanderTapCallback,
-            userInfo: userInfo
-        ) else {
-            throw ExpanderEngineError.tapCreateFailed
+        state.debugKeys = debugKeys
+        state.onTapDisabled = { [weak self] reason in
+            self?.reenableTap(reason: reason)
         }
 
-        self.tap = tap
-        runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
-        CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
-        CGEvent.tapEnable(tap: tap, enable: true)
+        let installed = try CGEventTapListen.install(
+            userInfo: Unmanaged.passUnretained(state).toOpaque(),
+            callback: expanderTapCallback
+        )
+        eventTap = installed.tap
+        runLoopSource = installed.source
     }
 
     private func teardownTap() {
-        if let tap {
-            CGEvent.tapEnable(tap: tap, enable: false)
-        }
-        if let runLoopSource {
-            CFRunLoopRemoveSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
-        }
-        tap = nil
+        CGEventTapListen.teardown(tap: eventTap, source: runLoopSource)
+        eventTap = nil
         runLoopSource = nil
+    }
+
+    private func reenableTap(reason: CGEventType) {
+        guard let eventTap else { return }
+        CGEvent.tapEnable(tap: eventTap, enable: true)
+        let label = reason == .tapDisabledByTimeout ? "timeout" : "user_input"
+        fputs("tap_reenabled|\(label)\n", stderr)
     }
 
     private func startHealthMonitor() {
@@ -250,7 +234,7 @@ public final class ExpanderEngine {
     private func performScheduledHealthCheck() {
         healthCheckCount += 1
 
-        let tapEnabled = tap.map { CGEvent.tapIsEnabled(tap: $0) } ?? false
+        let tapEnabled = eventTap.map { CGEvent.tapIsEnabled(tap: $0) } ?? false
         let permissionInterval = max(1, healthConfig.permissionProbeIntervalSeconds)
         let checksPerPermissionProbe = UInt(ceil(permissionInterval / healthConfig.checkIntervalSeconds))
         let includePermissionProbe = healthCheckCount % checksPerPermissionProbe == 0
@@ -275,8 +259,8 @@ public final class ExpanderEngine {
 
         if issues.contains(.tapDisabled) || issues.contains(.listenPermissionLost) {
             reinstallTapFromHealthCheck()
-        } else if issues.contains(.staleAxCacheSuspected) {
-            fputs("tap_health_hint|restart keypop after macOS update or re-sign\n", stderr)
+        } else if issues.contains(.staleTCCSuspected) {
+            fputs("tap_health_hint|re-grant TCC or run ./scripts/fix-keypop-tcc.sh after rebuild\n", stderr)
         }
     }
 
@@ -294,7 +278,7 @@ public final class ExpanderEngine {
         case .tapDisabled: return "tap_disabled"
         case .listenPermissionLost: return "listen_lost"
         case .injectPermissionLost: return "inject_lost"
-        case .staleAxCacheSuspected: return "stale_ax_cache"
+        case .staleTCCSuspected: return "stale_tcc"
         }
     }
 }

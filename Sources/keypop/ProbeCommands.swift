@@ -1,30 +1,6 @@
-import ApplicationServices
-import AppKit
 import Foundation
 import KSPrivateBridge
 import KeypopKit
-
-private final class KeyListenState {
-    var count = 0
-}
-
-private func keyListenCallback(
-    proxy: CGEventTapProxy,
-    type: CGEventType,
-    event: CGEvent,
-    userInfo: UnsafeMutableRawPointer?
-) -> Unmanaged<CGEvent>? {
-    guard let userInfo else {
-        return Unmanaged.passUnretained(event)
-    }
-    let state = Unmanaged<KeyListenState>.fromOpaque(userInfo).takeUnretainedValue()
-    if type == .keyDown {
-        state.count += 1
-        let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
-        fputs("keydown|\(state.count)|keycode=\(keyCode)\n", stderr)
-    }
-    return Unmanaged.passUnretained(event)
-}
 
 enum ProbeCommands {
     enum Subcommand: String {
@@ -38,6 +14,7 @@ enum ProbeCommands {
         var seconds: Double = 5
         var text: String = "keypop-probe-inject-test"
         var json: Bool = true
+        var request: Bool = false
     }
 
     struct ListenResult: Codable {
@@ -74,6 +51,8 @@ enum ProbeCommands {
                 }
             case "--plain":
                 options.json = false
+            case "--request":
+                options.request = true
             default:
                 fputs("Unknown flag: \(args[index])\n", stderr)
             }
@@ -91,7 +70,13 @@ enum ProbeCommands {
         }
     }
 
-    static func runPermissions(json: Bool) throws {
+    static func runPermissions(json: Bool, request: Bool) throws {
+        if request {
+            let listenRequested = PermissionProbe.requestListenAccess()
+            let postRequested = PermissionProbe.requestPostAccess()
+            fputs("request_listen=\(listenRequested) request_post=\(postRequested)\n", stderr)
+        }
+
         let snapshot = PermissionProbe.snapshot()
         if json {
             try printJSON(snapshot)
@@ -101,10 +86,15 @@ enum ProbeCommands {
             print("post_preflight=\(snapshot.postEventPreflight)")
             print("live_tap_creates=\(snapshot.liveTapCreates)")
             print("live_tap_enabled=\(snapshot.liveTapEnabled)")
-            print("stale_ax_cache_suspected=\(snapshot.staleAxCacheSuspected)")
+            print("stale_tcc_suspected=\(snapshot.staleTCCSuspected)")
             print("ready_for_listen=\(snapshot.readyForListen)")
             print("ready_for_inject=\(snapshot.readyForInject)")
+            print("bundle=\(snapshot.bundleIdentifier)")
+            print("executable=\(snapshot.executablePath)")
+            print("plist_input_monitoring_key=\(snapshot.hasInputMonitoringUsageDescription)")
+            print("plist_accessibility_key=\(snapshot.hasAccessibilityUsageDescription)")
         }
+        PermissionProbe.logDiagnostics(snapshot, to: stderr)
     }
 
     static func runListen(seconds: Double) throws {
@@ -114,30 +104,11 @@ enum ProbeCommands {
             throw CLIError.runtime("listen not ready")
         }
 
-        let state = KeyListenState()
-        let userInfo = Unmanaged.passUnretained(state).toOpaque()
-        let mask = (1 << CGEventType.keyDown.rawValue)
-
-        guard let tap = CGEvent.tapCreate(
-            tap: .cgSessionEventTap,
-            place: .tailAppendEventTap,
-            options: .listenOnly,
-            eventsOfInterest: CGEventMask(mask),
-            callback: keyListenCallback,
-            userInfo: userInfo
-        ) else {
-            throw CLIError.runtime("Failed to create event tap")
+        fputs("Listening for \(seconds)s via CGEventTap — type in any app. Key events on stderr.\n", stderr)
+        let count = try CGEventTapListen.runProbe(seconds: seconds) { keyCode in
+            fputs("keydown|keycode=\(keyCode)\n", stderr)
         }
-
-        let runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
-        CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
-        CGEvent.tapEnable(tap: tap, enable: true)
-
-        fputs("Listening for \(seconds)s — type in any app. Key events on stderr.\n", stderr)
-        RunLoop.current.run(until: Date().addingTimeInterval(seconds))
-
-        CGEvent.tapEnable(tap: tap, enable: false)
-        try printJSON(ListenResult(keysSeen: state.count, seconds: seconds))
+        try printJSON(ListenResult(keysSeen: count, seconds: seconds))
     }
 
     static func runInject(text: String) throws {
@@ -164,7 +135,7 @@ enum ProbeCommands {
 
         switch command {
         case .permissions:
-            try runPermissions(json: options.json)
+            try runPermissions(json: options.json, request: options.request)
         case .listen:
             try runListen(seconds: options.seconds)
         case .inject:

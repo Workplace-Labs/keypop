@@ -67,6 +67,7 @@ echo "Installing LaunchAgent for keypop..."
 
 echo ""
 echo "Next steps:"
+echo "  One-time: ./scripts/create-keypop-signing-cert.sh   # stable TCC across rebuilds"
 echo "  Grant Input Monitoring + Accessibility to: ${HOME}/.local/KeyPop.app"
 echo "  System Settings → Privacy & Security → click + → Cmd+Shift+G → paste app path"
 echo "  keypop import kits/prompts-core.snippets.json --prefix ';p' --dry-run"

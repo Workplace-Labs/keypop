@@ -75,6 +75,10 @@ keypop import kits/prompts-core.snippets.json --apply
 keypop import kits/workplace-labs-top5.snippets.json --apply
 keypop import kits/lab-rats.snippets.json --apply
 
+# One-time: stable code signing so TCC grants survive rebuilds
+./scripts/create-keypop-signing-cert.sh
+./scripts/install.sh
+
 # Grant TCC permissions to ~/.local/KeyPop.app, then:
 ./scripts/launch-keypop.sh restart
 ```

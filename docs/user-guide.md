@@ -44,9 +44,12 @@ Then restart:
 ```sh
 ./scripts/launch-keypop.sh restart
 ./scripts/launch-keypop.sh status     # expect: running + KeyPop.app path
+~/.local/KeyPop.app/Contents/MacOS/keypop probe permissions   # liveTapCreates=true
 ```
 
 Type `;pcr` in Warp to verify.
+
+**Stable signing (recommended):** run `./scripts/create-keypop-signing-cert.sh` once before `install.sh`. Rebuilds then keep the same signature so TCC grants survive. Without it, ad-hoc signing orphans grants on every rebuild — use `./scripts/fix-keypop-tcc.sh --rebundle` to reset.
 
 Replacements also sync to iPhone/iPad via iCloud (System Settings → Keyboard → Text Replacements).
 
@@ -143,7 +146,9 @@ tail -f ~/.local/log/keypop.log     # expansion / tap health logs
 
 **Daemon stopped after sleep** — check log for `tap_health` lines; restart: `./scripts/launch-keypop.sh restart`
 
-**TCC not working after rebuild** — re-grant permissions to `~/.local/KeyPop.app` (rebuild re-signs the bundle), remove stale exec entries, then `./scripts/launch-keypop.sh restart`.
+**TCC not working after rebuild** — run `./scripts/fix-keypop-tcc.sh --rebundle`, re-grant both permissions to `~/.local/KeyPop.app`, remove stale bare `keypop` exec entries, then `./scripts/launch-keypop.sh restart`. Probe: `keypop probe permissions` must show `readyForListen: true`.
+
+**Probe says listen preflight true but tap fails** — stale TCC grant from an old signature. `./scripts/fix-keypop-tcc.sh` resets and re-prompts.
 
 **`keypop` synced but Warp unchanged** — check stderr for `keypop_hint|` lines; confirm `keypop run` is loaded and log shows `reloaded|N snippets` after mutations.
 

@@ -36,13 +36,44 @@ cat >"$APP_PLIST" <<'PLIST'
   <key>CFBundleVersion</key><string>2</string>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>LSUIElement</key><true/>
+  <key>NSInputMonitoringUsageDescription</key>
+  <string>KeyPop listens for text replacement shortcuts (e.g. ;pcr) and expands them in Warp, VS Code, Cursor, and terminals.</string>
+  <key>NSAccessibilityUsageDescription</key>
+  <string>KeyPop injects expanded text into the active app after you type a shortcut.</string>
 </dict>
 </plist>
 PLIST
 
-codesign -s - --force --deep "$APP_ROOT" >/dev/null
+# Signing: prefer KEYPOP_SIGNING_IDENTITY, then local "KeyPop Dev" self-signed cert.
+# Run ./scripts/create-keypop-signing-cert.sh once. Do not use client Apple Dev certs.
+DEFAULT_SIGNING_IDENTITY="KeyPop Dev"
+
+resolve_signing_identity() {
+  if [[ -n "${KEYPOP_SIGNING_IDENTITY:-}" ]]; then
+    echo "${KEYPOP_SIGNING_IDENTITY}"
+    return 0
+  fi
+  if security find-certificate -c "${DEFAULT_SIGNING_IDENTITY}" -a 2>/dev/null | grep -q "keychain:"; then
+    echo "${DEFAULT_SIGNING_IDENTITY}"
+    return 0
+  fi
+  return 1
+}
+
+SIGNING_IDENTITY=""
+if SIGNING_IDENTITY="$(resolve_signing_identity)"; then
+  codesign --force --sign "$SIGNING_IDENTITY" --deep "$APP_ROOT" >/dev/null
+  echo "Signed with: ${SIGNING_IDENTITY}"
+else
+  echo "warning: no KeyPop Dev certificate; using ad-hoc signing (TCC grants break on every rebuild)" >&2
+  echo "  Run: ./scripts/create-keypop-signing-cert.sh" >&2
+  codesign --force --sign - --deep "$APP_ROOT" >/dev/null
+fi
+
+codesign -dv --verbose=2 "$APP_ROOT" 2>&1 | awk -F= '/Authority=|Identifier=|TeamIdentifier=/{print}'
 
 echo "Bundled: ${APP_MACOS}/keypop"
 echo "Grant TCC to: ${APP_ROOT}"
-echo "  System Settings → Privacy & Security → Input Monitoring + Accessibility"
+echo "  System Settings → Privacy & Security → Input Monitoring"
+echo "  System Settings → Privacy & Security → Accessibility"
 echo "  Click +, press Cmd+Shift+G, paste: ${APP_ROOT}"

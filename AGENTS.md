@@ -40,7 +40,7 @@ Mutations auto-export to `~/.config/keypop/snippets.json` unless `--no-sync`. Ru
 
 Scripts: `install.sh`, `bundle-keypop-app.sh`, `launch-keypop.sh`, `sync-keypop.sh`, `probes/run-sprint0.sh`
 
-**TCC:** LaunchAgent runs `~/.local/KeyPop.app/Contents/MacOS/keypop run`. Grant Input Monitoring + Accessibility to **`~/.local/KeyPop.app`**, not Terminal. Re-grant after `install.sh` rebuilds the bundle.
+**TCC:** LaunchAgent runs `~/.local/KeyPop.app/Contents/MacOS/keypop run`. Grant **Input Monitoring** + **Accessibility** to **`~/.local/KeyPop.app`**, not Terminal. Re-grant after `install.sh` rebuilds the bundle. Sign with `./scripts/create-keypop-signing-cert.sh` (`KeyPop Dev` self-signed cert — not client Apple Dev accounts).
 
 `keypop` prints `keypop_hint|` on stderr when sync succeeds but the daemon is not running.
 

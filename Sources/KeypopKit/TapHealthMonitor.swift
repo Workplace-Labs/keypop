@@ -20,7 +20,7 @@ public enum TapHealthIssue: Equatable, Sendable {
     case tapDisabled
     case listenPermissionLost
     case injectPermissionLost
-    case staleAxCacheSuspected
+    case staleTCCSuspected
 }
 
 public enum TapHealthMonitor {
@@ -45,8 +45,8 @@ public enum TapHealthMonitor {
         if !snapshot.readyForInject {
             issues.append(.injectPermissionLost)
         }
-        if snapshot.staleAxCacheSuspected {
-            issues.append(.staleAxCacheSuspected)
+        if snapshot.staleTCCSuspected {
+            issues.append(.staleTCCSuspected)
         }
 
         return issues
