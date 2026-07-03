@@ -37,6 +37,12 @@ if [[ "${major}" -lt 14 ]]; then
   exit 1
 fi
 
+if ! command -v swift >/dev/null 2>&1; then
+  echo "error: swift not found. Install Xcode Command Line Tools (not full Xcode):" >&2
+  echo "  xcode-select --install" >&2
+  exit 1
+fi
+
 echo "Building release binary..."
 swift build --package-path "$PROJECT_DIR" -c release -q
 

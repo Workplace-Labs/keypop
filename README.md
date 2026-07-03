@@ -49,7 +49,7 @@ kits/*.snippets.json  ──keypop import──►  Apple Text Replacements (iOS
 ## Requirements
 
 - macOS 14+ (validated on macOS 26, Apple Silicon)
-- Swift toolchain
+- **Xcode Command Line Tools** — not the full Xcode app. Install with `xcode-select --install` (no App Store sign-in, ~1-2GB vs. Xcode's 10GB+). Provides the `swift` toolchain, `clang`, and `codesign` that the build and install scripts need.
 - Uses private `KeyboardServices` APIs — not Mac App Store safe
 - `keypop run` requires **Input Monitoring** + **Accessibility** permissions
 

@@ -57,6 +57,8 @@ Scripts: `install.sh`, `bundle-keypop-app.sh`, `launch-keypop.sh`, `sync-keypop.
 
 ## Validation
 
+Requires Xcode Command Line Tools (`xcode-select --install`) — not the full Xcode app. `install.sh` fails fast with that instruction if `swift` is missing.
+
 ```sh
 swift build && swift test
 ./scripts/install.sh
