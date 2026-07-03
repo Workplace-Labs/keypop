@@ -38,7 +38,7 @@ KeyPop is a practical tool with a little personality. When writing prose (README
 
 Mutations auto-export to `~/.config/keypop/snippets.json` unless `--no-sync`. Running `keypop run` reloads from that file via directory watch (~200ms debounce).
 
-Scripts: `install.sh`, `bundle-keypop-app.sh`, `launch-keypop.sh`, `sync-keypop.sh`, `fix-keypop-tcc.sh`, `generate-app-icon.sh`, `keypop-paths.sh`
+Scripts: `install.sh`, `bundle-keypop-app.sh`, `launch-keypop.sh`, `sync-keypop.sh`, `fix-keypop-tcc.sh`, `generate-app-icon.sh`, `keypop-paths.sh`, `sync-keypop-skill.sh`
 
 **Install layout:** CLI → `~/.local/bin/keypop`. App bundle → `~/Applications/KeyPop.app`. Override app path: `KEYPOP_APP=... ./scripts/install.sh`.
 
@@ -54,6 +54,12 @@ Scripts: `install.sh`, `bundle-keypop-app.sh`, `launch-keypop.sh`, `sync-keypop.
 **Icon:** Source SVG `assets/icons/keypop-icon-orbit-tilt.svg` → `./scripts/generate-app-icon.sh` → `assets/AppIcon.icns` (bundled on install).
 
 `keypop` prints `keypop_hint|` on stderr when sync succeeds but the daemon is not running.
+
+## Skill docs
+
+`.cursor/skills/keypop/SKILL.md` is canonical. `.agents/skills/keypop/SKILL.md` is a symlink to it (never drifts). `wl-agent-toolkit/skills/keypop/SKILL.md` (sibling repo) is a real generated copy — never edit it directly.
+
+One-time setup: `git config core.hooksPath scripts/hooks` — the pre-commit hook runs `scripts/sync-keypop-skill.sh` automatically when the canonical file changes, regenerating the toolkit copy on disk. It lives in a separate repo, so commit it there yourself.
 
 ## Validation
 

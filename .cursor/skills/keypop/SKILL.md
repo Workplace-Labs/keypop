@@ -9,9 +9,32 @@ description: >-
 metadata:
   version: "1.0"
   project: keypop
+  repo: https://github.com/Workplace-Labs/keypop
 ---
 
 # keypop — Text Replacements
+
+> This file is canonical (`.agents/skills/keypop/SKILL.md` is a symlink to
+> it). `wl-agent-toolkit/skills/keypop/SKILL.md` is a generated copy — edit
+> this file, then run `./scripts/sync-keypop-skill.sh` (or just commit; the
+> pre-commit hook does it for you, see AGENTS.md).
+
+## Project context
+
+Canonical repo: [Workplace-Labs/keypop](https://github.com/Workplace-Labs/keypop). After install, `keypop` is at `~/.local/bin/keypop` and KeyPop.app at `~/Applications/KeyPop.app`.
+
+**macOS only.** Requires **Xcode Command Line Tools** (`xcode-select --install` — not the full Xcode app) and Input Monitoring + Accessibility TCC grants to the app bundle.
+
+## Install
+
+If `keypop` is not installed yet:
+
+- **From this repo:** `./scripts/install.sh` (see Daemon section below)
+- **From the wl-agent-toolkit**, without a local checkout: `scripts/keypop-install.sh` — clones (or updates) the repo, then runs the same installer. Accepts `--repo <path>` / `$KEYPOP_REPO_PATH`, and `--yes` to skip the interactive TCC pause for scripted/agent runs.
+
+Either path builds, signs, installs the LaunchAgent, and walks through the Input Monitoring + Accessibility TCC grants.
+
+If `keypop` is already installed, use the daemon commands below rather than re-running an installer.
 
 ## Architecture
 
@@ -74,6 +97,7 @@ keypop import kits/prompts-core.snippets.json --prefix ';p' --apply --on-conflic
 - **Semicolon prefix:** `;github` not `github`
 - **Plain text only:** no `{clipboard}`, `{date}`, or dynamic placeholders
 - **~2000 char limit:** risky on iOS for long prompts
+- **Workplace Labs zones:** `;p` prompts, `;wl` team shortcuts (see `kits/workplace-labs-top5.snippets.json`)
 
 ## Daemon
 
@@ -114,7 +138,7 @@ tail -f ~/.local/log/keypop.log          # listen_ready|tap_installed, expanded|
 
 ## Personal workspace (`private/`)
 
-Gitignored folder for machine-local content. Scaffold it when the user wants a personal or team user guide, private kits, or a snippet mirror for diffing.
+Gitignored folder in the keypop repo for machine-local content. Scaffold when the user wants a personal or team user guide, private kits, or a snippet mirror.
 
 ```
 private/
@@ -136,7 +160,7 @@ Refresh the mirror:
 ```sh
 mkdir -p private
 keypop export --output private/snippets.json
-keypop export --prefix ';ac' --output private/kits/acme-team.snippets.json
+keypop export --prefix ';wl' --output private/kits/wl-team.snippets.json
 ```
 
 ### Create a personal user guide
@@ -172,6 +196,6 @@ Fill in their actual prefix zones, example shortcuts, and kit paths. Do not comm
 |------|---------|
 | `~/.config/keypop/snippets.json` | live runtime snippets (installed app / daemon) |
 | `~/Applications/KeyPop.app` | app bundle (TCC target) |
-| `kits/` | shareable snippet kits (repo) |
+| `kits/` | shareable snippet kits (in keypop repo) |
 | `private/` | gitignored personal guide, mirrors, backups, private kits |
 | `private/backups/` | pre-apply import backups |
