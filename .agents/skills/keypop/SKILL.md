@@ -9,7 +9,7 @@ description: >-
   the user through conversational post-install onboarding. Also covers the
   keypop daemon and expansion troubleshooting.
 metadata:
-  version: "1.3"
+  version: "1.4"
   project: keypop
   repo: https://github.com/Workplace-Labs/keypop
 ---
@@ -28,7 +28,7 @@ metadata:
 **Primary:** turn reusable AI prompts into shortcuts you can type anywhere.
 
 - **Manage** — create, update, organize, and prune prompt shortcuts
-- **Use** — type `;pproof` (or any keyword) and get the full prompt pasted in Cursor, Warp, VS Code, Terminal, Notes, Mail, Slack, and more
+- **Use** — type `;pproof` (or any keyword) and get the full prompt pasted in your AI chat app, Notes, Mail, Slack, Cursor, Warp, VS Code, Terminal, and more
 - **Share** — ship prompts as versioned **kits** (`.snippets.json`) your team can import
 
 **Also great for:** email signatures, contact info, follow-up boilerplate, and other text you paste often. Same mechanism, same shortcuts.
@@ -67,7 +67,7 @@ If `keypop` is already installed, use the daemon commands below rather than re-r
 **You do first, silently:** confirm the daemon is running and import `kits/prompts-core.snippets.json` (`--apply --on-conflict skip`). If the daemon isn't running or permissions look missing, go to Step 2 first instead of saying anything yet.
 
 **Then say something like:**
-> You're set up. Open **Cursor** or **Warp**, click into any text box, and type `;pproof` then hit space.
+> You're set up. Open whatever AI chat app you use most — ChatGPT, Claude, Cursor, Warp, anywhere you paste prompts — click into the message box, and type `;pproof` then hit space.
 
 **Done when:** the full prompt appears out of nowhere. That's the entire pitch in one keystroke — an AI prompt library at your fingertips, everywhere you type.
 
@@ -93,9 +93,11 @@ If `keypop` is already installed, use the daemon commands below rather than re-r
 ### Step 3 — Make one shortcut yours
 
 **Say something like:**
-> Now the good part. What's something you type or paste all the time — a prompt, your email sign-off, a LinkedIn link, anything?
+> Now the good part. What's a prompt you use all the time — or something else you type often, like your email sign-off or a LinkedIn link?
+>
+> Quick convention: we recommend starting your own favorite prompts with `;p` (that's what `;pproof` was) — keeps them easy to spot and separate from prompt kits you import later.
 
-**You do:** take whatever they say and save it as a shortcut with a sensible `;` keyword. Confirm the wording with them if it's ambiguous, otherwise just create it.
+**You do:** take whatever they say and save it as a shortcut — `;p` + a short name for a personal prompt, something sensible for anything else. Confirm the wording with them if it's ambiguous, otherwise just create it.
 
 **Then say something like:**
 > Done — go type `;whatever` and watch it fill in.
@@ -109,7 +111,7 @@ If `keypop` is already installed, use the daemon commands below rather than re-r
 **You do:** import `kits/workplace-labs-top5.snippets.json` (`--apply --on-conflict skip`).
 
 **Say something like:**
-> Here's where it gets genuinely useful. Next time you start a chat with AI, try `;wlask` — it makes the AI interview you before answering instead of guessing. Or `;wlredteam` when you want your idea stress-tested instead of just agreed with.
+> Here's where it gets genuinely useful. Workplace Labs publishes a shared prompt kit under `;wl` — that's just their naming; any team can brand a kit the same way. Next time you start a chat with AI, try `;wlask` — it makes the AI interview you before answering instead of guessing. Or `;wlredteam` when you want your idea stress-tested instead of just agreed with.
 >
 > These are prompts other people already refined. You get them for free, and they update if the team improves them.
 
@@ -152,15 +154,15 @@ Mutations auto-export to `~/.config/keypop/snippets.json`. The daemon watches th
 
 **Kits** are the sharing format: JSON arrays of `{ "name", "keyword", "text" }` files (`.snippets.json`). Repo kits live in `kits/`; team or personal kits can live in `private/kits/`.
 
-Shipped prompt kits (import with `--prefix` as needed):
+Shipped prompt kits (import with `--prefix` as needed). `;p` is the recommended convention for personal favorite prompts; `;wl` is Workplace Labs' own branded kit prefix — an example of how any team can package and prefix their prompts:
 
 | Kit | Prefix zone | Examples |
 |-----|-------------|----------|
 | `kits/prompts-core.snippets.json` | `;p` | `;pproof`, `;psum` |
-| `kits/workplace-labs-top5.snippets.json` | `;wl` | `;wlask`, `;wlredteam`, `;wlx` |
-| `kits/workplace-labs-thinking.snippets.json` | `;wl` | `;wlpremortem`, `;wloptions` |
-| `kits/workplace-labs-dev.snippets.json` | `;wl` | dev-focused prompts |
-| `kits/workplace-labs-hr.snippets.json` | `;wl` | HR/coaching prompts |
+| `kits/workplace-labs-top5.snippets.json` | `;wl` (Workplace Labs example) | `;wlask`, `;wlredteam`, `;wlx` |
+| `kits/workplace-labs-thinking.snippets.json` | `;wl` (Workplace Labs example) | `;wlpremortem`, `;wloptions` |
+| `kits/workplace-labs-dev.snippets.json` | `;wl` (Workplace Labs example) | dev-focused prompts |
+| `kits/workplace-labs-hr.snippets.json` | `;wl` (Workplace Labs example) | HR/coaching prompts |
 
 ## Workflows
 
@@ -221,7 +223,7 @@ keypop stats --prefix ';p'    # usage counts from the Mac daemon
 ## Conventions
 
 - **Semicolon prefix:** `;pproof` not `pproof` — avoids accidental expansion while typing
-- **Prefix zones:** `;p` personal/general prompts, `;wl` Workplace Labs team prompts, `;my` contact/boilerplate — pick zones and stick to them
+- **Prefix zones:** we recommend `;p` for your own favorite prompts and `;my` for contact/boilerplate. `;wl` is Workplace Labs' example shared kit — any team can brand a kit the same way with its own prefix. Pick zones and stick to them
 - **Plain text only:** no `{clipboard}`, `{date}`, or dynamic placeholders (iOS + Mac parity)
 - **~2000 char limit:** long prompts are risky on iOS; keep prompt `text` focused
 - **Prompt `text` stays pasteable:** playful names are fine (`"Bottle That Prompt"`); the expanded text should read like something you'd paste into any AI chat
