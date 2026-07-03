@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
-# Pre-commit hook: keep the wl-agent-toolkit SKILL.md copy in sync.
+# Pre-commit hook: keep keypop's SKILL.md copies in sync.
 #
 # One-time setup: git config core.hooksPath scripts/hooks
 #
-# .agents/skills/keypop/SKILL.md is a symlink to the canonical
-# .cursor/skills/keypop/SKILL.md, so it never needs syncing. Only the
-# sibling wl-agent-toolkit repo has a real copy — this regenerates it on
-# disk (not auto-committed, since it's a separate repo) whenever the
-# canonical file is staged.
+# If the canonical .cursor/skills/keypop/SKILL.md is staged, regenerate the
+# copies and stage the in-repo one (.agents/skills/keypop/SKILL.md — a real
+# file, not a symlink, so raw GitHub fetches and Windows checkouts resolve
+# it correctly). The wl-agent-toolkit copy lives in a separate repo, so
+# it's updated on disk but not auto-committed — sync-keypop-skill.sh prints
+# a reminder.
 
 set -euo pipefail
 
@@ -15,4 +16,5 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 
 if git diff --cached --name-only | grep -qx ".cursor/skills/keypop/SKILL.md"; then
   "${REPO_ROOT}/scripts/sync-keypop-skill.sh"
+  git add "${REPO_ROOT}/.agents/skills/keypop/SKILL.md"
 fi

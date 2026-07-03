@@ -1,1 +1,203 @@
-../../../.cursor/skills/keypop/SKILL.md
+---
+name: keypop
+description: >-
+  Manage Apple Text Replacements and Mac system-wide text expansion using the
+  keypop CLI. Use when the user wants to list, add, update, delete, import, or
+  export text replacements, manage snippet kits (.snippets.json), run or check
+  the keypop daemon, or troubleshoot expansion in Warp, VS Code, Cursor, or
+  terminals.
+metadata:
+  version: "1.0"
+  project: keypop
+  repo: https://github.com/Workplace-Labs/keypop
+---
+
+# keypop — Text Replacements
+
+> This file is canonical. `.agents/skills/keypop/SKILL.md` and
+> `wl-agent-toolkit/skills/keypop/SKILL.md` are generated copies (real
+> files, not symlinks, so raw GitHub fetches and Windows checkouts still
+> resolve correctly) — edit this file, then run
+> `./scripts/sync-keypop-skill.sh` (or just commit; the pre-commit hook
+> does it for you, see AGENTS.md).
+
+## Project context
+
+Canonical repo: [Workplace-Labs/keypop](https://github.com/Workplace-Labs/keypop). After install, `keypop` is at `~/.local/bin/keypop` and KeyPop.app at `~/Applications/KeyPop.app`.
+
+**macOS only.** Requires **Xcode Command Line Tools** (`xcode-select --install` — not the full Xcode app) and Input Monitoring + Accessibility TCC grants to the app bundle.
+
+## Install
+
+If `keypop` is not installed yet:
+
+- **From this repo:** `./scripts/install.sh` (see Daemon section below)
+- **From the wl-agent-toolkit**, without a local checkout: `scripts/keypop-install.sh` — clones (or updates) the repo, then runs the same installer. Accepts `--repo <path>` / `$KEYPOP_REPO_PATH`, and `--yes` to skip the interactive TCC pause for scripted/agent runs.
+
+Either path builds, signs, installs the LaunchAgent, and walks through the Input Monitoring + Accessibility TCC grants.
+
+If `keypop` is already installed, use the daemon commands below rather than re-running an installer.
+
+## Architecture
+
+Two layers, one keyword library:
+
+| Layer | Command | Where it works |
+|-------|---------|----------------|
+| Apple Text Replacements | `keypop list/create/...` | iOS, Notes, Mail, Messages, Safari, Slack |
+| Mac expander | `keypop run` | Warp, VS Code, Cursor, Terminal |
+
+Mutations auto-export to `~/.config/keypop/snippets.json`. `keypop run` watches that file (~200ms debounce) and reloads automatically.
+
+## CLI reference
+
+```sh
+keypop list [--prefix <prefix>]
+keypop get --shortcut <shortcut>
+keypop export [--prefix <prefix>] [--output <path>]
+keypop create --shortcut <shortcut> --phrase <phrase>
+keypop update --shortcut <shortcut> --phrase <phrase>
+keypop delete --shortcut <shortcut>
+keypop import <path|-> [--prefix <prefix>] [--dry-run|--apply] [--on-conflict fail|skip|overwrite] [--no-sync]
+
+keypop run [--snippets ~/.config/keypop/snippets.json]
+
+keypop probe permissions|listen|inject|bridge
+
+keypop inspect
+keypop read-sources
+keypop db-summary
+```
+
+Disable runtime sync: `--no-sync` or `KEYPOP_SYNC=0`.
+
+## Workflows
+
+### Add or update a single replacement
+
+1. **Gather:** `keypop get --shortcut '<shortcut>'` (skip if creating)
+2. **Act:** `keypop create` or `keypop update`
+3. **Verify:** `keypop get --shortcut '<shortcut>'` and confirm `~/.config/keypop/snippets.json` matches
+
+### Import a kit
+
+Always dry-run first:
+
+```sh
+keypop import kits/prompts-core.snippets.json --prefix ';p' --dry-run
+keypop import kits/prompts-core.snippets.json --prefix ';p' --apply --on-conflict skip
+```
+
+### Re-sync runtime export
+
+```sh
+./scripts/sync-keypop.sh
+```
+
+## Conventions
+
+- **Semicolon prefix:** `;github` not `github`
+- **Plain text only:** no `{clipboard}`, `{date}`, or dynamic placeholders
+- **~2000 char limit:** risky on iOS for long prompts
+- **Workplace Labs zones:** `;p` prompts, `;wl` team shortcuts (see `kits/workplace-labs-top5.snippets.json`)
+
+## Daemon
+
+```sh
+./scripts/launch-keypop.sh status
+./scripts/launch-keypop.sh restart
+./scripts/install.sh
+./scripts/fix-keypop-tcc.sh          # rebuild + reset TCC + open System Settings
+```
+
+**Install layout:** CLI at `~/.local/bin/keypop`, app bundle at `~/Applications/KeyPop.app`.
+
+**TCC:** Grant Input Monitoring + Accessibility to `~/Applications/KeyPop.app` (the `.app` bundle — not Terminal, not the bare `keypop` binary). Use **+** → **Cmd+Shift+G** in each pane.
+
+**Signing:** `./scripts/create-keypop-signing-cert.sh` once, then `install.sh` signs with `KeyPop Dev` so TCC survives rebuilds.
+
+**Troubleshooting expansion:**
+```sh
+./scripts/launch-keypop.sh status
+tail -f ~/.local/log/keypop.log          # listen_ready|tap_installed, expanded|…
+./scripts/fix-keypop-tcc.sh              # when grants go stale after rebuild
+```
+
+**Tips for agents:**
+- Trust the **daemon log** over `keypop probe permissions` from Terminal for Input Monitoring — shell context often shows `listen=false` while the LaunchAgent tap works.
+- `listen_ready|tap_installed` = tap OK. `expanded|keyword|…` = match fired. `tap_reinstall_failed|…` = re-grant TCC + restart.
+- Stale daemons from legacy `~/.local/KeyPop.app` block expansion — `launch-keypop.sh restart` kills them; check `status` for warnings.
+- After `./scripts/install.sh`, re-grant TCC if the signature changed. Remove old entries (black exec `keypop`, legacy path) before re-adding the app.
+
+**stderr signals:**
+- `keypop_sync|<path>|<count>` — export succeeded
+- `keypop_hint|daemon not running` — run `./scripts/launch-keypop.sh restart`
+
+## Safety
+
+- Never write directly to `~/Library/KeyboardServices/TextReplacements.db`
+- Always `--dry-run` before `import --apply`
+
+## Personal workspace (`private/`)
+
+Gitignored folder in the keypop repo for machine-local content. Scaffold when the user wants a personal or team user guide, private kits, or a snippet mirror.
+
+```
+private/
+  user-guide.md     # personal/team conventions and onboarding notes
+  snippets.json     # optional mirror (see below)
+  backups/          # import --apply backups (auto-created)
+  kits/             # optional personal team kits (*.snippets.json)
+```
+
+**Where snippets actually live**
+
+| Path | Role |
+|------|------|
+| `~/.config/keypop/snippets.json` | **Canonical runtime file** — daemon reads this; `keypop` mutations auto-export here |
+| `private/snippets.json` | Optional workspace mirror for review, diff, or agent context |
+
+Refresh the mirror:
+
+```sh
+mkdir -p private
+keypop export --output private/snippets.json
+keypop export --prefix ';wl' --output private/kits/wl-team.snippets.json
+```
+
+### Create a personal user guide
+
+When the user asks to set up personal docs or team conventions:
+
+1. `mkdir -p private`
+2. If `private/user-guide.md` is missing, create it from the outline below (adapt to their org/prefixes).
+3. Point them at `docs/user-guide.md` for public setup steps; keep team-specific rules in `private/`.
+
+**Suggested outline for `private/user-guide.md`:**
+
+```markdown
+# Text Replacements: Personal User Guide
+
+> Gitignored at private/user-guide.md. Public guide: docs/user-guide.md.
+
+## Who this is for
+## Shortcut conventions (prefix zones, naming patterns)
+## Org/team patterns (e.g. ;ac, ;wl)
+## Prompt shortcuts (;p…)
+## Kits we maintain (paths under private/kits/ or kits/)
+## Import/export workflows
+## App compatibility notes (which apps need keypop run)
+## Troubleshooting (team-specific)
+```
+
+Fill in their actual prefix zones, example shortcuts, and kit paths. Do not commit `private/` — it stays local.
+
+## Key paths
+
+| Path | Purpose |
+|------|---------|
+| `~/.config/keypop/snippets.json` | live runtime snippets (installed app / daemon) |
+| `~/Applications/KeyPop.app` | app bundle (TCC target) |
+| `kits/` | shareable snippet kits (in keypop repo) |
+| `private/` | gitignored personal guide, mirrors, backups, private kits |
+| `private/backups/` | pre-apply import backups |

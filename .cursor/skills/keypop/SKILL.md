@@ -14,10 +14,12 @@ metadata:
 
 # keypop — Text Replacements
 
-> This file is canonical (`.agents/skills/keypop/SKILL.md` is a symlink to
-> it). `wl-agent-toolkit/skills/keypop/SKILL.md` is a generated copy — edit
-> this file, then run `./scripts/sync-keypop-skill.sh` (or just commit; the
-> pre-commit hook does it for you, see AGENTS.md).
+> This file is canonical. `.agents/skills/keypop/SKILL.md` and
+> `wl-agent-toolkit/skills/keypop/SKILL.md` are generated copies (real
+> files, not symlinks, so raw GitHub fetches and Windows checkouts still
+> resolve correctly) — edit this file, then run
+> `./scripts/sync-keypop-skill.sh` (or just commit; the pre-commit hook
+> does it for you, see AGENTS.md).
 
 ## Project context
 

@@ -57,9 +57,9 @@ Scripts: `install.sh`, `bundle-keypop-app.sh`, `launch-keypop.sh`, `sync-keypop.
 
 ## Skill docs
 
-`.cursor/skills/keypop/SKILL.md` is canonical. `.agents/skills/keypop/SKILL.md` is a symlink to it (never drifts). `wl-agent-toolkit/skills/keypop/SKILL.md` (sibling repo) is a real generated copy — never edit it directly.
+`.cursor/skills/keypop/SKILL.md` is canonical. `.agents/skills/keypop/SKILL.md` and `wl-agent-toolkit/skills/keypop/SKILL.md` (sibling repo) are generated copies — never edit them directly. Kept as real files rather than symlinks: symlinks don't resolve over raw GitHub fetches (`raw.githubusercontent.com`, the Contents API), zip downloads, or Windows checkouts without symlink support enabled.
 
-One-time setup: `git config core.hooksPath scripts/hooks` — the pre-commit hook runs `scripts/sync-keypop-skill.sh` automatically when the canonical file changes, regenerating the toolkit copy on disk. It lives in a separate repo, so commit it there yourself.
+One-time setup: `git config core.hooksPath scripts/hooks` — the pre-commit hook runs `scripts/sync-keypop-skill.sh` automatically when the canonical file changes and stages the in-repo copy. The toolkit copy is updated on disk but lives in a separate repo, so commit it there yourself.
 
 ## Validation
 
