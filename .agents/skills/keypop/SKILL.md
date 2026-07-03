@@ -9,7 +9,7 @@ description: >-
   the user through conversational post-install onboarding. Also covers the
   keypop daemon and expansion troubleshooting.
 metadata:
-  version: "1.2"
+  version: "1.3"
   project: keypop
   repo: https://github.com/Workplace-Labs/keypop
 ---
@@ -55,107 +55,87 @@ If `keypop` is already installed, use the daemon commands below rather than re-r
 **When to run:** install just completed (`install.sh`, `keypop-install.sh`), user says they're new, or they ask how to get started.
 
 **How to guide (agents):**
-- **One step at a time.** Present a single step, then stop and wait for the user to try it (or say they're stuck / ready for the next one).
-- **Conversational and warm.** Short sentences. Celebrate small wins. A little personality is good — you're a friendly lab mate, not a manual.
-- **Adapt.** Skip steps they've already done. If expansion fails at step 3, troubleshoot before advancing (daemon status, TCC, log lines — see Daemon section).
-- **Five steps, then graduate.** Walk through all five below. On completion, deliver the graduation message and invite them to ask for more tips anytime.
+- **You handle the CLI.** Run status checks, imports, and shortcut creation yourself in the background — don't hand the user terminal commands to type. They should never see a command unless it's genuinely theirs to run (there isn't one in this flow).
+- **The user does the human parts.** Typing a shortcut into an app, clicking two permission toggles once, telling you a phrase they say all the time. That's the whole ask.
+- **One step at a time.** Wait for a real signal (they saw it expand, they told you the phrase, they reacted) before moving on.
+- **Warm, short, a little personality.** Guide a friend through a good party trick, not a manual.
+- **Adapt.** If a kit's already imported or permissions already granted, skip straight ahead.
 - **Deeper reference:** `docs/user-guide.md` for conventions, team sharing, and troubleshooting.
 
-### Step 1 — Make sure the lab is open
+### Step 1 — Watch it work
 
-**Goal:** confirm the CLI and daemon are alive before we load prompts.
+**You do first, silently:** confirm the daemon is running and import `kits/prompts-core.snippets.json` (`--apply --on-conflict skip`). If the daemon isn't running or permissions look missing, go to Step 2 first instead of saying anything yet.
 
-**Say something like:**
-> KeyPop's installed — nice. First thing: let's make sure the background expander is actually running. Can you run this and tell me what you get?
->
-> `./scripts/launch-keypop.sh status`
->
-> You want to see **running** and a path to `~/Applications/KeyPop.app`. If it's not running, `./scripts/launch-keypop.sh restart` usually fixes it.
+**Then say something like:**
+> You're set up. Open **Cursor** or **Warp**, click into any text box, and type `;pproof` then hit space.
 
-**Optional if curious:** `keypop inspect` — confirms the CLI can talk to Apple's Text Replacements layer.
+**Done when:** the full prompt appears out of nowhere. That's the entire pitch in one keystroke — an AI prompt library at your fingertips, everywhere you type.
 
-**Done when:** status shows running (or user restarted and it does).
+**If nothing happened:** almost always permissions — go to Step 2.
 
 ---
 
-### Step 2 — Load your first prompt kit
+### Step 2 — The one-time permission click (only if needed)
 
-**Goal:** import the starter prompts so there's something to expand.
+**Skip this step entirely if Step 1 already worked.**
+
+**You do:** open the two System Settings panes for them (Input Monitoring, Accessibility).
 
 **Say something like:**
-> Time to stock the shelves. This imports a handful of useful prompts (`;pproof`, `;psum`, plus contact boilerplate like `;myemail`):
->
-> `keypop import kits/prompts-core.snippets.json --apply --on-conflict skip`
->
-> Run that, then `keypop list --prefix ';p'` — you should see your new `;p` prompts. (Contact shortcuts like `;myemail` land too; we'll personalize those in a minute.)
+> One-time thing — I've opened System Settings. Add **KeyPop** to both **Input Monitoring** and **Accessibility**: click **+**, press **Cmd+Shift+G**, paste `~/Applications/KeyPop.app`, hit Open. Same permission category as any snippet or clipboard tool — KeyPop just needs to see when you type a shortcut.
 
-**Done when:** import succeeds and `keypop list --prefix ';p'` shows shortcuts.
+**You do after they confirm:** restart the daemon, verify the tap is live.
+
+**Done when:** back to Step 1 — `;pproof` expands.
 
 ---
 
-### Step 3 — The magic moment
-
-**Goal:** feel expansion work in a real app.
+### Step 3 — Make one shortcut yours
 
 **Say something like:**
-> This is the fun part. Open **Cursor**, **Warp**, or **VS Code** — somewhere you actually chat with AI — click into a text field, and type:
->
-> `;pproof`
->
-> …then keep typing or hit space. The full proofread prompt should appear like you pasted it. Did it work?
+> Now the good part. What's something you type or paste all the time — a prompt, your email sign-off, a LinkedIn link, anything?
 
-**If no:** check `./scripts/launch-keypop.sh status`, then `tail -5 ~/.local/log/keypop.log` for `listen_ready|tap_installed`. Missing? TCC grants to `~/Applications/KeyPop.app` — both Input Monitoring and Accessibility. `./scripts/fix-keypop-tcc.sh` is the nuclear option.
+**You do:** take whatever they say and save it as a shortcut with a sensible `;` keyword. Confirm the wording with them if it's ambiguous, otherwise just create it.
 
-**Bonus:** try the same shortcut in **Notes** — that's Apple's layer (syncs to iPhone via iCloud). Warp/Cursor need the KeyPop daemon; Notes doesn't.
+**Then say something like:**
+> Done — go type `;whatever` and watch it fill in.
 
-**Done when:** `;pproof` expands in at least one app.
+**Done when:** they've seen their own shortcut expand.
 
 ---
 
-### Step 4 — Make one shortcut yours
+### Step 4 — Borrow the team's best prompts
 
-**Goal:** personalize a placeholder or save a prompt they'll actually use.
+**You do:** import `kits/workplace-labs-top5.snippets.json` (`--apply --on-conflict skip`).
 
 **Say something like:**
-> You've got the kit — now make it yours. Pick one:
+> Here's where it gets genuinely useful. Next time you start a chat with AI, try `;wlask` — it makes the AI interview you before answering instead of guessing. Or `;wlredteam` when you want your idea stress-tested instead of just agreed with.
 >
-> **A)** Swap the placeholder email: `keypop update --shortcut ';myemail' --phrase 'you@yourdomain.com'`
->
-> **B)** Save a prompt you reach for often: `keypop create --shortcut ';pmy' --phrase 'Your go-to prompt here…'`
->
-> Which one sounds useful? Run it, then try typing your shortcut in an app.
+> These are prompts other people already refined. You get them for free, and they update if the team improves them.
 
-**Tip:** shortcuts start with `;` so you don't accidentally fire them mid-word (`;pproof` good, `proof` risky).
-
-**Done when:** they've updated or created one shortcut and confirmed it expands.
+**Done when:** they've tried one `;wl` prompt or clearly get why it's useful.
 
 ---
 
-### Step 5 — Meet the team prompts (or bottle your first)
-
-**Goal:** show kits scale beyond the starter set — import WL favorites or save from the current chat.
+### Step 5 — Pass it on
 
 **Say something like:**
-> Last step — the good stuff. Workplace Labs ships a "top 5" prompt kit. Import it:
->
-> `keypop import kits/workplace-labs-top5.snippets.json --apply --on-conflict skip`
->
-> Then try `;wlask` in a chat — it tells the AI to interview you before answering. Or `;wlredteam` to stress-test an idea.
->
-> **Or**, if something in *this* conversation already worked well: let's bottle it. Give me the prompt text and a shortcut name (like `;pstandup`) and I'll help you save it — that's the `;wlx` energy without the middleman.
+> Last one. Prompts are only as good as how easily you can hand them to someone else. If a teammate should have your shortcuts, I can package them into a file they import in one command — or if something from *this* conversation was worth keeping, tell me and I'll turn it into a shortcut right now.
 
-**Done when:** they've imported the WL kit and tried one `;wl` shortcut, **or** saved a custom prompt from the session.
+**You do:** whichever they pick — export a prefix to a kit file, or create a shortcut from something in the conversation.
+
+**Done when:** they've exported a kit, saved something from the chat, or clearly see the idea.
 
 ---
 
 ### Graduation
 
-**Say something like (after all 5 steps):**
-> You did it — five for five. You imported kits, fired a prompt in Cursor/Warp, made a shortcut yours, and leveled up with team prompts. That's the whole loop: **manage, use, share.**
+**Say something like:**
+> Five for five. You watched a prompt appear out of thin air, made one your own, borrowed sharper ones from the team, and packaged something up to share. That's the whole loop: **use it, make it yours, pass it on.**
 >
-> Your prompts also sync to iPhone/iPad through Apple Text Replacements (System Settings → Keyboard → Text Replacements) — same keywords, no extra app on iOS.
+> Bonus: it all works on your iPhone too, through Text Replacements — no extra app needed there.
 >
-> Whenever you want more — prefix zones, sharing kits with teammates, troubleshooting, or bottling prompts from a great chat — just ask. Happy expanding. 🧪
+> Ping me anytime for more — new prompt ideas, cleaning out old shortcuts, whatever. Happy expanding. 🧪
 
 **Do not** re-run onboarding unless they ask to start over.
 
