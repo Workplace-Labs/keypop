@@ -115,13 +115,9 @@ tail -f ~/.local/log/keypop.log      # listen_ready|tap_installed, expanded|…
 
 **TCC:** Grant Input Monitoring + Accessibility to `~/Applications/KeyPop.app` (the `.app` bundle — not Terminal, not the bare `keypop` binary). Use **+** → **Cmd+Shift+G** in each pane.
 
-**Signing:** `./scripts/create-keypop-signing-cert.sh` once, then `install.sh` signs with `KeyPop Dev` so TCC survives rebuilds.
-
-**Tips for agents:**
-- Trust the **daemon log** over `keypop probe permissions` from Terminal for Input Monitoring — shell context often shows `listen=false` while the LaunchAgent tap works.
-- `listen_ready|tap_installed` = tap OK. `expanded|keyword|…` = match fired. `tap_reinstall_failed|…` = re-grant TCC + restart.
-- Stale daemons from legacy `~/.local/KeyPop.app` block expansion — `launch-keypop.sh restart` kills them; check `status` for warnings.
-- After `./scripts/install.sh`, re-grant TCC if the signature changed. Remove old entries (black exec `keypop`, legacy path) before re-adding the app.
+**If expansion stops working:**
+- Trust the **daemon log** over `keypop probe permissions` from Terminal — shell context can show `listen=false` while the LaunchAgent tap works.
+- `listen_ready|tap_installed` = tap OK. `expanded|keyword|…` = match fired. `tap_reinstall_failed|…` = re-grant TCC (`fix-keypop-tcc.sh`) + restart.
 
 **stderr signals:**
 - `keypop_sync|<path>|<count>` — export succeeded
