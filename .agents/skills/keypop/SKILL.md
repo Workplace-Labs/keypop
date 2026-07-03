@@ -9,7 +9,7 @@ description: >-
   the user through conversational post-install onboarding. Also covers the
   keypop daemon and expansion troubleshooting.
 metadata:
-  version: "1.5"
+  version: "1.6"
   project: keypop
   repo: https://github.com/Workplace-Labs/keypop
 ---
@@ -149,10 +149,10 @@ If `keypop` is already installed, use the daemon commands below rather than re-r
 > - Learn more about sharing kits with a team
 
 **You do**, depending on their pick:
-- **Another tip:** surface something from Conventions, Workflows, or a kit they haven't tried.
+- **Another tip:** surface something from Conventions, Common commands, or a kit they haven't tried.
 - **Explore other kits:** describe `workplace-labs-thinking`, `workplace-labs-dev`, `workplace-labs-hr`, and `lab-rats` from the Shipped prompt kits table above; import whichever sounds good.
 - **See their library:** run `keypop list` and summarize it back to them.
-- **Sharing kits:** walk through [Share prompts with a team](#share-prompts-with-a-team).
+- **Sharing kits:** walk through [Kits (import and export)](#kits-import-and-export).
 
 **Do not** re-run the 5-step onboarding unless they ask to start over. Happy expanding. 🧪
 
@@ -179,19 +179,53 @@ Shipped prompt kits (import with `--prefix` as needed). `;p` is the recommended 
 | `kits/workplace-labs-dev.snippets.json` | `;wl` (Workplace Labs example) | dev-focused prompts |
 | `kits/workplace-labs-hr.snippets.json` | `;wl` (Workplace Labs example) | HR/coaching prompts |
 
-## Workflows
+## Common commands
 
-### Save a new prompt shortcut
+Mutations auto-export to `~/.config/keypop/snippets.json` and the daemon reloads automatically. Disable sync with `--no-sync` or `KEYPOP_SYNC=0`.
 
-1. **Gather:** `keypop get --shortcut ';pmyshort'` (skip if creating)
-2. **Act:** `keypop create --shortcut ';pmyshort' --phrase 'Your full prompt text here…'`
-3. **Verify:** `keypop get --shortcut ';pmyshort'` and confirm `~/.config/keypop/snippets.json` matches
+### List shortcuts
 
-Use a descriptive `name` when building kits; keep `text` clean and pasteable (no personality in the prompt body).
+```sh
+keypop list                      # everything
+keypop list --prefix ';p'        # personal prompt zone
+keypop list --prefix ';wl'       # Workplace Labs kit zone
+```
 
-### Import a prompt kit
+### Create a shortcut
 
-Always dry-run first:
+```sh
+keypop create --shortcut ';pproof' --phrase 'Proofread the following text for grammar and clarity:'
+keypop create --shortcut ';psum' --phrase 'Summarize the following in 3 bullet points:'
+keypop create --shortcut ';myemail' --phrase 'you@example.com'
+keypop create --shortcut ';mysig' --phrase 'Best,\nYour Name'
+```
+
+Fails if the shortcut already exists — use `update` instead.
+
+### Update a shortcut
+
+```sh
+keypop update --shortcut ';pproof' --phrase 'Improved proofread prompt text here…'
+keypop update --shortcut ';myemail' --phrase 'newemail@example.com'
+```
+
+Changes the expanded text only; the shortcut keyword stays the same.
+
+### Delete a shortcut
+
+```sh
+keypop delete --shortcut ';poldprompt'
+```
+
+### Look up one shortcut
+
+```sh
+keypop get --shortcut ';pproof'
+```
+
+## Kits (import and export)
+
+**Import** — always dry-run first:
 
 ```sh
 keypop import kits/prompts-core.snippets.json --prefix ';p' --dry-run
@@ -199,41 +233,16 @@ keypop import kits/prompts-core.snippets.json --prefix ';p' --apply --on-conflic
 keypop import kits/workplace-labs-top5.snippets.json --prefix ';wl' --apply --on-conflict skip
 ```
 
-### Share prompts with a team
-
-Export a prefix zone to a kit file, commit it, or hand it to teammates:
+**Export** — share a prefix zone with teammates:
 
 ```sh
-keypop export --prefix ';wl' --output private/kits/wl-team.snippets.json
+keypop export --prefix ';wl' --output wl-team.snippets.json
 keypop export --prefix ';p' --output my-prompts.snippets.json
 ```
 
 Teammates import with `keypop import <file> --apply --on-conflict skip`.
 
-### Bottle a prompt from a conversation
-
-When a chat produced a great reusable prompt, save it as a shortcut (or suggest `;wlx` / "Bottle That Prompt" if the user already has that kit). Match the structure of their existing prompts: lead with the instruction, keep placeholders like `[goal]` where the user fills in context.
-
-### General text replacement
-
-Same commands — signatures, contact info, boilerplate:
-
-```sh
-keypop create --shortcut ';mysig' --phrase 'Best,\nYour Name\n…'
-keypop update --shortcut ';myemail' --phrase 'you@example.com'
-```
-
-### Re-sync runtime export
-
-```sh
-./scripts/sync-keypop.sh
-```
-
-### Find unused prompts
-
-```sh
-keypop stats --prefix ';p'    # usage counts from the Mac daemon
-```
+When a chat produced a great reusable prompt, save it with `create` (or suggest `;wlx` / "Bottle That Prompt" if they have that kit). Lead with the instruction; keep placeholders like `[goal]` where they fill in context.
 
 ## Conventions
 
@@ -242,31 +251,6 @@ keypop stats --prefix ';p'    # usage counts from the Mac daemon
 - **Plain text only:** no `{clipboard}`, `{date}`, or dynamic placeholders (iOS + Mac parity)
 - **~2000 char limit:** long prompts are risky on iOS; keep prompt `text` focused
 - **Prompt `text` stays pasteable:** playful names are fine (`"Bottle That Prompt"`); the expanded text should read like something you'd paste into any AI chat
-
-## CLI reference
-
-```sh
-keypop list [--prefix <prefix>]
-keypop get --shortcut <shortcut>
-keypop export [--prefix <prefix>] [--output <path>]
-keypop create --shortcut <shortcut> --phrase <phrase>
-keypop update --shortcut <shortcut> --phrase <phrase>
-keypop delete --shortcut <shortcut>
-keypop import <path|-> [--prefix <prefix>] [--dry-run|--apply] [--on-conflict fail|skip|overwrite] [--no-sync]
-
-keypop stats [--prefix <prefix>]
-keypop stats reset [--shortcut <shortcut>|--all]
-
-keypop run [--snippets ~/.config/keypop/snippets.json]
-
-keypop probe permissions|listen|inject|bridge
-
-keypop inspect
-keypop read-sources
-keypop db-summary
-```
-
-Disable runtime sync: `--no-sync` or `KEYPOP_SYNC=0`.
 
 ## Daemon
 
@@ -292,66 +276,12 @@ tail -f ~/.local/log/keypop.log      # listen_ready|tap_installed, expanded|…
 - Never write directly to `~/Library/KeyboardServices/TextReplacements.db`
 - Always `--dry-run` before `import --apply`
 
-## Personal workspace (`private/`)
-
-Gitignored folder in the keypop repo for machine-local prompt kits, mirrors, and team conventions.
-
-```
-private/
-  user-guide.md     # personal/team prompt zones and onboarding notes
-  snippets.json     # optional mirror of all shortcuts
-  backups/          # import --apply backups (auto-created)
-  kits/             # personal or team prompt kits (*.snippets.json)
-```
-
-**Where snippets actually live**
-
-| Path | Role |
-|------|------|
-| `~/.config/keypop/snippets.json` | **Canonical runtime file** — daemon reads this; `keypop` mutations auto-export here |
-| `private/snippets.json` | Optional workspace mirror for review, diff, or agent context |
-| `kits/` | Shareable prompt kits in the repo |
-
-Refresh the mirror:
-
-```sh
-mkdir -p private
-keypop export --output private/snippets.json
-keypop export --prefix ';wl' --output private/kits/wl-team.snippets.json
-```
-
-### Create a personal prompt guide
-
-When the user asks to set up personal docs or team prompt conventions:
-
-1. `mkdir -p private`
-2. If `private/user-guide.md` is missing, create it from the outline below (adapt to their org/prefixes).
-3. Point them at `docs/user-guide.md` for public setup steps; keep team-specific prompt zones in `private/`.
-
-**Suggested outline for `private/user-guide.md`:**
-
-```markdown
-# AI Prompts: Personal User Guide
-
-> Gitignored at private/user-guide.md. Public guide: docs/user-guide.md.
-
-## Who this is for
-## Prompt zones (prefix conventions: ;p, ;wl, ;my, …)
-## Favorite prompt shortcuts
-## Kits we maintain (paths under private/kits/ or kits/)
-## Import/export workflows
-## Which apps need the keypop daemon vs native Apple expansion
-## Troubleshooting (team-specific)
-```
-
-Fill in their actual prefix zones, example shortcuts, and kit paths. Do not commit `private/` — it stays local.
-
 ## Key paths
 
 | Path | Purpose |
 |------|---------|
-| `~/.config/keypop/snippets.json` | live runtime snippets (installed app / daemon) |
+| `~/.config/keypop/snippets.json` | live runtime snippets (daemon reads this) |
 | `~/Applications/KeyPop.app` | app bundle (TCC target) |
-| `kits/` | shareable prompt kits (in keypop repo) |
-| `private/` | gitignored personal guide, mirrors, backups, private kits |
-| `private/backups/` | pre-apply import backups |
+| `kits/` | shareable prompt kits in the repo |
+| `private/` | gitignored local kits, mirrors, import backups |
+| `docs/user-guide.md` | full reference for conventions, sharing, troubleshooting |
