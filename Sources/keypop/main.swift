@@ -32,6 +32,8 @@ enum KeypopCLI {
           keypop update --shortcut <shortcut> --phrase <phrase>
           keypop delete --shortcut <shortcut>
           keypop import <path|-> [--prefix <prefix>] [--dry-run|--apply] [--on-conflict fail|skip|overwrite] [--no-sync]
+          keypop stats [--prefix <prefix>]
+          keypop stats reset [--shortcut <shortcut>|--all]
 
           keypop run [--snippets ~/.config/keypop/snippets.json]
 
@@ -93,6 +95,9 @@ do {
             throw CLIError.usage(KeypopCLI.probeUsage())
         }
         try ProbeCommands.run(subcommand: subcommand, args: Array(commandArgs.dropFirst()))
+
+    case "stats":
+        try StatsCommands.run(args: commandArgs)
 
     default:
         guard KeypopCLI.crudCommands.contains(command) else {

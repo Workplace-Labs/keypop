@@ -22,14 +22,16 @@ fileprivate final class EngineState {
     var buffer = ""
     var matcher: KeywordMatcher
     var phrases: [String: String]
+    let usageStore: UsageStore?
     let injector = ClipboardInjector()
     var enabled = true
     var isExpanding = false
     var debugKeys = false
     var onTapDisabled: ((CGEventType) -> Void)?
 
-    init(phrases: [String: String]) {
+    init(phrases: [String: String], usageStore: UsageStore?) {
         self.phrases = phrases
+        self.usageStore = usageStore
         self.matcher = KeywordMatcher(keywords: Array(phrases.keys))
     }
 
@@ -78,6 +80,11 @@ fileprivate final class EngineState {
         do {
             try injector.deleteCharacters(count: keyword.count)
             try injector.inject(phrase)
+            do {
+                try usageStore?.recordUse(keyword: keyword)
+            } catch {
+                fputs("usage_error|\(keyword)|\(error.localizedDescription)\n", stderr)
+            }
             buffer = ""
             fputs("expanded|\(keyword)|\(phrase.count) chars\n", stderr)
         } catch {
@@ -142,8 +149,12 @@ public final class ExpanderEngine {
     private let healthConfig: TapHealthMonitorConfig
     private let debugKeys: Bool
 
-    public init(phrases: [String: String], healthConfig: TapHealthMonitorConfig = .default) {
-        state = EngineState(phrases: phrases)
+    public init(
+        phrases: [String: String],
+        usageStore: UsageStore? = nil,
+        healthConfig: TapHealthMonitorConfig = .default
+    ) {
+        state = EngineState(phrases: phrases, usageStore: usageStore)
         self.healthConfig = healthConfig
         debugKeys = ProcessInfo.processInfo.environment["KEYPOP_DEBUG"] == "1"
     }

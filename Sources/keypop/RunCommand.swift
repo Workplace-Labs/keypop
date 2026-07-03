@@ -37,7 +37,7 @@ enum RunCommand {
 
         do {
             let store = try SnippetStore.load(from: path)
-            let engine = ExpanderEngine(phrases: store.phrases)
+            let engine = ExpanderEngine(phrases: store.phrases, usageStore: UsageStore())
             try engine.start()
 
             var watcher: SnippetFileWatcher?

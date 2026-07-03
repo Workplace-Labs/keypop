@@ -237,8 +237,12 @@ keypop run --snippets ~/.config/keypop/snippets.json
 | Export kit | `keypop export --prefix ';lab' --output kits/lab-rats.snippets.json` |
 | Import preview | `keypop import kits/prompts-core.snippets.json --prefix ';p' --dry-run` |
 | Import apply | `keypop import kits/prompts-core.snippets.json --prefix ';p' --apply --on-conflict skip` |
+| Runtime usage | `keypop stats --prefix ';wl'` |
+| Reset usage | `keypop stats reset --shortcut ';wlmc'` |
 | Install daemon | `./scripts/launch-keypop.sh install` |
 | Restart daemon | `./scripts/launch-keypop.sh restart` |
 | Re-export | `./scripts/sync-keypop.sh` |
 | TCC probe | `keypop probe permissions` |
 | Inject probe | `keypop probe inject --text 'hello'` |
+
+Usage stats count `keypop run` expansions only. Native Apple Text Replacements are outside the daemon, so KeyPop cannot count those.

@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-07-03
+
+### Added
+
+- Runtime usage stats — `keypop stats`, prefix filtering, and reset commands backed by local `~/.config/keypop/usage.json`.
+- Xcode Command Line Tools guidance — install docs and a fast failure when `swift` is missing.
+
+### Fixed
+
+- Prefix-colliding shortcuts are now detected before they can shadow each other in the Mac runtime.
+- Workplace Labs dev kit renamed `;wlexplain` to `;wldoc` so it does not block `;wle`.
+
 ## [0.2.1] - 2026-07-03
 
 ### Fixed
