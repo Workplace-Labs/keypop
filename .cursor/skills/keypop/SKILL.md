@@ -9,7 +9,7 @@ description: >-
   the user through conversational post-install onboarding. Also covers the
   keypop daemon and expansion troubleshooting.
 metadata:
-  version: "1.4"
+  version: "1.5"
   project: keypop
   repo: https://github.com/Workplace-Labs/keypop
 ---
@@ -67,7 +67,9 @@ If `keypop` is already installed, use the daemon commands below rather than re-r
 **You do first, silently:** confirm the daemon is running and import `kits/prompts-core.snippets.json` (`--apply --on-conflict skip`). If the daemon isn't running or permissions look missing, go to Step 2 first instead of saying anything yet.
 
 **Then say something like:**
-> You're set up. Open whatever AI chat app you use most — ChatGPT, Claude, Cursor, Warp, anywhere you paste prompts — click into the message box, and type `;pproof` then hit space.
+> I just loaded your starter kit — prompts-core, with proofread, summarize, and a few contact shortcuts — so you've got something to try right away.
+>
+> Open whatever AI chat app you use most — ChatGPT, Claude, Cursor, Warp, anywhere you paste prompts — click into the message box, and type `;pproof` then hit space.
 
 **Done when:** the full prompt appears out of nowhere. That's the entire pitch in one keystroke — an AI prompt library at your fingertips, everywhere you type.
 
@@ -111,7 +113,9 @@ If `keypop` is already installed, use the daemon commands below rather than re-r
 **You do:** import `kits/workplace-labs-top5.snippets.json` (`--apply --on-conflict skip`).
 
 **Say something like:**
-> Here's where it gets genuinely useful. Workplace Labs publishes a shared prompt kit under `;wl` — that's just their naming; any team can brand a kit the same way. Next time you start a chat with AI, try `;wlask` — it makes the AI interview you before answering instead of guessing. Or `;wlredteam` when you want your idea stress-tested instead of just agreed with.
+> I just added Workplace Labs' shared prompt kit — five prompts under `;wl` that people reach for most. That's just their naming; any team can brand a kit the same way.
+>
+> Next time you start a chat with AI, try `;wlask` — it makes the AI interview you before answering instead of guessing. Or `;wlredteam` when you want your idea stress-tested instead of just agreed with.
 >
 > These are prompts other people already refined. You get them for free, and they update if the team improves them.
 
@@ -133,13 +137,24 @@ If `keypop` is already installed, use the daemon commands below rather than re-r
 ### Graduation
 
 **Say something like:**
-> Five for five. You watched a prompt appear out of thin air, made one your own, borrowed sharper ones from the team, and packaged something up to share. That's the whole loop: **use it, make it yours, pass it on.**
+> Five for five — seriously nice work. You watched a prompt appear out of thin air, made one your own, borrowed sharper ones from the team, and packaged something up to share. That's the whole loop: **use it, make it yours, pass it on.** You're basically a KeyPop power user already.
 >
 > Bonus: it all works on your iPhone too, through Text Replacements — no extra app needed there.
->
-> Ping me anytime for more — new prompt ideas, cleaning out old shortcuts, whatever. Happy expanding. 🧪
 
-**Do not** re-run onboarding unless they ask to start over.
+**Then ask what's next — offer real options, don't just trail off:**
+> What sounds good next?
+> - Another tip or trick
+> - Explore other kits (there's a few more worth a look)
+> - See everything in your library so far
+> - Learn more about sharing kits with a team
+
+**You do**, depending on their pick:
+- **Another tip:** surface something from Conventions, Workflows, or a kit they haven't tried.
+- **Explore other kits:** describe `workplace-labs-thinking`, `workplace-labs-dev`, `workplace-labs-hr`, and `lab-rats` from the Shipped prompt kits table above; import whichever sounds good.
+- **See their library:** run `keypop list` and summarize it back to them.
+- **Sharing kits:** walk through [Share prompts with a team](#share-prompts-with-a-team).
+
+**Do not** re-run the 5-step onboarding unless they ask to start over. Happy expanding. 🧪
 
 ## How it works
 
