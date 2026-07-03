@@ -6,6 +6,9 @@ You type `;pproof` and it expands to:
 
 > Proofread the following text for spelling and grammar, improving clarity and tone:
 
+> [!TIP]
+> Shortcuts start with `;` so they don't fire by accident mid-word (`;pproof`, not `proof`). The `p` is a prefix: `;p` is our recommended zone for your own favorite prompts, so they're easy to spot and separate from kits you import. Pick your own prefixes and stick with them — see [Conventions](docs/user-guide.md#conventions).
+
 Works in Notes, Mail, Slack. Works on your iPhone. No extra app required.
 
 Here's the thing — this is already built into macOS and iOS. System Settings → Keyboard → Text Replacements. Apple has had it for years and it syncs over iCloud automatically.
@@ -112,6 +115,8 @@ keypop export --prefix ';lab' --output kits/lab-rats.snippets.json
 | `kits/workplace-labs-hr.snippets.json` | `;wl` | HR prompts — retention, focus groups, AI rollout risk |
 | `kits/workplace-labs-dev.snippets.json` | `;wl` | Developer prompts — pre-PR, TDD, debug, best practice |
 | `kits/lab-rats.snippets.json` | `;lab` | Workplace Labs adoption prompts, with personality |
+
+`;wl` and `;lab` are just Workplace Labs' own prefixes for the kits it publishes — pick whatever prefix makes sense when you build and share your own.
 
 Import any kit:
 
