@@ -64,15 +64,15 @@ If you are installing kits for the first time, import one and use it for a day b
 
 | Kit | Prefix | Use it for |
 |-----|--------|------------|
-| `kits/prompts-core.snippets.json` | `;p` | Starter prompts and common personal snippets |
-| `kits/workplace-labs-top5.snippets.json` | `;wl` | Workplace Labs' highest-use AI prompts |
-| `kits/workplace-labs-thinking.snippets.json` | `;wl` | Premortems, tradeoffs, assumptions, and decisions |
-| `kits/workplace-labs-hr.snippets.json` | `;wl` | HR and people-ops workflows |
-| `kits/workplace-labs-dev.snippets.json` | `;wl` | Developer workflows and review prompts |
-| `kits/lab-rats.snippets.json` | `;lab` | Adoption prompts with Workplace Labs personality |
-| [`kits/karpathy-agentic-coding.snippets.json`](karpathy-agentic-coding-kit.md) | `;ak` | Agentic coding loops with explicit verification |
-| [`kits/caveman-prompting.snippets.json`](caveman-prompting-kit.md) | `;cm` | High-signal compressed prompting |
-| [`kits/compound-engineering.snippets.json`](compound-engineering-kit.md) | `;ce` | Product-engineering loop from goal to reusable learning |
+| `kits/prompts-core.snippets.json` | `;p` | Everyday prompts for proofreading, summarizing, contact info, and email drafts |
+| `kits/workplace-labs-top5.snippets.json` | `;wl` | Workplace Labs' highest-use prompts for interviewing, red teaming, rewriting, and summarizing |
+| `kits/workplace-labs-thinking.snippets.json` | `;wl` | Structured thinking prompts for premortems, tradeoffs, assumptions, options, and decisions |
+| `kits/workplace-labs-hr.snippets.json` | `;wl` | People-ops prompts for retention, focus groups, manager coaching, and AI rollout risk |
+| `kits/workplace-labs-dev.snippets.json` | `;wl` | Developer prompts for code review, TDD, explanation, debugging, feature starts, and security review |
+| `kits/lab-rats.snippets.json` | `;lab` | Workplace Labs adoption prompts for coaching, rollout planning, stakeholder updates, and behavior change |
+| [`kits/karpathy-agentic-coding.snippets.json`](karpathy-agentic-coding-kit.md) | `;ak` | Agentic engineering prompts for specs, eval loops, implementation, steering, simplification, diff review, and verification |
+| [`kits/caveman-prompting.snippets.json`](caveman-prompting-kit.md) | `;cm` | Output-compression prompts for concise tasks, debugging, review, verification, handoff, and safe prompt shortening |
+| [`kits/compound-engineering.snippets.json`](compound-engineering-kit.md) | `;ce` | Product-engineering prompts for strategy, ideation, requirements, planning, execution, review, simplification, and reusable lessons |
 
 ### Agent Workflow Kits
 
@@ -80,7 +80,7 @@ These three kits are deliberately focused. They are not meant to be imported as 
 
 | Kit | Based on | First shortcut to try | Notes |
 |-----|----------|-----------------------|-------|
-| `karpathy-agentic-coding` | Andrej Karpathy's Sequoia Ascent 2026 talk, [`From Vibe Coding to Agentic Engineering`](https://www.youtube.com/watch?v=96jN2OCOfLs) | `;akloop` | Best when you want inspect, implement, steer, simplify, checkpoint, and verify in one autonomous loop. |
+| `karpathy-agentic-coding` | Andrej Karpathy's Sequoia Ascent 2026 talk, [`From Vibe Coding to Agentic Engineering`](https://www.youtube.com/watch?v=96jN2OCOfLs) | `;akloop` | Best when you want specs, eval loops, implementation, diff review, steering, simplification, checkpointing, and verification. |
 | `caveman-prompting` | Julius Brussee's `juliusbrussee/caveman` project | `;cm` | Use for shorter assistant output. Do not use it to remove important context from the task. |
 | `compound-engineering` | Every Inc's Compound Engineering plugin | `;ceplan` | Best when you want a repeatable engineering cycle: strategy, ideate, plan, work, review, simplify, capture. |
 

@@ -107,28 +107,21 @@ keypop export --prefix ';lab' --output kits/lab-rats.snippets.json
 
 ## Available kits
 
-New to prompt kits? Start with **one** kit, not all of them:
+New to prompt kits? Start with **one** kit, not all of them. The full kit guide is in [Kits](docs/kits.md).
 
-- `prompts-core` for everyday prompts
-- `karpathy-agentic-coding` when you want an AI coding agent to inspect, build, test, and verify
-- `compound-engineering` when you want a product-engineering loop from goal to learning
-- `caveman-prompting` when you want shorter output, not less context
-
-| Kit | Prefix | What's in it |
-|-----|--------|-------------|
-| `kits/prompts-core.snippets.json` | `;p` | Starter kit — proofread, summarize, contact info, email snippets |
-| `kits/workplace-labs-top5.snippets.json` | `;wl` | The 5 AI prompts you'll reach for most |
-| `kits/workplace-labs-thinking.snippets.json` | `;wl` | Premortems, tradeoffs, decision summaries |
-| `kits/workplace-labs-hr.snippets.json` | `;wl` | HR prompts — retention, focus groups, AI rollout risk |
-| `kits/workplace-labs-dev.snippets.json` | `;wl` | Developer prompts — pre-PR, TDD, debug, best practice |
-| `kits/lab-rats.snippets.json` | `;lab` | Workplace Labs adoption prompts, with personality |
-| `kits/karpathy-agentic-coding.snippets.json` | `;ak` | Agentic coding loops — inspect, spec, steer, simplify, verify |
-| `kits/caveman-prompting.snippets.json` | `;cm` | Concise prompting — compressed tasks, debug, review, verify, handoff |
-| `kits/compound-engineering.snippets.json` | `;ce` | Compound engineering workflow — strategy, ideate, plan, work, review, capture |
+| Kit | Prefix | Start here when you want... |
+|-----|--------|---------------------------|
+| `kits/prompts-core.snippets.json` | `;p` | Everyday writing and summary prompts |
+| `kits/workplace-labs-top5.snippets.json` | `;wl` | Workplace Labs' highest-use prompts |
+| `kits/workplace-labs-thinking.snippets.json` | `;wl` | Structured thinking and decision prompts |
+| `kits/workplace-labs-hr.snippets.json` | `;wl` | HR and people-ops prompts |
+| `kits/workplace-labs-dev.snippets.json` | `;wl` | Developer workflow prompts |
+| `kits/lab-rats.snippets.json` | `;lab` | Workplace Labs adoption prompts |
+| `kits/karpathy-agentic-coding.snippets.json` | `;ak` | Agentic engineering prompts |
+| `kits/caveman-prompting.snippets.json` | `;cm` | Shorter assistant output |
+| `kits/compound-engineering.snippets.json` | `;ce` | Product-engineering loops |
 
 `;wl` and `;lab` are just Workplace Labs' own prefixes for the kits it publishes — pick whatever prefix makes sense when you build and share your own.
-
-Credit where it's due: the `;ak` kit is based on Andrej Karpathy's Sequoia Ascent 2026 talk, [`From Vibe Coding to Agentic Engineering`](https://www.youtube.com/watch?v=96jN2OCOfLs). The `;ce` kit is based on Every Inc's Compound Engineering plugin, and the `;cm` kit is based on Julius Brussee's `juliusbrussee/caveman` project.
 
 Import any kit:
 
