@@ -1,0 +1,1 @@
+@docs/karpathy-agentic-coding-kit.md
