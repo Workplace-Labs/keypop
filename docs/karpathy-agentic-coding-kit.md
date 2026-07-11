@@ -39,16 +39,16 @@ Two ideas from the talk shape the prompts:
 
 | Keyword | Name | Use it for |
 |---------|------|------------|
-| `;akinspect` | Karpathy / Inspect | Map the repo and ask what code really needs to exist. |
-| `;akspec` | Karpathy / Spec | Convert a request into goal, constraints, acceptance criteria, and evals. |
-| `;akloop` | Karpathy / Loop | Run an autonomous inspect-implement-test-review loop. |
-| `;akdebug` | Karpathy / Debug | Find root cause from symptoms, reproduction, and evidence. |
-| `;akratchet` | Karpathy / Ratchet | Improve one verifiable signal at a time. |
-| `;aksteer` | Karpathy / Steer | Re-anchor drift, hidden architecture choices, and old-paradigm code. |
-| `;aksimplify` | Karpathy / Simplify | Remove generated bloat, awkward abstractions, and avoidable code. |
-| `;akcheckpoint` | Karpathy / Checkpoint | Summarize state, decisions, evals, failures, reusable context, and next step. |
-| `;akreview` | Karpathy / Review | Catch drift, generated-code mistakes, security/data issues, and missing evals. |
-| `;akverify` | Karpathy / Verify | Report proof: acceptance criteria, diff review, checks, results, and residual risk. |
+| `;akinspect` | Inspect (Karpathy) | Map the repo and ask what code really needs to exist. |
+| `;akspec` | Spec (Karpathy) | Convert a request into goal, constraints, acceptance criteria, and evals. |
+| `;akloop` | Loop (Karpathy) | Run an autonomous inspect-implement-test-review loop. |
+| `;akdebug` | Debug (Karpathy) | Find root cause from symptoms, reproduction, and evidence. |
+| `;akratchet` | Ratchet (Karpathy) | Improve one verifiable signal at a time. |
+| `;aksteer` | Steer (Karpathy) | Re-anchor drift, hidden architecture choices, and old-paradigm code. |
+| `;aksimplify` | Simplify (Karpathy) | Remove generated bloat, awkward abstractions, and avoidable code. |
+| `;akcheckpoint` | Checkpoint (Karpathy) | Summarize state, decisions, evals, failures, reusable context, and next step. |
+| `;akreview` | Review (Karpathy) | Catch drift, generated-code mistakes, security/data issues, and missing evals. |
+| `;akverify` | Verify (Karpathy) | Report proof: acceptance criteria, diff review, checks, results, and residual risk. |
 
 ## Suggested Flow
 

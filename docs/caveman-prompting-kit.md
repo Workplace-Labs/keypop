@@ -29,13 +29,13 @@ Do not use it to strip important context from a task. Newer prompt-compression r
 
 | Keyword | Name | Use it for |
 |---------|------|------------|
-| `;cm` | Caveman / Concise | Default high-signal response mode. |
-| `;cmtask` | Caveman / Task | Goal, context, constraints, plan, verification. |
-| `;cmcompress` | Caveman / Compress | Shorten a prompt without losing commands or acceptance criteria. |
-| `;cmdebug` | Caveman / Debug | Symptom, cause, evidence, fix, verify. |
-| `;cmreview` | Caveman / Review | Defect-only review findings. |
-| `;cmverify` | Caveman / Verify | Short proof of completion. |
-| `;cmhandoff` | Caveman / Handoff | Compact session or agent handoff. |
+| `;cm` | Concise (Caveman) | Default high-signal response mode. |
+| `;cmtask` | Task (Caveman) | Goal, context, constraints, plan, verification. |
+| `;cmcompress` | Compress (Caveman) | Shorten a prompt without losing commands or acceptance criteria. |
+| `;cmdebug` | Debug (Caveman) | Symptom, cause, evidence, fix, verify. |
+| `;cmreview` | Review (Caveman) | Defect-only review findings. |
+| `;cmverify` | Verify (Caveman) | Short proof of completion. |
+| `;cmhandoff` | Handoff (Caveman) | Compact session or agent handoff. |
 
 ## Suggested Flow
 

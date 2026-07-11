@@ -31,16 +31,16 @@ This kit is strongest when you use it as a loop instead of a menu.
 
 | Keyword | Name | Use it for |
 |---------|------|------------|
-| `;cegoal` | Compound / Goal | Capture problem, user, success metric, constraints, and non-goals. |
-| `;cestrategy` | Compound / Strategy | Create or refresh the product-engineering strategy. |
-| `;ceideate` | Compound / Ideate | Explore options before choosing a plan. |
-| `;cebrain` | Compound / Brainstorm | Ask targeted questions and produce requirements. |
-| `;ceplan` | Compound / Plan | Convert requirements into a small implementation plan. |
-| `;cework` | Compound / Work | Execute the approved plan with tests and progress updates. |
-| `;cereview` | Compound / Review | Review for correctness, simplicity, security, performance, and regressions. |
-| `;cesimplify` | Compound / Simplify | Reduce complexity before capturing the lesson. |
-| `;cecompound` | Compound / Capture | Save the reusable pattern or lesson. |
-| `;cepulse` | Compound / Pulse | Summarize the cycle and recommend the next iteration. |
+| `;cegoal` | Goal (Compound) | Capture problem, user, success metric, constraints, and non-goals. |
+| `;cestrategy` | Strategy (Compound) | Create or refresh the product-engineering strategy. |
+| `;ceideate` | Ideate (Compound) | Explore options before choosing a plan. |
+| `;cebrain` | Brainstorm (Compound) | Ask targeted questions and produce requirements. |
+| `;ceplan` | Plan (Compound) | Convert requirements into a small implementation plan. |
+| `;cework` | Work (Compound) | Execute the approved plan with tests and progress updates. |
+| `;cereview` | Review (Compound) | Review for correctness, simplicity, security, performance, and regressions. |
+| `;cesimplify` | Simplify (Compound) | Reduce complexity before capturing the lesson. |
+| `;cecompound` | Capture (Compound) | Save the reusable pattern or lesson. |
+| `;cepulse` | Pulse (Compound) | Summarize the cycle and recommend the next iteration. |
 
 ## Suggested Flow
 

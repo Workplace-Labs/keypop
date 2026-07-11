@@ -1,51 +1,51 @@
 [
   {
-    "name": "Karpathy / Inspect",
+    "name": "Inspect (Karpathy)",
     "keyword": ";akinspect",
     "text": "Inspect the repository before changing code.\n\nFind:\n- architecture\n- entry points\n- existing patterns\n- likely files to touch\n- relevant tests\n- deterministic code that must exist\n- work an LLM/tool could handle directly instead of adding code\n\nThen summarize the smallest safe implementation path. Do not edit files yet."
   },
   {
-    "name": "Karpathy / Spec",
+    "name": "Spec (Karpathy)",
     "keyword": ";akspec",
     "text": "Turn this request into a declarative engineering spec before implementation.\n\nInclude:\n- goal\n- user-visible outcome\n- constraints\n- non-goals\n- acceptance criteria\n- evals or verification checks\n- human decisions still needed\n\nKeep it implementation-neutral unless the codebase clearly points to one approach."
   },
   {
-    "name": "Karpathy / Loop",
+    "name": "Loop (Karpathy)",
     "keyword": ";akloop",
     "text": "Work autonomously in a tight inspect-implement-test-review loop.\n\nFor each iteration:\n1. inspect the relevant code and context\n2. make the smallest useful change\n3. run the most relevant check\n4. review the diff for quality, security, and drift\n5. fix failures\n6. keep only progress that improves the objective\n\nTreat the model as stochastic and jagged: verify, do not assume. Stop for destructive actions, missing product decisions, credentials, or architectural choices that need human judgment."
   },
   {
-    "name": "Karpathy / Debug",
+    "name": "Debug (Karpathy)",
     "keyword": ";akdebug",
     "text": "Debug from evidence, not guesses.\n\nOutput:\n- observed symptom\n- reproduction path\n- likely root cause\n- evidence from code or logs\n- smallest fix\n- verification command\n\nAvoid broad rewrites and workarounds."
   },
   {
-    "name": "Karpathy / Ratchet",
+    "name": "Ratchet (Karpathy)",
     "keyword": ";akratchet",
     "text": "Improve this with a ratchet loop.\n\nDefine the verifiable signal first: test, benchmark, eval, judge, or user-visible check. Then make one change at a time, measure it, and keep the change only if the signal improves without breaking constraints. Revert or discard changes that do not help.\n\nIf the work is not easily verifiable, say what proxy you are using and where judgment is still required."
   },
   {
-    "name": "Karpathy / Steer",
+    "name": "Steer (Karpathy)",
     "keyword": ";aksteer",
     "text": "Re-anchor the coding agent.\n\nCompare current work against the original goal, spec, and acceptance criteria. Identify:\n- drift\n- unsupported assumptions\n- unnecessary scope\n- hidden architectural choices\n- places where code exists only because we are thinking in the old paradigm\n- missing user decisions\n- next smallest corrective action\n\nDo not continue implementation until the direction is clear."
   },
   {
-    "name": "Karpathy / Simplify",
+    "name": "Simplify (Karpathy)",
     "keyword": ";aksimplify",
     "text": "Simplify after agentic implementation.\n\nLook for:\n- over-engineered abstractions\n- bloaty generated code\n- copy-pasted logic\n- awkward abstractions\n- dead code\n- unnecessary dependencies\n- brittle workarounds\n- tests that can be clearer\n- code that can be replaced by a simpler prompt, tool call, or data flow\n\nKeep behavior the same unless a change is explicitly justified."
   },
   {
-    "name": "Karpathy / Checkpoint",
+    "name": "Checkpoint (Karpathy)",
     "keyword": ";akcheckpoint",
     "text": "Create a compact checkpoint for a long agentic coding run.\n\nInclude:\n- objective\n- spec or acceptance criteria\n- current state\n- decisions made\n- files changed\n- evals or tests run\n- failures and fixes\n- blockers or risks\n- reusable context another agent needs\n- next best step\n\nWrite so another agent or future session can continue without rediscovery."
   },
   {
-    "name": "Karpathy / Review",
+    "name": "Review (Karpathy)",
     "keyword": ";akreview",
     "text": "Review this like an agentic coding run that might have drifted.\n\nLook for:\n- unmet acceptance criteria\n- hidden assumptions\n- unreviewed generated code\n- regressions\n- security or data-handling issues\n- identity, authorization, or data-model mistakes\n- over-engineering\n- missing evals or tests\n- stale or unused changes\n\nReport only actionable findings with file and line references when possible."
   },
   {
-    "name": "Karpathy / Verify",
+    "name": "Verify (Karpathy)",
     "keyword": ";akverify",
     "text": "Prove the task is complete.\n\nRun the relevant checks, inspect the final diff, and report:\n- what changed\n- acceptance criteria satisfied\n- commands run\n- results\n- diff reviewed\n- remaining risk\n- anything not verified\n\nDo not claim completion without evidence. If verification is weak, say exactly what would make it stronger."
   }
