@@ -332,7 +332,7 @@ enum CRUDCommands {
         case "get":
             let shortcut = try value(after: "--shortcut", in: commandArgs)
             guard let row = try replacements().first(where: { $0.shortcut == shortcut }) else {
-                throw CLIError.runtime("No replacement found for shortcut \(shortcut)")
+                throw CLIError.runtime("shortcut \(shortcut) not found")
             }
             try printJSON(SnippetEntry(replacement: row))
         case "export":
@@ -360,7 +360,7 @@ enum CRUDCommands {
             let phrase = try value(after: "--phrase", in: commandArgs)
             let current = try replacements()
             guard current.contains(where: { $0.shortcut == shortcut }) else {
-                throw CLIError.runtime("No replacement found for shortcut \(shortcut)")
+                throw CLIError.runtime("shortcut \(shortcut) not found")
             }
             try updateReplacement(shortcut: shortcut, phrase: phrase)
             syncIfEnabled(commandArgs: commandArgs)
@@ -368,7 +368,9 @@ enum CRUDCommands {
         case "delete":
             let shortcut = try value(after: "--shortcut", in: commandArgs)
             if try !replacements().contains(where: { $0.shortcut == shortcut }) {
-                throw CLIError.runtime("No replacement found for shortcut \(shortcut)")
+                // Warn but treat as success if already absent.
+                fputs("Warning: shortcut \(shortcut) not found (was it already deleted?)\n", stderr)
+        
             }
             try deleteReplacement(shortcut: shortcut)
             syncIfEnabled(commandArgs: commandArgs)
