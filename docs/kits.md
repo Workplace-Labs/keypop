@@ -58,6 +58,34 @@ Mutations via `keypop` auto-export to `~/.config/keypop/snippets.json`; `keypop 
 
 Team contact kits with PII should stay local or gitignored.
 
+## Shipped Kits
+
+If you are installing kits for the first time, import one and use it for a day before adding more. The shortcuts are intentionally small, but three agent-workflow kits at once is still a lot of new muscle memory.
+
+| Kit | Prefix | Use it for |
+|-----|--------|------------|
+| `kits/prompts-core.snippets.json` | `;p` | Everyday prompts for proofreading, summarizing, contact info, and email drafts |
+| `kits/workplace-labs-top5.snippets.json` | `;wl` | Workplace Labs' highest-use prompts for interviewing, red teaming, rewriting, and summarizing |
+| `kits/workplace-labs-thinking.snippets.json` | `;wl` | Structured thinking prompts for premortems, tradeoffs, assumptions, options, and decisions |
+| `kits/workplace-labs-hr.snippets.json` | `;wl` | People-ops prompts for retention, focus groups, manager coaching, and AI rollout risk |
+| `kits/workplace-labs-dev.snippets.json` | `;wl` | Developer prompts for code review, TDD, explanation, debugging, feature starts, and security review |
+| `kits/lab-rats.snippets.json` | `;lab` | Workplace Labs adoption prompts for coaching, rollout planning, stakeholder updates, and behavior change |
+| [`kits/karpathy-agentic-coding.snippets.json`](karpathy-agentic-coding-kit.md) | `;ak` | Agentic engineering prompts for specs, eval loops, implementation, steering, simplification, diff review, and verification |
+| [`kits/caveman-prompting.snippets.json`](caveman-prompting-kit.md) | `;cm` | Output-compression prompts for concise tasks, debugging, review, verification, handoff, and safe prompt shortening |
+| [`kits/compound-engineering.snippets.json`](compound-engineering-kit.md) | `;ce` | Product-engineering prompts for strategy, ideation, requirements, planning, execution, review, simplification, and reusable lessons |
+
+### Agent Workflow Kits
+
+These three kits are deliberately focused. They are not meant to be imported as one giant "AI best practices" dump.
+
+| Kit | Based on | First shortcut to try | Notes |
+|-----|----------|-----------------------|-------|
+| `karpathy-agentic-coding` | Andrej Karpathy's Sequoia Ascent 2026 talk, [`From Vibe Coding to Agentic Engineering`](https://www.youtube.com/watch?v=96jN2OCOfLs) | `;akloop` | Best when you want specs, eval loops, implementation, diff review, steering, simplification, checkpointing, and verification. |
+| `caveman-prompting` | Julius Brussee's `juliusbrussee/caveman` project | `;cm` | Use for shorter assistant output. Do not use it to remove important context from the task. |
+| `compound-engineering` | Every Inc's Compound Engineering plugin | `;ceplan` | Best when you want a repeatable engineering cycle: strategy, ideate, plan, work, review, simplify, capture. |
+
+The Caveman kit deserves one extra caveat: newer prompt-compression research suggests output compression is useful, but compressing the user's input too aggressively can make models compensate with longer or worse answers. That is why this kit keeps the task structure intact and mostly asks the assistant to be concise.
+
 ## Naming
 
 Use descriptive `name` values for browsing kits in git:

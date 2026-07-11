@@ -1,0 +1,52 @@
+[
+  {
+    "name": "Goal (Compound)",
+    "keyword": ";cegoal",
+    "text": "Capture the durable context before implementation.\n\nOutput:\n- problem\n- user\n- success metric\n- constraints\n- non-goals\n\nEverything that follows should optimize for this document."
+  },
+  {
+    "name": "Strategy (Compound)",
+    "keyword": ";cestrategy",
+    "text": "Create or refresh the product-engineering strategy.\n\nOutput:\n- diagnosis\n- guiding principle\n- target user\n- success metric\n- constraints\n- work tracks\n- near-term bet\n\nKeep it short enough to guide future planning."
+  },
+  {
+    "name": "Ideate (Compound)",
+    "keyword": ";ceideate",
+    "text": "Explore possible directions before choosing a plan.\n\nGenerate 3-5 options. For each, include:\n- user value\n- implementation shape\n- risk\n- cost\n- why it might win\n\nThen recommend one path and explain the tradeoff."
+  },
+  {
+    "name": "Brainstorm (Compound)",
+    "keyword": ";cebrain",
+    "text": "Do not write code yet.\n\nAsk only the questions needed to remove ambiguity. Then produce:\n- requirements\n- edge cases\n- risks\n- acceptance criteria\n\nStop there."
+  },
+  {
+    "name": "Plan (Compound)",
+    "keyword": ";ceplan",
+    "text": "Turn the requirements into an implementation plan.\n\nInclude:\n- files to modify\n- order of work\n- risks\n- tests\n- rollback\n\nPrefer the smallest reviewable implementation."
+  },
+  {
+    "name": "Work (Compound)",
+    "keyword": ";cework",
+    "text": "Execute the approved plan.\n\nWork until complete. Continuously:\n- verify assumptions\n- run tests\n- fix failures\n- update progress\n\nOnly stop for missing product decisions or destructive actions."
+  },
+  {
+    "name": "Review (Compound)",
+    "keyword": ";cereview",
+    "text": "Review from multiple viewpoints.\n\nLook for:\n- correctness\n- simplicity\n- security\n- performance\n- maintainability\n- regression risk\n\nOnly report actionable findings."
+  },
+  {
+    "name": "Simplify (Compound)",
+    "keyword": ";cesimplify",
+    "text": "Simplify the solution before compounding it.\n\nLook for:\n- avoidable complexity\n- unclear naming\n- too many concepts\n- duplicated paths\n- premature abstractions\n- docs that no longer match behavior\n\nReturn a smaller version of the same idea."
+  },
+  {
+    "name": "Capture (Compound)",
+    "keyword": ";cecompound",
+    "text": "Capture reusable engineering knowledge.\n\nOutput:\nPattern:\nProblem:\nSolution:\nTradeoffs:\nWhen to reuse:\nWhen not to reuse:\n\nWrite so another engineer does not have to rediscover it."
+  },
+  {
+    "name": "Pulse (Compound)",
+    "keyword": ";cepulse",
+    "text": "Summarize the engineering cycle.\n\nOutput:\n- completed\n- learned\n- outstanding risks\n- technical debt\n- highest-leverage next task\n\nRecommend the next iteration."
+  }
+]

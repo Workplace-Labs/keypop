@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Concise (Caveman)",
+    "keyword": ";cm",
+    "text": "Use concise, high-signal output.\n\nRules:\n- cut filler, pleasantries, hedging\n- keep technical accuracy\n- preserve commands, paths, identifiers, numbers, and constraints exactly\n- use bullets only when they improve scanning\n- state blockers directly"
+  },
+  {
+    "name": "Task (Caveman)",
+    "keyword": ";cmtask",
+    "text": "Handle this task with minimal words and strong structure.\n\nOutput:\n- goal\n- context used\n- constraints\n- plan\n- verification\n\nThen execute unless a decision is required."
+  },
+  {
+    "name": "Compress (Caveman)",
+    "keyword": ";cmcompress",
+    "text": "Compress this prompt without losing meaning.\n\nKeep:\n- commands\n- paths\n- identifiers\n- numbers\n- acceptance criteria\n- safety constraints\n\nRemove filler, duplicated intent, softeners, and unnecessary explanation."
+  },
+  {
+    "name": "Debug (Caveman)",
+    "keyword": ";cmdebug",
+    "text": "Debug in compressed form.\n\nFormat:\nSymptom:\nCause:\nEvidence:\nFix:\nVerify:\n\nNo speculation unless labeled."
+  },
+  {
+    "name": "Review (Caveman)",
+    "keyword": ";cmreview",
+    "text": "Review for defects only.\n\nReport concise findings sorted by severity. Each finding needs:\n- file/line\n- problem\n- impact\n- fix\n\nSkip praise and style notes unless they affect behavior."
+  },
+  {
+    "name": "Verify (Caveman)",
+    "keyword": ";cmverify",
+    "text": "Verify completion.\n\nReport:\n- checks run\n- pass/fail result\n- diff reviewed\n- remaining risks\n- unverified items\n\nKeep it short. Evidence over confidence."
+  },
+  {
+    "name": "Handoff (Caveman)",
+    "keyword": ";cmhandoff",
+    "text": "Create a compact handoff.\n\nInclude:\n- objective\n- current state\n- files changed\n- commands run\n- known issues\n- next action\n\nNo filler."
+  }
+]
