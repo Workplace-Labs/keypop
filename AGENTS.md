@@ -38,7 +38,9 @@ KeyPop is a practical tool with a little personality. When writing prose (README
 
 Mutations auto-export to `~/.config/keypop/snippets.json` unless `--no-sync`. Running `keypop run` reloads from that file via directory watch (~200ms debounce).
 
-Scripts: `install.sh`, `bundle-keypop-app.sh`, `launch-keypop.sh`, `sync-keypop.sh`, `fix-keypop-tcc.sh`, `generate-app-icon.sh`, `keypop-paths.sh`, `sync-keypop-skill.sh`
+Scripts (in `scripts/`): `install.sh`, `bundle-keypop-app.sh`, `launch-keypop.sh`, `sync-keypop.sh`, `fix-keypop-tcc.sh`, `generate-app-icon.sh`, `keypop-paths.sh`, `sync-keypop-skill.sh`
+
+**Two installers:** root `install.sh` is the curl-able CLI-only installer — it shallow-fetches the repo and delegates to `scripts/install.sh --cli-only` (no app bundle, LaunchAgent, or TCC). `scripts/install.sh` without flags is the full setup. Shared logic lives only in `scripts/install.sh`.
 
 **Install layout:** CLI → `~/.local/bin/keypop`. App bundle → `~/Applications/KeyPop.app`. Override app path: `KEYPOP_APP=... ./scripts/install.sh`.
 
@@ -63,7 +65,7 @@ One-time setup: `git config core.hooksPath scripts/hooks` — the pre-commit hoo
 
 ## Validation
 
-Requires Xcode Command Line Tools (`xcode-select --install`) — not the full Xcode app. `install.sh` fails fast with that instruction if `swift` is missing.
+Requires Xcode Command Line Tools (`xcode-select --install`) — not the full Xcode app. Both installers fail fast with that instruction when `xcode-select -p` reports no CLT; checking `command -v swift` is not enough, since macOS ships `/usr/bin/swift` and `/usr/bin/git` shims even before the CLT are installed.
 
 ```sh
 swift build && swift test

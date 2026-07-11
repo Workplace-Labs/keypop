@@ -7,6 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/keypop-paths.sh"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 INSTALL_PREFIX="${HOME}/.local/bin"
+CLI_ONLY=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -14,9 +15,14 @@ while [[ $# -gt 0 ]]; do
       INSTALL_PREFIX="${2:?missing value for --prefix}"
       shift 2
       ;;
+    --cli-only)
+      CLI_ONLY=1
+      shift
+      ;;
     -h|--help)
-      echo "Usage: $0 [--prefix <directory>]"
+      echo "Usage: $0 [--prefix <directory>] [--cli-only]"
       echo "  Builds release keypop binary and installs to <directory>/."
+      echo "  --cli-only skips the app bundle and LaunchAgent (no expander)."
       exit 0
       ;;
     *)
@@ -37,8 +43,10 @@ if [[ "${major}" -lt 14 ]]; then
   exit 1
 fi
 
-if ! command -v swift >/dev/null 2>&1; then
-  echo "error: swift not found. Install Xcode Command Line Tools (not full Xcode):" >&2
+# /usr/bin/swift exists as a shim even before the CLT are installed, so
+# command -v can't tell — probe the CLT themselves.
+if ! xcode-select -p >/dev/null 2>&1; then
+  echo "error: Xcode Command Line Tools not found. Install them (not full Xcode):" >&2
   echo "  xcode-select --install" >&2
   exit 1
 fi
@@ -47,21 +55,22 @@ echo "Building release binary..."
 swift build --package-path "$PROJECT_DIR" -c release -q
 
 mkdir -p "$INSTALL_PREFIX"
-cp "${PROJECT_DIR}/.build/release/keypop" "${INSTALL_PREFIX}/keypop"
-chmod +x "${INSTALL_PREFIX}/keypop"
+install -m 755 "${PROJECT_DIR}/.build/release/keypop" "${INSTALL_PREFIX}/keypop"
 echo "Installed: ${INSTALL_PREFIX}/keypop"
 
-"${PROJECT_DIR}/scripts/bundle-keypop-app.sh" "${INSTALL_PREFIX}/keypop"
+if [[ "${CLI_ONLY}" -eq 0 ]]; then
+  "${PROJECT_DIR}/scripts/bundle-keypop-app.sh" "${INSTALL_PREFIX}/keypop"
 
-if [[ ! -f "${PROJECT_DIR}/assets/AppIcon.icns" ]]; then
-  echo "Generating AppIcon.icns..."
-  "${PROJECT_DIR}/scripts/generate-app-icon.sh"
-fi
+  if [[ ! -f "${PROJECT_DIR}/assets/AppIcon.icns" ]]; then
+    echo "Generating AppIcon.icns..."
+    "${PROJECT_DIR}/scripts/generate-app-icon.sh"
+  fi
 
-if [[ -d "${KEYPOP_APP_LEGACY}" && "${KEYPOP_APP}" != "${KEYPOP_APP_LEGACY}" ]]; then
-  echo ""
-  echo "App moved to ${KEYPOP_APP}. Re-grant Input Monitoring + Accessibility there."
-  echo "Remove any stale TCC entry for ${KEYPOP_APP_LEGACY}."
+  if [[ -d "${KEYPOP_APP_LEGACY}" && "${KEYPOP_APP}" != "${KEYPOP_APP_LEGACY}" ]]; then
+    echo ""
+    echo "App moved to ${KEYPOP_APP}. Re-grant Input Monitoring + Accessibility there."
+    echo "Remove any stale TCC entry for ${KEYPOP_APP_LEGACY}."
+  fi
 fi
 
 case ":${PATH}:" in
@@ -78,6 +87,13 @@ echo "Running keypop inspect..."
 if ! "${INSTALL_PREFIX}/keypop" inspect >/dev/null; then
   echo "error: keypop inspect failed" >&2
   exit 1
+fi
+
+if [[ "${CLI_ONLY}" -eq 1 ]]; then
+  echo ""
+  echo "CLI only — the keypop run expander is not set up."
+  echo "Full setup (app bundle + LaunchAgent): rerun without --cli-only."
+  exit 0
 fi
 
 echo ""

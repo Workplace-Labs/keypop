@@ -58,6 +58,16 @@ kits/*.snippets.json  ──keypop import──►  Apple Text Replacements (iOS
 
 ## Install
 
+**CLI only** — manage your Text Replacements library from the command line, no permission grants needed:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Workplace-Labs/keypop/main/install.sh | sh
+```
+
+Builds from source and installs the `keypop` CLI to `~/.local/bin`. Skips the app bundle and the LaunchAgent, so the `keypop run` expander stays off. Not a fan of `curl | sh`? Read [`install.sh`](install.sh) first, then run it locally.
+
+**Full setup** — CLI plus the system-wide expander for Warp, editors, and terminals:
+
 ```sh
 git clone git@github.com:Workplace-Labs/keypop.git
 cd keypop
