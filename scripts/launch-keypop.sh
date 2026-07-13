@@ -2,7 +2,7 @@
 # Manage keypop via a LaunchAgent so it survives terminal/session exit.
 #
 # Usage:
-#   ./scripts/launch-keypop.sh [start|stop|restart|status|install|uninstall|uninstall-clean]
+#   ./scripts/launch-keypop.sh [start|stop|restart|status|install|uninstall|uninstall-clean|debug|debug-off|diagnostics]
 #
 # Override binary: KEYPOP_BIN=/path/to/keypop
 
@@ -20,6 +20,46 @@ PLIST_DIR="${HOME}/Library/LaunchAgents"
 PLIST="${PLIST_DIR}/${LABEL}.plist"
 LAUNCHCTL_DOMAIN="gui/$(id -u)"
 LAUNCHCTL_SERVICE="${LAUNCHCTL_DOMAIN}/${LABEL}"
+
+diagnostics_until() {
+  [[ -f "$KEYPOP_DIAGNOSTICS_SESSION" ]] || return 0
+  local until now
+  until="$(tr -d '[:space:]' < "$KEYPOP_DIAGNOSTICS_SESSION")"
+  [[ "$until" =~ ^[0-9]+$ ]] || { rm -f "$KEYPOP_DIAGNOSTICS_SESSION"; return 0; }
+  now="$(date +%s)"
+  if (( until > now )); then
+    echo "$until"
+  else
+    rm -f "$KEYPOP_DIAGNOSTICS_SESSION"
+  fi
+}
+
+restart_agent() {
+  if is_loaded; then
+    unload_agent
+  fi
+  ensure_binary
+  ensure_snippets
+  local binary
+  binary="$(resolve_keypop_binary)"
+  kill_stale_keypop_processes "$binary"
+  write_plist "$binary"
+  load_agent
+  wait_for_daemon "$binary"
+}
+
+wait_for_daemon() {
+  local binary="$1"
+  local _
+  for _ in {1..20}; do
+    if pgrep -f "${binary} run --snippets" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 0.1
+  done
+  echo "keypop did not start within 2 seconds; check log: $LOG_FILE" >&2
+  return 1
+}
 
 resolve_keypop_binary() {
   if [[ -n "${KEYPOP_BIN:-}" && -x "${KEYPOP_BIN}" ]]; then
@@ -98,6 +138,8 @@ needs_plist_refresh() {
 
 write_plist() {
   local binary="$1"
+  local diagnostics_until_value
+  diagnostics_until_value="$(diagnostics_until)"
   mkdir -p "$PLIST_DIR" "$(dirname "$LOG_FILE")"
   cat > "$PLIST" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -121,6 +163,11 @@ write_plist() {
   <key>EnvironmentVariables</key>
   <dict>
     <key>PATH</key><string>${HOME}/.local/bin:/usr/local/bin:/usr/bin:/bin</string>
+$(if [[ -n "$diagnostics_until_value" ]]; then cat <<ENV
+    <key>KEYPOP_DIAGNOSTICS</key><string>1</string>
+    <key>KEYPOP_DIAGNOSTICS_UNTIL</key><string>${diagnostics_until_value}</string>
+ENV
+fi)
   </dict>
 </dict>
 </plist>
@@ -128,6 +175,9 @@ PLIST
   echo "Wrote ${PLIST}"
   echo "TCC: grant Input Monitoring + Accessibility to app bundle:"
   echo "  ${KEYPOP_APP}"
+  if [[ -n "$diagnostics_until_value" ]]; then
+    echo "Diagnostics enabled until $(date -r "$diagnostics_until_value" '+%H:%M:%S')."
+  fi
 }
 
 is_loaded() {
@@ -163,9 +213,15 @@ case "$cmd" in
     ensure_binary
     ensure_snippets
     binary="$(resolve_keypop_binary)"
+    # A rebuilt app bundle does not replace an already-running executable image.
+    # Stop the current agent so a full install always starts the new binary.
+    if is_loaded; then
+      unload_agent
+    fi
     kill_stale_keypop_processes "$binary"
     write_plist "$binary"
     load_agent
+    wait_for_daemon "$binary"
     echo "keypop installed and started"
     echo "log: $LOG_FILE"
     ;;
@@ -206,6 +262,7 @@ case "$cmd" in
       echo "keypop already loaded"
     else
       load_agent
+      wait_for_daemon "$binary"
       echo "keypop started"
     fi
     echo "log: $LOG_FILE"
@@ -221,15 +278,7 @@ case "$cmd" in
     ;;
 
   restart)
-    if is_loaded; then
-      unload_agent
-    fi
-    ensure_binary
-    ensure_snippets
-    binary="$(resolve_keypop_binary)"
-    kill_stale_keypop_processes "$binary"
-    write_plist "$binary"
-    load_agent
+    restart_agent
     echo "keypop restarted"
     echo "log: $LOG_FILE"
     ;;
@@ -246,6 +295,11 @@ case "$cmd" in
       if [[ -n "$PID" ]]; then
         echo "running (pid $PID)"
         echo "binary: ${BINARY}"
+        if until="$(diagnostics_until)"; [[ -n "$until" ]]; then
+          echo "diagnostics: enabled until $(date -r "$until" '+%H:%M:%S')"
+        else
+          echo "diagnostics: off"
+        fi
       else
         echo "loaded but not running (check log: $LOG_FILE)"
         echo "binary: ${BINARY}"
@@ -257,8 +311,71 @@ case "$cmd" in
     fi
     ;;
 
+  debug)
+    mkdir -p "$KEYPOP_DIAGNOSTICS_DIR"
+    chmod 700 "$KEYPOP_DIAGNOSTICS_DIR"
+    until="$(( $(date +%s) + 1800 ))"
+    printf '%s\n' "$until" > "$KEYPOP_DIAGNOSTICS_SESSION"
+    chmod 600 "$KEYPOP_DIAGNOSTICS_SESSION"
+    restart_agent
+    echo "KeyPop diagnostics enabled for 30 minutes. Reproduce once, then run:"
+    echo "  ./scripts/launch-keypop.sh diagnostics"
+    ;;
+
+  debug-off)
+    rm -f "$KEYPOP_DIAGNOSTICS_SESSION"
+    restart_agent
+    echo "KeyPop diagnostics disabled"
+    ;;
+
+  diagnostics)
+    mkdir -p "$KEYPOP_DIAGNOSTICS_DIR"
+    chmod 700 "$KEYPOP_DIAGNOSTICS_DIR"
+    report="$KEYPOP_DIAGNOSTICS_DIR/report-$(date '+%Y%m%d-%H%M%S').txt"
+    binary="$(resolve_keypop_binary 2>/dev/null || true)"
+    pid="$(pgrep -f "${binary} run --snippets" 2>/dev/null | head -1 || true)"
+    until="$(diagnostics_until)"
+    recent_events="$(awk '
+      /^diagnostic\|runtime_started\|diagnostics=enabled/ { events = "" }
+      /^diagnostic\|/ { events = events $0 ORS }
+      END { printf "%s", events }
+    ' "$LOG_FILE" 2>/dev/null | tail -120 || true)"
+    {
+      echo "KeyPop diagnostic report"
+      echo "generated_at=$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+      echo "launchagent_loaded=$(is_loaded && echo true || echo false)"
+      echo "expected_binary=${binary:-missing}"
+      echo "daemon_pid=${pid:-none}"
+      echo "diagnostics_until=${until:-off}"
+      echo "snippet_file_present=$([[ -f "$SNIPPETS" ]] && echo true || echo false)"
+      if [[ -x "${KEYPOP_APP}/Contents/MacOS/keypop" ]]; then
+        echo "app_identifier=$(codesign -dvvv "$KEYPOP_APP" 2>&1 | awk -F= '/^Identifier=/{print $2; exit}')"
+      fi
+      echo "events_begin"
+      [[ -n "$recent_events" ]] && printf '%s\n' "$recent_events"
+      echo "events_end"
+      if [[ -z "$pid" ]]; then
+        echo "verdict=daemon_not_running"
+      elif grep -q '^diagnostic|tap_reinstall_failed|' <<< "$recent_events"; then
+        echo "verdict=tap_reinstall_failed"
+      elif grep -q '^diagnostic|inject|.*outcome=failed' <<< "$recent_events"; then
+        echo "verdict=match_observed_injection_failed"
+      elif grep -q '^diagnostic|expansion|outcome=paste_posted' <<< "$recent_events"; then
+        echo "verdict=paste_posted_app_insertion_unconfirmed"
+      elif grep -q '^diagnostic|input_heartbeat|.*key_down_count=[1-9][0-9]*' <<< "$recent_events"; then
+        echo "verdict=input_observed_no_abnormal_state"
+      elif grep -q '^diagnostic|input_heartbeat|.*key_down_count=0' <<< "$recent_events"; then
+        echo "verdict=no_input_observed_during_diagnostic_interval"
+      else
+        echo "verdict=no_abnormal_state_observed"
+      fi
+    } > "$report"
+    chmod 600 "$report"
+    echo "Wrote diagnostic report: $report"
+    ;;
+
   *)
-    echo "Usage: $0 {start|stop|restart|status|install|uninstall|uninstall-clean}"
+    echo "Usage: $0 {start|stop|restart|status|install|uninstall|uninstall-clean|debug|debug-off|diagnostics}"
     exit 1
     ;;
 esac

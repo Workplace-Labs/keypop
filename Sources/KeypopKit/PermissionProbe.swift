@@ -81,13 +81,13 @@ public enum PermissionProbe {
         }
         if !snapshot.hasInputMonitoringUsageDescription {
             fputs(
-                "permission_hint|Rebuild KeyPop.app with ./scripts/install.sh (missing NSInputMonitoringUsageDescription)\n",
+                "permission_hint|Rebuild KeyPop.app with ./scripts/install-full.sh (missing NSInputMonitoringUsageDescription)\n",
                 stream
             )
         }
         if !snapshot.hasAccessibilityUsageDescription {
             fputs(
-                "permission_hint|Rebuild KeyPop.app with ./scripts/install.sh (missing NSAccessibilityUsageDescription)\n",
+                "permission_hint|Rebuild KeyPop.app with ./scripts/install-full.sh (missing NSAccessibilityUsageDescription)\n",
                 stream
             )
         }

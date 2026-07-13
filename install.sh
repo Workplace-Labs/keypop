@@ -1,8 +1,8 @@
 #!/bin/sh
-# Standalone curl-able installer: fetches keypop, builds the CLI from source,
-# and installs it to ~/.local/bin. CLI only — no app bundle, LaunchAgent, or
-# TCC permissions. For the complete setup (system-wide expander, app bundle),
-# clone the repo and run scripts/install.sh.
+# KeyPop CLI-only bootstrap installer (kept at this curl-friendly URL).
+# Fetches KeyPop, builds the CLI from source, and installs it to ~/.local/bin.
+# It does not install the app bundle, LaunchAgent, or TCC permissions.
+# For the full macOS setup, clone the repo and run scripts/install-full.sh.
 #
 # Usage:
 #   curl -fsSL https://raw.githubusercontent.com/Workplace-Labs/keypop/main/install.sh | sh
@@ -34,9 +34,15 @@ fi
 workdir="$(mktemp -d)"
 trap 'rm -rf "$workdir"' EXIT INT TERM
 
+echo "KeyPop CLI-only install"
+echo "  Installs: ${PREFIX}/keypop"
+echo "  Skips:    KeyPop.app, LaunchAgent, Input Monitoring, Accessibility"
 echo "Fetching keypop @ ${REF}..."
 git init -q "$workdir/keypop"
 git -C "$workdir/keypop" fetch -q --depth 1 "$REPO" "$REF"
 git -C "$workdir/keypop" checkout -q FETCH_HEAD
 
-"$workdir/keypop/scripts/install.sh" --cli-only --prefix "$PREFIX"
+"$workdir/keypop/scripts/install-full.sh" --cli-only --prefix "$PREFIX"
+
+echo "KeyPop CLI-only install complete."
+echo "For the system-wide expander, clone the repo and run ./scripts/install-full.sh."

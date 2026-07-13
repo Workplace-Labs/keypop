@@ -38,11 +38,11 @@ KeyPop is a practical tool with a little personality. When writing prose (README
 
 Mutations auto-export to `~/.config/keypop/snippets.json` unless `--no-sync`. Running `keypop run` reloads from that file via directory watch (~200ms debounce).
 
-Scripts (in `scripts/`): `install.sh`, `bundle-keypop-app.sh`, `launch-keypop.sh`, `sync-keypop.sh`, `fix-keypop-tcc.sh`, `generate-app-icon.sh`, `keypop-paths.sh`, `sync-keypop-skill.sh`
+Scripts (in `scripts/`): `install-full.sh`, `bundle-keypop-app.sh`, `launch-keypop.sh`, `sync-keypop.sh`, `fix-keypop-tcc.sh`, `generate-app-icon.sh`, `keypop-paths.sh`, `sync-keypop-skill.sh`
 
-**Two installers:** root `install.sh` is the curl-able CLI-only installer — it shallow-fetches the repo and delegates to `scripts/install.sh --cli-only` (no app bundle, LaunchAgent, or TCC). `scripts/install.sh` without flags is the full setup. Shared logic lives only in `scripts/install.sh`.
+**Two installers:** root `install.sh` is the curl-able CLI-only installer — it shallow-fetches the repo and delegates to `scripts/install-full.sh --cli-only` (no app bundle, LaunchAgent, or TCC). `scripts/install-full.sh` without flags is the full setup. Shared logic lives only in `scripts/install-full.sh`.
 
-**Install layout:** CLI → `~/.local/bin/keypop`. App bundle → `~/Applications/KeyPop.app`. Override app path: `KEYPOP_APP=... ./scripts/install.sh`.
+**Install layout:** CLI → `~/.local/bin/keypop`. App bundle → `~/Applications/KeyPop.app`. Override app path: `KEYPOP_APP=... ./scripts/install-full.sh`.
 
 **TCC:** LaunchAgent runs `~/Applications/KeyPop.app/Contents/MacOS/keypop run`. Grant **Input Monitoring** + **Accessibility** to **`~/Applications/KeyPop.app`**, not Terminal or Cursor. Both panes need the `.app` bundle (use **+** → **Cmd+Shift+G**). Sign with `./scripts/create-keypop-signing-cert.sh` once (`KeyPop Dev` self-signed cert — not client Apple Dev accounts). Re-grant after rebuilds that change the signature.
 
@@ -69,7 +69,7 @@ Requires Xcode Command Line Tools (`xcode-select --install`) — not the full Xc
 
 ```sh
 swift build && swift test
-./scripts/install.sh
+./scripts/install-full.sh
 ./scripts/launch-keypop.sh status
 keypop inspect
 scripts/validate-crud.sh

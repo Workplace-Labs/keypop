@@ -34,14 +34,14 @@ sleep 1
 
 if [[ "$REBUNDLE_ONLY" == true ]]; then
   if [[ ! -x "${KEYPOP_CLI}" ]]; then
-    echo "error: ${KEYPOP_CLI} not found; run ./scripts/install.sh first" >&2
+    echo "error: ${KEYPOP_CLI} not found; run ./scripts/install-full.sh first" >&2
     exit 1
   fi
   echo "Re-signing KeyPop.app..."
   "${PROJECT_DIR}/scripts/bundle-keypop-app.sh" "${KEYPOP_CLI}"
 else
   echo "Rebuilding and re-signing KeyPop.app..."
-  "${PROJECT_DIR}/scripts/install.sh"
+  "${PROJECT_DIR}/scripts/install-full.sh"
 fi
 
 remove_legacy_app_bundle

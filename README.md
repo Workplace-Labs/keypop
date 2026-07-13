@@ -65,7 +65,7 @@ Pick the install path based on how you want to use KeyPop:
 | Manage snippets from Terminal, scripts, Raycast, or another launcher | CLI only |
 | Expand shortcuts as you type in Warp, editors, terminals, and other apps | Full setup |
 
-**CLI only** — installs the `keypop` command, with no background app and no permission grants:
+**CLI-only bootstrap (`install.sh`)** — installs the `keypop` command, with no background app and no permission grants:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Workplace-Labs/keypop/main/install.sh | sh
@@ -75,12 +75,12 @@ Builds from source and installs the `keypop` CLI to `~/.local/bin`. This is the 
 
 Not a fan of `curl | sh`? Read [`install.sh`](install.sh) first, then run it locally.
 
-**Full setup** — installs the CLI plus the system-wide expander:
+**Full macOS setup (`scripts/install-full.sh`)** — installs the CLI plus the system-wide expander:
 
 ```sh
 git clone git@github.com:Workplace-Labs/keypop.git
 cd keypop
-./scripts/install.sh
+./scripts/install-full.sh
 ```
 
 Installs the `keypop` CLI to `~/.local/bin`, bundles `~/Applications/KeyPop.app`, and registers a LaunchAgent.
@@ -99,13 +99,15 @@ keypop import kits/lab-rats.snippets.json --apply
 
 # One-time: stable code signing so TCC grants survive rebuilds
 ./scripts/create-keypop-signing-cert.sh
-./scripts/install.sh
+./scripts/install-full.sh
 
 # Grant TCC permissions to ~/Applications/KeyPop.app, then:
 ./scripts/launch-keypop.sh restart
 ```
 
 Type `;pproof` in Warp to verify. See [User Guide](docs/user-guide.md) for full setup and permissions.
+
+If expansion ever gets weird, run `./scripts/launch-keypop.sh debug`, reproduce once, then run `./scripts/launch-keypop.sh diagnostics`. The report is metadata-only and auto-expires after 30 minutes.
 
 ## CLI examples
 

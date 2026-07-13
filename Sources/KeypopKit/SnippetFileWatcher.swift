@@ -32,6 +32,7 @@ public final class SnippetFileWatcher {
         watchFD = open(directory, O_EVTONLY)
         guard watchFD >= 0 else {
             fputs("reload_watch_disabled|could not watch snippet directory\n", stderr)
+            KeypopDiagnostics.event("watcher_disabled", fields: ["reason": "directory_open_failed"])
             return
         }
 
@@ -53,6 +54,7 @@ public final class SnippetFileWatcher {
         source.resume()
         self.source = source
         fputs("reload_watch|directory|\(directory)\n", stderr)
+        KeypopDiagnostics.event("watcher_started")
     }
 
     public func stop() {

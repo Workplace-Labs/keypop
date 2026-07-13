@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Build keypop and install to ~/.local/bin (or --prefix <dir>).
+# KeyPop full macOS installer.
+# Builds and installs the CLI, KeyPop.app, and LaunchAgent. The --cli-only
+# flag is used internally by the root curl-friendly CLI-only bootstrap.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -21,8 +23,8 @@ while [[ $# -gt 0 ]]; do
       ;;
     -h|--help)
       echo "Usage: $0 [--prefix <directory>] [--cli-only]"
-      echo "  Builds release keypop binary and installs to <directory>/."
-      echo "  --cli-only skips the app bundle and LaunchAgent (no expander)."
+      echo "  Full setup: installs the CLI, KeyPop.app, and LaunchAgent."
+      echo "  --cli-only Internal/minimal mode: skips the app and LaunchAgent."
       exit 0
       ;;
     *)
@@ -59,6 +61,7 @@ install -m 755 "${PROJECT_DIR}/.build/release/keypop" "${INSTALL_PREFIX}/keypop"
 echo "Installed: ${INSTALL_PREFIX}/keypop"
 
 if [[ "${CLI_ONLY}" -eq 0 ]]; then
+  echo "Installing full setup: KeyPop.app and LaunchAgent..."
   "${PROJECT_DIR}/scripts/bundle-keypop-app.sh" "${INSTALL_PREFIX}/keypop"
 
   if [[ ! -f "${PROJECT_DIR}/assets/AppIcon.icns" ]]; then

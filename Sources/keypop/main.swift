@@ -54,6 +54,8 @@ enum KeypopCLI {
           keypop import kits/prompts-core.snippets.json --prefix ';p' --dry-run
           ./scripts/launch-keypop.sh install
           tail -f ~/.local/log/keypop.log
+          ./scripts/launch-keypop.sh debug       # 30-minute metadata-only session
+          ./scripts/launch-keypop.sh diagnostics # redacted report
         """
     }
 

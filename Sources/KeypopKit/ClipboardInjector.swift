@@ -26,7 +26,7 @@ public struct ClipboardInjector: Sendable {
     }
 
     /// Saves pasteboard, sets text, posts Cmd+V, restores after delay.
-    public func inject(_ text: String) throws {
+    public func inject(_ text: String, onStage: ((String) -> Void)? = nil) throws {
         guard CGPreflightPostEventAccess() else {
             throw ClipboardInjectorError.postEventDenied
         }
@@ -42,15 +42,17 @@ public struct ClipboardInjector: Sendable {
         guard pasteboard.setString(text, forType: .string) else {
             throw ClipboardInjectorError.pasteFailed
         }
+        onStage?("pasteboard_written")
 
         try postCommandV()
+        onStage?("paste_posted")
 
         usleep(restoreDelayMs * 1000)
         restorePasteboard(savedItems: savedItems)
     }
 
     /// Deletes `count` characters to the left via forward-delete (Fn+Delete) or backspace.
-    public func deleteCharacters(count: Int) throws {
+    public func deleteCharacters(count: Int, onStage: ((String) -> Void)? = nil) throws {
         guard count > 0 else { return }
         guard CGPreflightPostEventAccess() else {
             throw ClipboardInjectorError.postEventDenied
@@ -69,6 +71,7 @@ public struct ClipboardInjector: Sendable {
             up.post(tap: .cghidEventTap)
             usleep(2_000)
         }
+        onStage?("delete_posted")
     }
 
     private func postCommandV() throws {

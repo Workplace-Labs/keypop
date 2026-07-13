@@ -65,6 +65,7 @@ enum RunCommand {
                     engine.reload(phrases: updated.phrases)
                 } catch {
                     fputs("reload_error|\(error.localizedDescription)\n", stderr)
+                    KeypopDiagnostics.event("watcher_reload_failed", fields: ["error": "snippet_load_failed"])
                 }
             }
             watcher?.start()

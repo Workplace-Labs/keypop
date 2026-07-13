@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-07-13
+
+### Added
+
+- A 30-minute, metadata-only diagnostic session for intermittent expansion failures: `./scripts/launch-keypop.sh debug`, then `diagnostics` for a redacted report.
+
+### Fixed
+
+- Full installs now restart the Mac expander, so a rebuilt KeyPop.app is the daemon actually running.
+- Runtime logs no longer include shortcut or expanded prompt text.
+
+### Changed
+
+- Install paths are named plainly: root `install.sh` is the curl-friendly CLI-only bootstrap; `scripts/install-full.sh` installs the Mac expander.
+
 ## [0.2.2] - 2026-07-03
 
 ### Added

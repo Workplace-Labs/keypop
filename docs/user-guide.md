@@ -28,7 +28,7 @@ Swap the placeholder values for your own. See [Available kits](../README.md#avai
 3. **Start the Mac expander**
 
 ```sh
-./scripts/install.sh                  # or: ./scripts/launch-keypop.sh install
+./scripts/install-full.sh             # or: ./scripts/launch-keypop.sh install
 ```
 
 ### Permissions
@@ -49,7 +49,7 @@ Then restart:
 
 Type `;pcr` in Warp to verify.
 
-**Stable signing (recommended):** run `./scripts/create-keypop-signing-cert.sh` once before `install.sh`. Rebuilds then keep the same signature so TCC grants survive. Without it, ad-hoc signing orphans grants on every rebuild — run `./scripts/fix-keypop-tcc.sh` to reset.
+**Stable signing (recommended):** run `./scripts/create-keypop-signing-cert.sh` once before `install-full.sh`. Rebuilds then keep the same signature so TCC grants survive. Without it, ad-hoc signing orphans grants on every rebuild — run `./scripts/fix-keypop-tcc.sh` to reset.
 
 Replacements also sync to iPhone/iPad via iCloud (System Settings → Keyboard → Text Replacements).
 
@@ -142,6 +142,18 @@ tail -f ~/.local/log/keypop.log     # listen_ready|tap_installed, expanded|…
 
 Look for `listen_ready|tap_installed` in the log. If missing, Input Monitoring is not granted to the daemon.
 
+**Intermittent expansion in Warp / VS Code / Cursor**
+
+Run a short, metadata-only diagnostic session before reproducing the issue:
+
+```sh
+./scripts/launch-keypop.sh debug
+# Reproduce the problem once.
+./scripts/launch-keypop.sh diagnostics
+```
+
+KeyPop writes a redacted report under `~/.config/keypop/diagnostics/`. It records tap health, app bundle IDs, aggregate key-event counts, and whether KeyPop posted a paste — never the characters you type, shortcut text, expanded prompt text, or clipboard contents. Diagnostics turn themselves off after 30 minutes; use `./scripts/launch-keypop.sh debug-off` to stop sooner.
+
 **No expansion on iPhone** — check System Settings → Keyboard → Text Replacements; wait for iCloud sync.
 
 **Double expansion in Slack** — rare; both Apple Text Replacements and `keypop run` may fire. Test in Notes vs Warp to isolate.
@@ -206,7 +218,7 @@ keypop import kits/lab-rats.snippets.json --prefix ';lab' --apply --on-conflict 
 ### Daemon commands
 
 ```sh
-./scripts/install.sh                       # build, bundle KeyPop.app, install LaunchAgent
+./scripts/install-full.sh                  # build, bundle KeyPop.app, install LaunchAgent
 ./scripts/launch-keypop.sh install       # plist only (after manual build)
 ./scripts/launch-keypop.sh status        # running? which binary path?
 ./scripts/launch-keypop.sh restart       # after TCC grant or rebuild
