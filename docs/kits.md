@@ -73,6 +73,7 @@ If you are installing kits for the first time, import one and use it for a day b
 | [`kits/karpathy-agentic-coding.snippets.json`](karpathy-agentic-coding-kit.md) | `;ak` | Agentic engineering prompts for specs, eval loops, implementation, steering, simplification, diff review, and verification |
 | [`kits/caveman-prompting.snippets.json`](caveman-prompting-kit.md) | `;cm` | Output-compression prompts for concise tasks, debugging, review, verification, handoff, and safe prompt shortening |
 | [`kits/compound-engineering.snippets.json`](compound-engineering-kit.md) | `;ce` | Product-engineering prompts for strategy, ideation, requirements, planning, execution, review, simplification, and reusable lessons |
+| [`kits/claude-command-patterns.snippets.json`](claude-command-patterns-kit.md) | `;cc` | Compact, explicit prompt patterns inspired by viral Claude labels; these are prompt templates, not hidden commands |
 
 ### Agent Workflow Kits
 
@@ -88,9 +89,9 @@ The Caveman kit deserves one extra caveat: newer prompt-compression research sug
 
 ## Naming
 
-Use descriptive `name` values for browsing kits in git:
+Use concise, descriptive `name` values. Do not repeat the product, kit, or category name in every snippet; the kit filename and keyword prefix already provide that context.
 
 ```
-Lab Rats / Email
-Prompt / Code review
+Ghost Rewrite
+Decision Matrix
 ```

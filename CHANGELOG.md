@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Claude Command Patterns kit — eleven compact shortcuts under `;cc` for rewriting, decisions, red teaming, artifacts, concise delivery, and candid critique.
+
 ## [0.2.3] - 2026-07-13
 
 ### Added
