@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.2.4] - 2026-07-30
 
 ### Added
 
@@ -14,6 +14,10 @@
 - Snippet directory watch ignores sibling file writes; usage stats moved to `~/.local/state/keypop/usage.json` (legacy file migrated once).
 - Full install syncs the signed app binary back to `~/.local/bin/keypop` so CLI and KeyPop.app share one code identity.
 - Tap teardown invalidates the mach port; permission probe field renamed to `tapCreateAllowed` (create ≠ deliver).
+- Runtime shortcut matching now keeps only a viable shortcut suffix, so unrelated text and terminal control input cannot poison the next expansion.
+- `Ctrl+C`, editing/navigation keys, whitespace, and Command/Control/Option input reset the runtime candidate state; app activation does too.
+- KeyPop-generated delete/paste events are marked and ignored by the matcher, while expansions queue safely during clipboard restoration.
+- Runtime Unicode extraction now allocates from the event's exact UTF-16 length instead of assuming a fixed buffer.
 
 ## [0.2.3] - 2026-07-13
 

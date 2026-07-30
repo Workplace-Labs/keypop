@@ -2,15 +2,29 @@ import XCTest
 @testable import KeypopKit
 
 final class KeywordMatcherTests: XCTestCase {
-    func testExactMatch() {
+    func testAdvanceMatchesKeyword() {
         let matcher = KeywordMatcher(keywords: [";wle", ";wlw"])
-        XCTAssertEqual(matcher.match(in: ";wle"), ";wle")
+        var state = ""
+
+        for character in ";wle" {
+            let step = matcher.advance(character, from: state)
+            state = step.state
+            if character == "e" {
+                XCTAssertEqual(step.match, ";wle")
+            }
+        }
     }
 
     func testWaitsForLongerPrefix() {
         let matcher = KeywordMatcher(keywords: [";wl", ";wle"])
-        XCTAssertNil(matcher.match(in: ";wl"))
-        XCTAssertEqual(matcher.match(in: ";wle"), ";wle")
+        var state = ""
+        for character in ";wl" {
+            state = matcher.advance(character, from: state).state
+        }
+        XCTAssertEqual(state, ";wl")
+
+        let step = matcher.advance("e", from: state)
+        XCTAssertEqual(step.match, ";wle")
     }
 
     func testReportsPrefixCollisions() {
@@ -28,12 +42,64 @@ final class KeywordMatcherTests: XCTestCase {
 
     func testNoPartialMatch() {
         let matcher = KeywordMatcher(keywords: [";wle"])
-        XCTAssertNil(matcher.match(in: ";wl"))
+        var state = ""
+        for character in ";wl" {
+            state = matcher.advance(character, from: state).state
+        }
+        XCTAssertEqual(state, ";wl")
     }
 
-    func testBufferResetOnWhitespace() {
-        let matcher = KeywordMatcher(keywords: [";wle"])
-        XCTAssertTrue(matcher.shouldResetBuffer(for: " "))
-        XCTAssertFalse(matcher.shouldResetBuffer(for: ";"))
+    func testAdvanceUsesTheUsefulSuffix() {
+        let matcher = KeywordMatcher(keywords: [";tcodex", ";mylinkedin"])
+        var state = ""
+        var match: String?
+
+        for character in "old text;tcodex" {
+            let step = matcher.advance(character, from: state)
+            state = step.state
+            match = step.match ?? match
+        }
+
+        XCTAssertEqual(match, ";tcodex")
+        XCTAssertEqual(state, "")
+    }
+
+    func testControlCharacterCannotPoisonTheNextShortcut() {
+        let matcher = KeywordMatcher(keywords: [";tcodex", ";mylinkedin"])
+        var state = matcher.advance("\u{3}", from: "").state
+
+        XCTAssertEqual(state, "")
+
+        for character in ";tcodex" {
+            let step = matcher.advance(character, from: state)
+            state = step.state
+            if character == "x" {
+                XCTAssertEqual(step.match, ";tcodex")
+            }
+        }
+    }
+
+    func testIncompleteCandidateSurvivesUnrelatedPrefix() {
+        let matcher = KeywordMatcher(keywords: [";tcodex"])
+        var state = ""
+
+        for character in "abc;tc" {
+            state = matcher.advance(character, from: state).state
+        }
+
+        XCTAssertEqual(state, ";tc")
+    }
+
+    func testNewShortcutCanStartAfterStaleCandidateText() {
+        let matcher = KeywordMatcher(keywords: [";tcodex"])
+        var state = "stale"
+
+        for character in ";tcodex" {
+            let step = matcher.advance(character, from: state)
+            state = step.state
+            if character == "x" {
+                XCTAssertEqual(step.match, ";tcodex")
+            }
+        }
     }
 }

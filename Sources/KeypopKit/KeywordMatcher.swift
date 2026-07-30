@@ -10,28 +10,47 @@ public struct KeywordCollision: Sendable, Equatable {
     }
 }
 
+struct KeywordMatcherStep: Sendable, Equatable {
+    let state: String
+    let match: String?
+
+    init(state: String, match: String? = nil) {
+        self.state = state
+        self.match = match
+    }
+}
+
 /// Immediate-mode matcher: expand when buffer equals a keyword and no longer keyword shares that prefix.
 public struct KeywordMatcher: Sendable {
     private let keywords: Set<String>
-    private let maxKeywordLength: Int
+    private let prefixes: Set<String>
 
     public init(keywords: [String]) {
         let normalized = Set(keywords.filter { !$0.isEmpty })
         self.keywords = normalized
-        self.maxKeywordLength = normalized.map(\.count).max() ?? 0
+        self.prefixes = Set(normalized.flatMap { keyword in
+            (1...keyword.count).map { String(keyword.prefix($0)) }
+        })
     }
 
-    public var bufferCapacity: Int {
-        max(maxKeywordLength, 1)
-    }
+    /// Keeps only the longest suffix that can still become a keyword.
+    func advance(_ character: Character, from state: String) -> KeywordMatcherStep {
+        let input = state + String(character)
+        let matches = keywords.filter { input.hasSuffix($0) }
 
-    public func match(in buffer: String) -> String? {
-        guard keywords.contains(buffer) else { return nil }
-
-        let longerPrefixExists = keywords.contains { keyword in
-            keyword.count > buffer.count && keyword.hasPrefix(buffer)
+        if let match = matches.max(by: { $0.count < $1.count }) {
+            let longerPrefixExists = keywords.contains { keyword in
+                keyword.count > match.count && keyword.hasPrefix(match)
+            }
+            if !longerPrefixExists {
+                return KeywordMatcherStep(state: "", match: match)
+            }
         }
-        return longerPrefixExists ? nil : buffer
+
+        let candidate = prefixes
+            .filter { input.hasSuffix($0) }
+            .max(by: { $0.count < $1.count }) ?? ""
+        return KeywordMatcherStep(state: candidate)
     }
 
     public static func collisions(for keyword: String, among keywords: [String]) -> [KeywordCollision] {
@@ -60,11 +79,4 @@ public struct KeywordMatcher: Sendable {
         }
     }
 
-    public func shouldResetBuffer(for character: Character) -> Bool {
-        if character == "\n" || character == "\t" {
-            return true
-        }
-        let whitespace = CharacterSet.whitespacesAndNewlines
-        return character.unicodeScalars.allSatisfy { whitespace.contains($0) }
-    }
 }

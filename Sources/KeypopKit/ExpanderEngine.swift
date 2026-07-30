@@ -1,4 +1,5 @@
 import ApplicationServices
+import AppKit
 import Foundation
 
 public enum ExpanderEngineError: Error, LocalizedError {
@@ -19,13 +20,14 @@ public enum ExpanderEngineError: Error, LocalizedError {
 }
 
 fileprivate final class EngineState {
-    var buffer = ""
+    var candidate = ""
     var matcher: KeywordMatcher
     var phrases: [String: String]
     let usageStore: UsageStore?
     let injector = ClipboardInjector()
     var enabled = true
     var isExpanding = false
+    var expansionQueue: [String] = []
     var observedKeyDowns = 0
     var keyDownsSinceTapInstall: UInt64 = 0
     var lastKeyDownAt: Date?
@@ -43,7 +45,7 @@ fileprivate final class EngineState {
         let merged = BuiltInSnippets.merging(with: phrases)
         self.phrases = merged
         self.matcher = KeywordMatcher(keywords: Array(merged.keys))
-        self.buffer = ""
+        self.candidate = ""
     }
 
     func noteTapInstalled() {
@@ -51,39 +53,55 @@ fileprivate final class EngineState {
         lastKeyDownAt = nil
     }
 
+    func resetCandidate() {
+        candidate = ""
+    }
+
     func processKeyDown(_ event: CGEvent) -> String? {
         observedKeyDowns += 1
         keyDownsSinceTapInstall += 1
         lastKeyDownAt = Date()
-        let keyCode = Int(event.getIntegerValueField(.keyboardEventKeycode))
-        if shouldReset(forKeyCode: keyCode) {
-            buffer = ""
-            return nil
-        }
 
         var length = 0
-        var units = [UniChar](repeating: 0, count: 8)
-        event.keyboardGetUnicodeString(maxStringLength: 8, actualStringLength: &length, unicodeString: &units)
-        guard length > 0 else { return nil }
+        event.keyboardGetUnicodeString(maxStringLength: 0, actualStringLength: &length, unicodeString: nil)
+        var units = [UniChar](repeating: 0, count: length)
+        if length > 0 {
+            event.keyboardGetUnicodeString(maxStringLength: length, actualStringLength: &length, unicodeString: &units)
+        }
+        let unicode = String(utf16CodeUnits: units, count: length)
+        let keyCode = Int(event.getIntegerValueField(.keyboardEventKeycode))
 
-        let string = String(utf16CodeUnits: units, count: length)
-        guard string.count == 1, let character = string.first else { return nil }
-
-        if matcher.shouldResetBuffer(for: character) {
-            buffer = ""
+        switch RuntimeInputClassifier.classify(keyCode: keyCode, flags: event.flags, unicode: unicode) {
+        case .reset:
+            resetCandidate()
             return nil
+        case let .text(character):
+            let step = matcher.advance(character, from: candidate)
+            candidate = step.state
+            return step.match
         }
-
-        buffer.append(character)
-        if buffer.count > matcher.bufferCapacity {
-            buffer = String(buffer.suffix(matcher.bufferCapacity))
-        }
-
-        return matcher.match(in: buffer)
     }
 
-    func performExpansion(keyword: String) {
-        guard !isExpanding, let phrase = phrases[keyword] else {
+    func enqueueExpansion(keyword: String) {
+        guard phrases[keyword] != nil else {
+            return
+        }
+
+        expansionQueue.append(keyword)
+        drainExpansionQueue()
+    }
+
+    private func drainExpansionQueue() {
+        guard !isExpanding, let keyword = expansionQueue.first else {
+            return
+        }
+        expansionQueue.removeFirst()
+        performExpansion(keyword: keyword)
+    }
+
+    private func performExpansion(keyword: String) {
+        guard let phrase = phrases[keyword] else {
+            drainExpansionQueue()
             return
         }
 
@@ -111,7 +129,7 @@ fileprivate final class EngineState {
                 fputs("usage_error|record_failed\n", stderr)
                 KeypopDiagnostics.event("usage_record_failed")
             }
-            buffer = ""
+            resetCandidate()
             fputs("expanded|keyword_length=\(keyword.count)|phrase_length=\(phrase.count)|outcome=paste_posted\n", stderr)
             KeypopDiagnostics.debugEvent(session, "expansion", fields: ["outcome": "paste_posted"])
             // Keep expansions serialized through pasteboard restore so restores cannot race.
@@ -120,12 +138,14 @@ fileprivate final class EngineState {
                 guard let self else { return }
                 self.isExpanding = false
                 self.onAfterExpansion?(keyword)
+                self.drainExpansionQueue()
             }
         } catch {
             let kind = errorKind(error)
             fputs("expand_error|error=\(kind)\n", stderr)
             KeypopDiagnostics.debugEvent(session, "inject", fields: ["outcome": "failed", "error": kind])
             isExpanding = false
+            drainExpansionQueue()
         }
     }
 
@@ -137,17 +157,6 @@ fileprivate final class EngineState {
         }
     }
 
-    private func shouldReset(forKeyCode keyCode: Int) -> Bool {
-        switch keyCode {
-        case 0x7B, 0x7C, 0x7D, 0x7E,
-             0x75, 0x73, 0x77, 0x74, 0x79, 0x71,
-             0x35, 0x33,
-             0x30, 0x24:
-            return true
-        default:
-            return false
-        }
-    }
 }
 
 private func expanderTapCallback(
@@ -168,13 +177,17 @@ private func expanderTapCallback(
         return nil
     }
 
-    guard state.enabled, !state.isExpanding, type == .keyDown else {
+    guard state.enabled, type == .keyDown else {
+        return Unmanaged.passUnretained(event)
+    }
+
+    if event.getIntegerValueField(.eventSourceUserData) == KeypopSyntheticEvent.userData {
         return Unmanaged.passUnretained(event)
     }
 
     if let keyword = state.processKeyDown(event) {
         DispatchQueue.main.async {
-            state.performExpansion(keyword: keyword)
+            state.enqueueExpansion(keyword: keyword)
         }
     }
 
@@ -187,6 +200,7 @@ public final class ExpanderEngine {
     private var runLoopSource: CFRunLoopSource?
     private var healthTimer: DispatchSourceTimer?
     private var diagnosticTimer: DispatchSourceTimer?
+    private var appActivationObserver: NSObjectProtocol?
     private var healthCheckCount: UInt = 0
     private var tapInstalledAt = Date()
     private var consecutiveNeverDeliveredReinstalls = 0
@@ -256,6 +270,15 @@ public final class ExpanderEngine {
         }
 
         try installTap()
+        appActivationObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self else { return }
+            self.state.resetCandidate()
+            KeypopDiagnostics.debugEvent(self.diagnosticSession, "input_reset", fields: ["reason": "app_activated"])
+        }
         startHealthMonitor()
         startDiagnosticTimer()
         fputs("keypop running|\(state.phrases.count) snippets\n", stderr)
@@ -271,6 +294,10 @@ public final class ExpanderEngine {
         stopHealthMonitor()
         stopDiagnosticTimer()
         teardownTap()
+        if let appActivationObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(appActivationObserver)
+            self.appActivationObserver = nil
+        }
         KeypopDiagnostics.event("runtime_stopped", fields: ["uptime_seconds": String(Int(Date().timeIntervalSince(startedAt)))])
     }
 
