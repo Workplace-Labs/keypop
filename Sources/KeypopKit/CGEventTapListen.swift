@@ -84,6 +84,9 @@ public enum CGEventTapListen {
         if let source {
             CFRunLoopRemoveSource(CFRunLoopGetCurrent(), source, .commonModes)
         }
+        if let tap {
+            CFMachPortInvalidate(tap)
+        }
     }
 
     private static let passthroughCallback: CGEventTapCallBack = { _, _, event, _ in

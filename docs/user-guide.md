@@ -137,10 +137,10 @@ Keep PII kits out of public repos (gitignored).
 ```sh
 ./scripts/launch-keypop.sh status   # running? correct binary path?
 ./scripts/sync-keypop.sh            # re-export snippets
-tail -f ~/.local/log/keypop.log     # listen_ready|tap_installed, expanded|…
+tail -f ~/.local/log/keypop.log     # tap_installed, expanded|…
 ```
 
-Look for `listen_ready|tap_installed` in the log. If missing, Input Monitoring is not granted to the daemon.
+Look for `tap_installed` in the log. If missing, Input Monitoring is not granted to the daemon.
 
 **Intermittent expansion in Warp / VS Code / Cursor**
 
@@ -162,7 +162,7 @@ If the report verdict is `tap_inert` (or the log shows `tap_inert|`), the daemon
 
 **Daemon stopped after sleep** — check log for `tap_health` lines; restart: `./scripts/launch-keypop.sh restart`
 
-**TCC not working after rebuild** — run `./scripts/fix-keypop-tcc.sh`, re-grant both permissions to `~/Applications/KeyPop.app`, remove stale entries (black `keypop` exec, legacy `~/.local/KeyPop.app`), then `./scripts/launch-keypop.sh restart`. Confirm log shows `listen_ready|tap_installed`.
+**TCC not working after rebuild** — run `./scripts/fix-keypop-tcc.sh`, re-grant both permissions to `~/Applications/KeyPop.app`, remove stale entries (black `keypop` exec, legacy `~/.local/KeyPop.app`), then `./scripts/launch-keypop.sh restart`. Confirm log shows `tap_installed` and expansions fire.
 
 **Probe from Terminal shows listen=false but Accessibility=true** — normal. Terminal and the LaunchAgent daemon have different TCC contexts. Trust the daemon log, not `keypop probe permissions` run from a shell, for Input Monitoring.
 

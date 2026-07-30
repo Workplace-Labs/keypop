@@ -36,6 +36,28 @@ final class UsageStoreTests: XCTestCase {
         )
         XCTAssertTrue(path.contains("/keypop/"), "usage path should stay under a keypop-owned directory")
         XCTAssertTrue(path.hasSuffix("usage.json"))
+        XCTAssertNotEqual(path, UsageStore.legacyDefaultPath)
+    }
+
+    func testMigratesLegacyUsageFileOnce() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("keypop-usage-migrate-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let legacy = root.appendingPathComponent("legacy-usage.json")
+        let modern = root.appendingPathComponent("state/usage.json")
+        let payload = Data(#"{";wlmc":{"count":2,"lastUsedAt":"1970-01-01T00:01:00Z"}}"#.utf8)
+        try payload.write(to: legacy)
+
+        UsageStore.migrateIfNeeded(from: legacy.path, to: modern.path, fileManager: .default)
+
+        let store = UsageStore(path: modern.path)
+        XCTAssertEqual(
+            try store.records(),
+            [";wlmc": UsageRecord(count: 2, lastUsedAt: "1970-01-01T00:01:00Z")]
+        )
+        XCTAssertFalse(FileManager.default.fileExists(atPath: legacy.path))
     }
 
     func testRecordUseIncrementsCountAndTimestamp() throws {

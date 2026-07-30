@@ -22,12 +22,35 @@ public final class UsageStore {
         return "\(home)/.local/state/keypop/usage.json"
     }
 
+    public static var legacyDefaultPath: String {
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        return "\(home)/.config/keypop/usage.json"
+    }
+
     private let path: String
     private let fileManager: FileManager
 
     public init(path: String = UsageStore.defaultPath, fileManager: FileManager = .default) {
         self.path = path
         self.fileManager = fileManager
+        // Only auto-migrate when using the live default path — never into test/temp paths.
+        if path == Self.defaultPath {
+            Self.migrateIfNeeded(from: Self.legacyDefaultPath, to: path, fileManager: fileManager)
+        }
+    }
+
+    /// Moves a legacy usage file into the modern path once. No-op if destination already exists.
+    static func migrateIfNeeded(from legacy: String, to path: String, fileManager: FileManager) {
+        guard path != legacy,
+              fileManager.fileExists(atPath: legacy),
+              !fileManager.fileExists(atPath: path)
+        else { return }
+        let destination = URL(fileURLWithPath: path)
+        try? fileManager.createDirectory(
+            at: destination.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        try? fileManager.moveItem(atPath: legacy, toPath: path)
     }
 
     public func records() throws -> [String: UsageRecord] {

@@ -21,6 +21,7 @@ public struct ClipboardInjector: Sendable {
 
     public let restoreDelayMs: UInt32
     private let scheduleRestore: @Sendable (UInt32, @escaping @Sendable () -> Void) -> Void
+    private let restoreGate: RestoreGate
 
     private typealias SavedPasteboardItem = (NSPasteboard.PasteboardType, Data?)
 
@@ -30,11 +31,13 @@ public struct ClipboardInjector: Sendable {
     ) {
         self.restoreDelayMs = restoreDelayMs
         self.scheduleRestore = scheduleRestore ?? Self.defaultScheduleRestore
+        self.restoreGate = RestoreGate()
     }
 
     /// Saves pasteboard, sets text, posts Cmd+V, then restores asynchronously after a delay.
     ///
     /// `paste_posted` means the paste keystroke was posted — not that the target app inserted text.
+    /// A newer inject cancels any pending restore from an older inject.
     public func inject(_ text: String, onStage: ((String) -> Void)? = nil) throws {
         guard CGPreflightPostEventAccess() else {
             throw ClipboardInjectorError.postEventDenied
@@ -56,9 +59,12 @@ public struct ClipboardInjector: Sendable {
         try postCommandV()
         onStage?("paste_posted")
 
+        let generation = restoreGate.begin()
         let delay = restoreDelayMs
         let items = savedItems
+        let gate = restoreGate
         scheduleRestore(delay) {
+            guard gate.isCurrent(generation) else { return }
             Self.restorePasteboard(savedItems: items)
         }
         onStage?("restore_scheduled")
@@ -123,5 +129,24 @@ public struct ClipboardInjector: Sendable {
             return item
         }
         pasteboard.writeObjects(newItems)
+    }
+}
+
+/// Cancels stale pasteboard restores when expansions overlap.
+private final class RestoreGate: @unchecked Sendable {
+    private let lock = NSLock()
+    private var generation: UInt64 = 0
+
+    func begin() -> UInt64 {
+        lock.lock()
+        defer { lock.unlock() }
+        generation += 1
+        return generation
+    }
+
+    func isCurrent(_ candidate: UInt64) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return candidate == generation
     }
 }

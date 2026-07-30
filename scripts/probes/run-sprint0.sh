@@ -38,7 +38,7 @@ ${PERMS}
 
 Interpretation:
 
-- \`readyForListen\` → R1 event tap viability
+- \`tapCreateAllowed\` → R1 event tap create viability (not delivery)
 - \`readyForInject\` → R2/R3 injection preflight
 - \`staleTCCSuspected\` → R6 TCC stale cache (preflight true, tap create failed)
 
@@ -81,4 +81,4 @@ EOF
 echo "Wrote ${RESULTS}"
 echo ""
 echo "Permissions:"
-echo "$PERMS" | jq '{readyForListen, readyForInject, staleTCCSuspected}' 2>/dev/null || echo "$PERMS"
+echo "$PERMS" | jq '{tapCreateAllowed, readyForInject, staleTCCSuspected}' 2>/dev/null || echo "$PERMS"

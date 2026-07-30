@@ -4,10 +4,11 @@
 
 ### Fixed
 
-- Detect inert CGEvent taps that still report `tap_enabled` / create-probe success; reinstall once, then exit so KeepAlive can respawn (`tap_inert`).
-- Clipboard paste restore no longer blocks the main run loop for the restore delay; default delay raised to 500ms for slow paste consumers.
-- Snippet directory watch ignores sibling file writes; usage stats moved to `~/.local/state/keypop/usage.json`.
+- Detect inert CGEvent taps that still report `tap_enabled` / create-probe success. `never_delivered` reinstalls once then exits for KeepAlive; `stalled` (idle after prior keyDowns) soft-reinstalls only.
+- Clipboard paste restore is async (500ms default), cancels stale restores on overlap, and holds expansion serialization through restore.
+- Snippet directory watch ignores sibling file writes; usage stats moved to `~/.local/state/keypop/usage.json` (legacy file migrated once).
 - Full install syncs the signed app binary back to `~/.local/bin/keypop` so CLI and KeyPop.app share one code identity.
+- Tap teardown invalidates the mach port; permission probe field renamed to `tapCreateAllowed` (create ≠ deliver).
 
 ## [0.2.3] - 2026-07-13
 
