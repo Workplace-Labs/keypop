@@ -27,6 +27,8 @@ fileprivate final class EngineState {
     var enabled = true
     var isExpanding = false
     var observedKeyDowns = 0
+    var totalKeyDowns: UInt64 = 0
+    var lastKeyDownAt: Date?
     var onTapDisabled: ((CGEventType) -> Void)?
 
     init(phrases: [String: String], usageStore: UsageStore?) {
@@ -43,6 +45,8 @@ fileprivate final class EngineState {
 
     func processKeyDown(_ event: CGEvent) -> String? {
         observedKeyDowns += 1
+        totalKeyDowns += 1
+        lastKeyDownAt = Date()
         let keyCode = Int(event.getIntegerValueField(.keyboardEventKeycode))
         if shouldReset(forKeyCode: keyCode) {
             buffer = ""
@@ -169,6 +173,9 @@ public final class ExpanderEngine {
     private var healthTimer: DispatchSourceTimer?
     private var diagnosticTimer: DispatchSourceTimer?
     private var healthCheckCount: UInt = 0
+    private var tapInstalledAt = Date()
+    private var consecutiveInertReinstalls = 0
+    private var lastSeenTotalKeyDowns: UInt64 = 0
     private let healthConfig: TapHealthMonitorConfig
     private let diagnosticSession: DiagnosticSession
     private let startedAt = Date()
@@ -244,6 +251,7 @@ public final class ExpanderEngine {
         )
         eventTap = installed.tap
         runLoopSource = installed.source
+        tapInstalledAt = Date()
         fputs("listen_ready|tap_installed\n", stderr)
         KeypopDiagnostics.event("tap_installed")
     }
@@ -314,16 +322,27 @@ public final class ExpanderEngine {
         healthCheckCount += 1
 
         let tapEnabled = eventTap.map { CGEvent.tapIsEnabled(tap: $0) } ?? false
+        let liveness = currentLivenessInput()
         let permissionInterval = max(1, healthConfig.permissionProbeIntervalSeconds)
         let checksPerPermissionProbe = UInt(ceil(permissionInterval / healthConfig.checkIntervalSeconds))
         let includePermissionProbe = healthCheckCount % checksPerPermissionProbe == 0
 
+        if state.totalKeyDowns > lastSeenTotalKeyDowns {
+            lastSeenTotalKeyDowns = state.totalKeyDowns
+            consecutiveInertReinstalls = 0
+        }
+
         if !includePermissionProbe {
-            KeypopDiagnostics.event("health_heartbeat", fields: ["tap_enabled": tapEnabled ? "true" : "false"])
-            guard !tapEnabled else { return }
-            fputs("tap_health|tap_disabled\n", stderr)
-            KeypopDiagnostics.event("tap_health", fields: ["state": "disabled"])
-            reinstallTapFromHealthCheck()
+            let lightIssues = TapHealthMonitor.evaluate(
+                tapEnabled: tapEnabled,
+                includePermissionProbe: false,
+                liveness: liveness
+            )
+            KeypopDiagnostics.event("health_heartbeat", fields: [
+                "tap_enabled": tapEnabled ? "true" : "false",
+                "seconds_since_key_down": String(Int(liveness.secondsSinceLastKeyDown)),
+            ])
+            handleHealthIssues(lightIssues, reason: "light_health")
             return
         }
 
@@ -332,30 +351,78 @@ public final class ExpanderEngine {
             "inject_ready": snapshot.readyForInject ? "true" : "false",
             "listen_ready": snapshot.readyForListen ? "true" : "false",
             "tap_enabled": tapEnabled ? "true" : "false",
+            "seconds_since_key_down": String(Int(liveness.secondsSinceLastKeyDown)),
         ])
         let issues = TapHealthMonitor.evaluate(
             tapEnabled: tapEnabled,
             snapshot: snapshot,
-            includePermissionProbe: true
+            includePermissionProbe: true,
+            liveness: liveness
         )
+        handleHealthIssues(issues, reason: "scheduled_health")
+    }
 
+    private func currentLivenessInput() -> TapLivenessInput {
+        let now = Date()
+        let graceActive = now.timeIntervalSince(tapInstalledAt) < healthConfig.startupGraceSeconds
+        let anchor = state.lastKeyDownAt ?? tapInstalledAt
+        return TapLivenessInput(
+            secondsSinceLastKeyDown: now.timeIntervalSince(anchor),
+            inertAfterSeconds: healthConfig.inertAfterSeconds,
+            gracePeriodActive: graceActive
+        )
+    }
+
+    private func handleHealthIssues(_ issues: [TapHealthIssue], reason: String) {
         guard !issues.isEmpty else { return }
 
         fputs("tap_health|\(issues.map(issueLabel).joined(separator: ","))\n", stderr)
-        KeypopDiagnostics.event("tap_health", fields: ["issues": issues.map(issueLabel).joined(separator: ",")])
+        KeypopDiagnostics.event("tap_health", fields: [
+            "issues": issues.map(issueLabel).joined(separator: ","),
+            "reason": reason,
+        ])
 
         if issues.contains(.tapDisabled) || issues.contains(.listenPermissionLost) {
-            reinstallTapFromHealthCheck()
-        } else if issues.contains(.staleTCCSuspected) {
+            reinstallTapFromHealthCheck(reason: reason)
+            return
+        }
+
+        if issues.contains(.staleTCCSuspected) {
             fputs("tap_health_hint|re-grant TCC or run ./scripts/fix-keypop-tcc.sh after rebuild\n", stderr)
+        }
+
+        let action = TapHealthMonitor.action(
+            issues: issues,
+            consecutiveInertReinstalls: consecutiveInertReinstalls,
+            maxInertReinstallsBeforeExit: healthConfig.maxInertReinstallsBeforeExit
+        )
+        switch action {
+        case .none:
+            return
+        case .reinstall:
+            consecutiveInertReinstalls += 1
+            fputs("tap_inert|reinstall|consecutive=\(consecutiveInertReinstalls)\n", stderr)
+            KeypopDiagnostics.event("tap_inert", fields: [
+                "action": "reinstall",
+                "consecutive": String(consecutiveInertReinstalls),
+            ])
+            reinstallTapFromHealthCheck(reason: "tap_inert")
+        case .fatalExit:
+            fputs("tap_inert|fatal|callbacks_not_delivering\n", stderr)
+            KeypopDiagnostics.event("tap_inert", fields: ["action": "fatal"])
+            fputs(
+                "tap_inert_hint|Input Monitoring grant may be stale. Remove KeyPop.app from Input Monitoring, re-add ~/Applications/KeyPop.app, then: ./scripts/launch-keypop.sh restart\n",
+                stderr
+            )
+            exit(1)
         }
     }
 
-    private func reinstallTapFromHealthCheck() {
+    private func reinstallTapFromHealthCheck(reason: String) {
         do {
             try installTap()
-            fputs("tap_reinstalled|scheduled_health\n", stderr)
-            KeypopDiagnostics.event("tap_reinstalled", fields: ["reason": "scheduled_health"])
+            fputs("tap_reinstalled|\(reason)\n", stderr)
+            KeypopDiagnostics.event("tap_reinstalled", fields: ["reason": reason])
         } catch {
             fputs("tap_reinstall_failed|\(error.localizedDescription)\n", stderr)
             KeypopDiagnostics.event("tap_reinstall_failed", fields: ["error": "install_failed"])
@@ -370,6 +437,7 @@ public final class ExpanderEngine {
         case .listenPermissionLost: return "listen_lost"
         case .injectPermissionLost: return "inject_lost"
         case .staleTCCSuspected: return "stale_tcc"
+        case .tapInert: return "tap_inert"
         }
     }
 }

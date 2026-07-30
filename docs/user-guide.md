@@ -154,6 +154,8 @@ Run a short, metadata-only diagnostic session before reproducing the issue:
 
 KeyPop writes a redacted report under `~/.config/keypop/diagnostics/`. It records tap health, app bundle IDs, aggregate key-event counts, and whether KeyPop posted a paste — never the characters you type, shortcut text, expanded prompt text, or clipboard contents. Diagnostics turn themselves off after 30 minutes; use `./scripts/launch-keypop.sh debug-off` to stop sooner.
 
+If the report verdict is `tap_inert` (or the log shows `tap_inert|`), the daemon installed a tap that is not receiving key events. KeyPop will reinstall once, then exit so LaunchAgent KeepAlive can respawn. If it keeps failing, remove **KeyPop.app** from Input Monitoring, re-add `~/Applications/KeyPop.app`, and run `./scripts/launch-keypop.sh restart`.
+
 **No expansion on iPhone** — check System Settings → Keyboard → Text Replacements; wait for iCloud sync.
 
 **Double expansion in Slack** — rare; both Apple Text Replacements and `keypop run` may fire. Test in Notes vs Warp to isolate.

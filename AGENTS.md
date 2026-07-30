@@ -36,7 +36,7 @@ KeyPop is a practical tool with a little personality. When writing prose (README
 | Apple Text Replacements | `keypop create/update/...` | iOS, native Mac apps |
 | Mac runtime | `keypop run` | Warp, VS Code, Cursor, terminals |
 
-Mutations auto-export to `~/.config/keypop/snippets.json` unless `--no-sync`. Running `keypop run` reloads from that file via directory watch (~200ms debounce).
+Mutations auto-export to `~/.config/keypop/snippets.json` unless `--no-sync`. Running `keypop run` reloads when that file changes (~200ms debounce; sibling writes ignored). Usage stats live at `~/.local/state/keypop/usage.json`.
 
 Scripts (in `scripts/`): `install-full.sh`, `bundle-keypop-app.sh`, `launch-keypop.sh`, `sync-keypop.sh`, `fix-keypop-tcc.sh`, `generate-app-icon.sh`, `keypop-paths.sh`, `sync-keypop-skill.sh`
 
@@ -49,7 +49,8 @@ Scripts (in `scripts/`): `install-full.sh`, `bundle-keypop-app.sh`, `launch-keyp
 **TCC troubleshooting (agents):**
 - `./scripts/fix-keypop-tcc.sh` — full rebuild, reset TCC, open System Settings. Use when grants go stale or after moving the app bundle.
 - Trust the **daemon log** over `keypop probe permissions` from Terminal for Input Monitoring — Terminal context can show `listen=false` while the LaunchAgent daemon has a working tap.
-- Log lines: `listen_ready|tap_installed` (tap OK), `expanded|keyword|…` (match fired), `tap_reinstall_failed|…` (re-grant TCC + restart).
+- Log lines: `listen_ready|tap_installed` (tap installed), `expanded|…` (match fired), `tap_inert|…` (enabled tap, no keyDown delivery — reinstall/exit), `tap_reinstall_failed|…` (re-grant TCC + restart).
+- `listen_ready` / `tap_enabled` only mean a tap object exists; trust `expanded|` or diagnostic `key_down_count>0` for real delivery.
 - Kill zombie daemons: `pkill -f "keypop run --snippets"` then `./scripts/launch-keypop.sh restart`. Stale processes from legacy `~/.local/KeyPop.app` block expansion even when new grants look correct.
 - Remove old TCC entries (black `keypop` exec, legacy `~/.local/KeyPop.app`, accidental Terminal/Cursor grants) before re-adding `~/Applications/KeyPop.app`.
 

@@ -17,8 +17,9 @@ public final class UsageStore {
         if let override = ProcessInfo.processInfo.environment[usagePathEnvironmentKey], !override.isEmpty {
             return override
         }
+        // Keep usage outside ~/.config/keypop so stats writes cannot trip the snippets directory watch.
         let home = FileManager.default.homeDirectoryForCurrentUser.path
-        return "\(home)/.config/keypop/usage.json"
+        return "\(home)/.local/state/keypop/usage.json"
     }
 
     private let path: String

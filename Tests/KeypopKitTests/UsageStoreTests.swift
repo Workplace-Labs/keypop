@@ -17,6 +17,27 @@ final class UsageStoreTests: XCTestCase {
         XCTAssertEqual(UsageStore.defaultPath, "/tmp/keypop-usage-test.json")
     }
 
+    func testDefaultPathIsOutsideSnippetWatchDirectory() {
+        let key = UsageStore.usagePathEnvironmentKey
+        let previous = ProcessInfo.processInfo.environment[key]
+        defer {
+            if let previous {
+                setenv(key, previous, 1)
+            } else {
+                unsetenv(key)
+            }
+        }
+        unsetenv(key)
+
+        let path = UsageStore.defaultPath
+        XCTAssertFalse(
+            path.contains("/.config/keypop/usage.json"),
+            "usage writes must not live beside snippets.json (directory watch false reloads)"
+        )
+        XCTAssertTrue(path.contains("/keypop/"), "usage path should stay under a keypop-owned directory")
+        XCTAssertTrue(path.hasSuffix("usage.json"))
+    }
+
     func testRecordUseIncrementsCountAndTimestamp() throws {
         let path = temporaryUsagePath()
         defer { try? FileManager.default.removeItem(at: path) }

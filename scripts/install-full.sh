@@ -64,6 +64,11 @@ if [[ "${CLI_ONLY}" -eq 0 ]]; then
   echo "Installing full setup: KeyPop.app and LaunchAgent..."
   "${PROJECT_DIR}/scripts/bundle-keypop-app.sh" "${INSTALL_PREFIX}/keypop"
 
+  # codesign rewrites the Mach-O inside the app bundle. Sync that signed binary
+  # back to the CLI path so ~/.local/bin/keypop and KeyPop.app share one identity.
+  install -m 755 "${KEYPOP_APP}/Contents/MacOS/keypop" "${INSTALL_PREFIX}/keypop"
+  echo "Synced signed binary to ${INSTALL_PREFIX}/keypop"
+
   if [[ ! -f "${PROJECT_DIR}/assets/AppIcon.icns" ]]; then
     echo "Generating AppIcon.icns..."
     "${PROJECT_DIR}/scripts/generate-app-icon.sh"

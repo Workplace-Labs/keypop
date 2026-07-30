@@ -29,6 +29,9 @@ public enum PermissionProbe {
         let bundle = Bundle.main
         let info = bundle.infoDictionary ?? [:]
 
+        // tapCreate success means TCC currently allows installing a tap object.
+        // It does NOT prove the production tap is delivering keyDown callbacks —
+        // ExpanderEngine uses TapLivenessInput / tap_inert for that.
         let tapReady = tapState.created && tapState.enabled
 
         return PermissionSnapshot(

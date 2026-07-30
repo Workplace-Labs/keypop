@@ -5,7 +5,8 @@ import Foundation
 /// Watches the snippet file's parent directory so atomic rewrites trigger reload.
 ///
 /// `Data.write(options: .atomic)` replaces the file inode; a vnode watch on the file
-/// itself stops receiving events after the first export.
+/// itself stops receiving events after the first export. Directory events are filtered
+/// so sibling writes (for example usage stats) do not reload snippets.
 public final class SnippetFileWatcher {
     private let snippetsPath: String
     private let debounceSeconds: TimeInterval
@@ -14,6 +15,7 @@ public final class SnippetFileWatcher {
     private var watchFD: Int32 = -1
     private var source: DispatchSourceFileSystemObject?
     private var debounceWork: DispatchWorkItem?
+    private var lastFingerprint: String?
 
     public init(
         snippetsPath: String,
@@ -36,13 +38,15 @@ public final class SnippetFileWatcher {
             return
         }
 
+        lastFingerprint = fingerprint()
+
         let source = DispatchSource.makeFileSystemObjectSource(
             fileDescriptor: watchFD,
             eventMask: [.write, .delete, .rename, .attrib, .link],
             queue: .main
         )
         source.setEventHandler { [weak self] in
-            self?.scheduleReload()
+            self?.scheduleReloadIfSnippetsChanged()
         }
         source.setCancelHandler { [weak self] in
             guard let self else { return }
@@ -62,14 +66,30 @@ public final class SnippetFileWatcher {
         debounceWork = nil
         source?.cancel()
         source = nil
+        lastFingerprint = nil
     }
 
-    private func scheduleReload() {
+    private func scheduleReloadIfSnippetsChanged() {
         debounceWork?.cancel()
         let work = DispatchWorkItem { [weak self] in
-            self?.onReload()
+            guard let self else { return }
+            let current = fingerprint()
+            guard current != lastFingerprint else { return }
+            lastFingerprint = current
+            onReload()
         }
         debounceWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + debounceSeconds, execute: work)
+    }
+
+    private func fingerprint() -> String? {
+        guard
+            let attrs = try? FileManager.default.attributesOfItem(atPath: snippetsPath),
+            let modified = attrs[.modificationDate] as? Date,
+            let size = attrs[.size] as? NSNumber
+        else {
+            return nil
+        }
+        return "\(size.intValue)-\(modified.timeIntervalSince1970)"
     }
 }

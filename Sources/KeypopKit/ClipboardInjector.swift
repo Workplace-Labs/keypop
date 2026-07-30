@@ -17,15 +17,24 @@ public enum ClipboardInjectorError: Error, LocalizedError {
 }
 
 public struct ClipboardInjector: Sendable {
+    public static let defaultRestoreDelayMs: UInt32 = 500
+
     public let restoreDelayMs: UInt32
+    private let scheduleRestore: @Sendable (UInt32, @escaping @Sendable () -> Void) -> Void
 
     private typealias SavedPasteboardItem = (NSPasteboard.PasteboardType, Data?)
 
-    public init(restoreDelayMs: UInt32 = 100) {
+    public init(
+        restoreDelayMs: UInt32 = Self.defaultRestoreDelayMs,
+        scheduleRestore: (@Sendable (UInt32, @escaping @Sendable () -> Void) -> Void)? = nil
+    ) {
         self.restoreDelayMs = restoreDelayMs
+        self.scheduleRestore = scheduleRestore ?? Self.defaultScheduleRestore
     }
 
-    /// Saves pasteboard, sets text, posts Cmd+V, restores after delay.
+    /// Saves pasteboard, sets text, posts Cmd+V, then restores asynchronously after a delay.
+    ///
+    /// `paste_posted` means the paste keystroke was posted — not that the target app inserted text.
     public func inject(_ text: String, onStage: ((String) -> Void)? = nil) throws {
         guard CGPreflightPostEventAccess() else {
             throw ClipboardInjectorError.postEventDenied
@@ -47,11 +56,15 @@ public struct ClipboardInjector: Sendable {
         try postCommandV()
         onStage?("paste_posted")
 
-        usleep(restoreDelayMs * 1000)
-        restorePasteboard(savedItems: savedItems)
+        let delay = restoreDelayMs
+        let items = savedItems
+        scheduleRestore(delay) {
+            Self.restorePasteboard(savedItems: items)
+        }
+        onStage?("restore_scheduled")
     }
 
-    /// Deletes `count` characters to the left via forward-delete (Fn+Delete) or backspace.
+    /// Deletes `count` characters to the left via backspace.
     public func deleteCharacters(count: Int, onStage: ((String) -> Void)? = nil) throws {
         guard count > 0 else { return }
         guard CGPreflightPostEventAccess() else {
@@ -74,6 +87,10 @@ public struct ClipboardInjector: Sendable {
         onStage?("delete_posted")
     }
 
+    private static let defaultScheduleRestore: @Sendable (UInt32, @escaping @Sendable () -> Void) -> Void = { delayMs, work in
+        DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(Int(delayMs)), execute: work)
+    }
+
     private func postCommandV() throws {
         let source = CGEventSource(stateID: .combinedSessionState)
         let vKey: CGKeyCode = 0x09
@@ -90,7 +107,7 @@ public struct ClipboardInjector: Sendable {
         up.post(tap: .cghidEventTap)
     }
 
-    private func restorePasteboard(savedItems: [[SavedPasteboardItem]]) {
+    private static func restorePasteboard(savedItems: [[SavedPasteboardItem]]) {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
 
