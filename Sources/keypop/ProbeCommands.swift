@@ -87,7 +87,7 @@ enum ProbeCommands {
             print("live_tap_creates=\(snapshot.liveTapCreates)")
             print("live_tap_enabled=\(snapshot.liveTapEnabled)")
             print("stale_tcc_suspected=\(snapshot.staleTCCSuspected)")
-            print("ready_for_listen=\(snapshot.readyForListen)")
+            print("tap_create_allowed=\(snapshot.tapCreateAllowed)")
             print("ready_for_inject=\(snapshot.readyForInject)")
             print("bundle=\(snapshot.bundleIdentifier)")
             print("executable=\(snapshot.executablePath)")
@@ -99,9 +99,9 @@ enum ProbeCommands {
 
     static func runListen(seconds: Double) throws {
         let snapshot = PermissionProbe.snapshot()
-        guard snapshot.readyForListen else {
-            fputs("Listen not ready. Run: keypop probe permissions\n", stderr)
-            throw CLIError.runtime("listen not ready")
+        guard snapshot.tapCreateAllowed else {
+            fputs("Tap create not allowed. Run: keypop probe permissions\n", stderr)
+            throw CLIError.runtime("tap create not allowed")
         }
 
         fputs("Listening for \(seconds)s via CGEventTap — type in any app. Key events on stderr.\n", stderr)

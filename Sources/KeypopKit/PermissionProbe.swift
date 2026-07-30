@@ -8,7 +8,8 @@ public struct PermissionSnapshot: Codable, Equatable, Sendable {
     public let liveTapCreates: Bool
     public let liveTapEnabled: Bool
     public let staleTCCSuspected: Bool
-    public let readyForListen: Bool
+    /// TCC currently allows creating a tap object. Not proof that callbacks deliver events.
+    public let tapCreateAllowed: Bool
     public let readyForInject: Bool
     public let bundleIdentifier: String
     public let executablePath: String
@@ -29,7 +30,10 @@ public enum PermissionProbe {
         let bundle = Bundle.main
         let info = bundle.infoDictionary ?? [:]
 
-        let tapReady = tapState.created && tapState.enabled
+        // tapCreate success means TCC currently allows installing a tap object.
+        // It does NOT prove the production tap is delivering keyDown callbacks —
+        // ExpanderEngine uses TapLivenessInput / tap_inert for that.
+        let tapCreateAllowed = tapState.created && tapState.enabled
 
         return PermissionSnapshot(
             axIsProcessTrusted: axTrusted,
@@ -37,8 +41,8 @@ public enum PermissionProbe {
             postEventPreflight: postPreflight,
             liveTapCreates: tapState.created,
             liveTapEnabled: tapState.enabled,
-            staleTCCSuspected: listenPreflight && !tapReady,
-            readyForListen: tapReady,
+            staleTCCSuspected: listenPreflight && !tapCreateAllowed,
+            tapCreateAllowed: tapCreateAllowed,
             readyForInject: postPreflight,
             bundleIdentifier: bundle.bundleIdentifier ?? "(none)",
             executablePath: bundle.executableURL?.path ?? ProcessInfo.processInfo.arguments.first ?? "(unknown)",
@@ -67,7 +71,7 @@ public enum PermissionProbe {
             stream
         )
 
-        if !snapshot.readyForListen {
+        if !snapshot.tapCreateAllowed {
             fputs(
                 "permission_hint|Grant Input Monitoring to \(appBundlePath()) (remove old entry, re-add via Cmd+Shift+G)\n",
                 stream

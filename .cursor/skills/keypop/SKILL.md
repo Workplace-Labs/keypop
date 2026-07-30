@@ -275,14 +275,17 @@ When a chat produced a great reusable prompt, save it with `create` (or suggest 
 ./scripts/launch-keypop.sh status
 ./scripts/launch-keypop.sh restart
 ./scripts/fix-keypop-tcc.sh          # rebuild + reset TCC + open System Settings
-tail -f ~/.local/log/keypop.log      # listen_ready|tap_installed, expanded|…
+tail -f ~/.local/log/keypop.log      # tap_installed, expanded|…
 ```
 
 **TCC:** Grant Input Monitoring + Accessibility to `~/Applications/KeyPop.app` (the `.app` bundle — not Terminal, not the bare `keypop` binary). Use **+** → **Cmd+Shift+G** in each pane.
 
 **If expansion stops working:**
-- Trust the **daemon log** over `keypop probe permissions` from Terminal — shell context can show `listen=false` while the LaunchAgent tap works.
-- `listen_ready|tap_installed` = tap OK. `expanded|keyword|…` = match fired. `tap_reinstall_failed|…` = re-grant TCC (`fix-keypop-tcc.sh`) + restart.
+1. Try `;kpfix` — expands to `KeyPop OK` and reinstalls the tap when listen works.
+2. If that does nothing: `keypop heal` (control-plane; works even when the tap is blind).
+3. Then `./scripts/launch-keypop.sh restart` / `fix-keypop-tcc.sh` if still dead.
+- Trust the **daemon log** over `keypop probe permissions` from Terminal.
+- `tap_installed` = tap object created (not proof of delivery). `expanded|…` = match fired. `heal|…` = heal ran. `tap_inert|…` = never delivered keyDowns after install.
 
 **stderr signals:**
 - `keypop_sync|<path>|<count>` — export succeeded

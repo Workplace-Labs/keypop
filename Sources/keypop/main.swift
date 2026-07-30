@@ -36,6 +36,7 @@ enum KeypopCLI {
           keypop stats reset [--shortcut <shortcut>|--all]
 
           keypop run [--snippets ~/.config/keypop/snippets.json]
+          keypop heal [--reason <text>]
 
           keypop probe permissions [--plain]
           keypop probe listen --seconds 5
@@ -49,9 +50,13 @@ enum KeypopCLI {
 
         Mutations auto-export to ~/.config/keypop/snippets.json (disable: --no-sync or KEYPOP_SYNC=0).
 
+        Built-in: ;kpfix — expands to "KeyPop OK" and reinstalls the tap (self-test).
+        If ;kpfix does nothing, the tap is blind — run: keypop heal
+
         Examples:
           keypop create --shortcut ';wle' --phrase 'you@example.com'
           keypop import kits/prompts-core.snippets.json --prefix ';p' --dry-run
+          keypop heal
           ./scripts/launch-keypop.sh install
           tail -f ~/.local/log/keypop.log
           ./scripts/launch-keypop.sh debug       # 30-minute metadata-only session
@@ -100,6 +105,9 @@ do {
 
     case "stats":
         try StatsCommands.run(args: commandArgs)
+
+    case "heal":
+        exit(HealCommand.run(args: commandArgs))
 
     default:
         guard KeypopCLI.crudCommands.contains(command) else {

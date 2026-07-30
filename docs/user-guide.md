@@ -137,10 +137,10 @@ Keep PII kits out of public repos (gitignored).
 ```sh
 ./scripts/launch-keypop.sh status   # running? correct binary path?
 ./scripts/sync-keypop.sh            # re-export snippets
-tail -f ~/.local/log/keypop.log     # listen_ready|tap_installed, expanded|…
+tail -f ~/.local/log/keypop.log     # tap_installed, expanded|…
 ```
 
-Look for `listen_ready|tap_installed` in the log. If missing, Input Monitoring is not granted to the daemon.
+Look for `tap_installed` in the log. If missing, Input Monitoring is not granted to the daemon.
 
 **Intermittent expansion in Warp / VS Code / Cursor**
 
@@ -154,13 +154,21 @@ Run a short, metadata-only diagnostic session before reproducing the issue:
 
 KeyPop writes a redacted report under `~/.config/keypop/diagnostics/`. It records tap health, app bundle IDs, aggregate key-event counts, and whether KeyPop posted a paste — never the characters you type, shortcut text, expanded prompt text, or clipboard contents. Diagnostics turn themselves off after 30 minutes; use `./scripts/launch-keypop.sh debug-off` to stop sooner.
 
+If expansion stops working:
+
+1. Type `;kpfix` — if you see `KeyPop OK`, the tap is alive (and KeyPop just reinstalled it).
+2. If `;kpfix` does nothing, run `keypop heal` in a terminal (this does not need the tap).
+3. If still broken: `./scripts/launch-keypop.sh restart`, or re-grant Input Monitoring to `~/Applications/KeyPop.app`.
+
+If the diagnostic verdict is `tap_inert`, the daemon installed a tap that never received key events after start. KeyPop reinstalls once, then exits so KeepAlive can respawn — or use `keypop heal`.
+
 **No expansion on iPhone** — check System Settings → Keyboard → Text Replacements; wait for iCloud sync.
 
 **Double expansion in Slack** — rare; both Apple Text Replacements and `keypop run` may fire. Test in Notes vs Warp to isolate.
 
 **Daemon stopped after sleep** — check log for `tap_health` lines; restart: `./scripts/launch-keypop.sh restart`
 
-**TCC not working after rebuild** — run `./scripts/fix-keypop-tcc.sh`, re-grant both permissions to `~/Applications/KeyPop.app`, remove stale entries (black `keypop` exec, legacy `~/.local/KeyPop.app`), then `./scripts/launch-keypop.sh restart`. Confirm log shows `listen_ready|tap_installed`.
+**TCC not working after rebuild** — run `./scripts/fix-keypop-tcc.sh`, re-grant both permissions to `~/Applications/KeyPop.app`, remove stale entries (black `keypop` exec, legacy `~/.local/KeyPop.app`), then `./scripts/launch-keypop.sh restart`. Confirm log shows `tap_installed` and expansions fire.
 
 **Probe from Terminal shows listen=false but Accessibility=true** — normal. Terminal and the LaunchAgent daemon have different TCC contexts. Trust the daemon log, not `keypop probe permissions` run from a shell, for Input Monitoring.
 

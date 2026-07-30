@@ -72,7 +72,7 @@ open -n -a "${APP}" --args probe permissions --request 2>/dev/null || true
 
 echo "After granting BOTH, run:"
 echo "  ./scripts/launch-keypop.sh restart"
-echo "  tail -f ~/.local/log/keypop.log    # expect: listen_ready|tap_installed"
+echo "  tail -f ~/.local/log/keypop.log    # expect: tap_installed, then expanded| after a test shortcut"
 echo ""
-echo "Note: probe from Terminal may show listen=false even when the daemon works."
-echo "Trust the daemon log (listen_ready|tap_installed) and expanded| lines in Warp."
+echo "Note: probe from Terminal may show tap_create_allowed=false even when the daemon works."
+echo "Trust the daemon log (tap_installed + expanded|) over Terminal probes."

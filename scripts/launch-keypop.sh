@@ -358,6 +358,10 @@ case "$cmd" in
         echo "verdict=daemon_not_running"
       elif grep -q '^diagnostic|tap_reinstall_failed|' <<< "$recent_events"; then
         echo "verdict=tap_reinstall_failed"
+      elif grep -q '^diagnostic|tap_inert|.*action=fatal' <<< "$recent_events"; then
+        echo "verdict=tap_inert"
+      elif grep -q '^diagnostic|tap_health|.*tap_inert' <<< "$recent_events"; then
+        echo "verdict=tap_inert"
       elif grep -q '^diagnostic|inject|.*outcome=failed' <<< "$recent_events"; then
         echo "verdict=match_observed_injection_failed"
       elif grep -q '^diagnostic|expansion|outcome=paste_posted' <<< "$recent_events"; then
