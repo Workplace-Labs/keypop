@@ -40,12 +40,15 @@ enum RunCommand {
             let engine = ExpanderEngine(phrases: store.phrases, usageStore: UsageStore())
             try engine.start()
 
-            var watcher: SnippetFileWatcher?
+            var snippetWatcher: SnippetFileWatcher?
+            var controlWatcher: ControlFileWatcher?
 
             func shutdown() {
                 fputs("shutting down\n", stderr)
-                watcher?.stop()
-                watcher = nil
+                snippetWatcher?.stop()
+                snippetWatcher = nil
+                controlWatcher?.stop()
+                controlWatcher = nil
                 engine.stop()
                 CFRunLoopStop(CFRunLoopGetCurrent())
             }
@@ -59,7 +62,7 @@ enum RunCommand {
                 signalSources.append(source)
             }
 
-            watcher = SnippetFileWatcher(snippetsPath: path) {
+            snippetWatcher = SnippetFileWatcher(snippetsPath: path) {
                 do {
                     let updated = try SnippetStore.load(from: path)
                     engine.reload(phrases: updated.phrases)
@@ -68,7 +71,12 @@ enum RunCommand {
                     KeypopDiagnostics.event("watcher_reload_failed", fields: ["error": "snippet_load_failed"])
                 }
             }
-            watcher?.start()
+            snippetWatcher?.start()
+
+            controlWatcher = ControlFileWatcher {
+                engine.heal(reason: $0)
+            }
+            controlWatcher?.start()
 
             engine.run()
             return 0

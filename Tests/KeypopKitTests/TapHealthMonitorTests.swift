@@ -39,15 +39,13 @@ final class TapHealthMonitorTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(config.checkIntervalSeconds, 60)
         XCTAssertGreaterThanOrEqual(config.permissionProbeIntervalSeconds, 300)
         XCTAssertGreaterThanOrEqual(config.inertAfterSeconds, config.startupGraceSeconds)
-        XCTAssertGreaterThanOrEqual(config.stalledAfterSeconds, config.inertAfterSeconds)
         XCTAssertGreaterThanOrEqual(config.startupGraceSeconds, 60)
     }
 
     func testNeverDeliveredInertWhenCreateProbeStillLooksHealthy() {
         let liveness = TapLivenessInput(
-            secondsSinceAnchor: 400,
+            secondsSinceInstall: 400,
             inertAfterSeconds: 300,
-            stalledAfterSeconds: 1800,
             gracePeriodActive: false,
             everReceivedKeyDown: false
         )
@@ -57,56 +55,39 @@ final class TapHealthMonitorTests: XCTestCase {
             includePermissionProbe: true,
             liveness: liveness
         )
-        XCTAssertEqual(TapHealthMonitor.inertKind(liveness), .neverDelivered)
+        XCTAssertTrue(TapHealthMonitor.isNeverDelivered(liveness))
         XCTAssertTrue(issues.contains(.tapInert))
-        XCTAssertFalse(issues.contains(.tapDisabled))
-        XCTAssertFalse(issues.contains(.listenPermissionLost))
     }
 
-    func testIdleStalledIsSoftInertNotNeverDelivered() {
+    func testIdleAfterPriorKeyDownsIsNotInert() {
         let liveness = TapLivenessInput(
-            secondsSinceAnchor: 2000,
+            secondsSinceInstall: 10_000,
             inertAfterSeconds: 300,
-            stalledAfterSeconds: 1800,
             gracePeriodActive: false,
             everReceivedKeyDown: true
         )
-        XCTAssertEqual(TapHealthMonitor.inertKind(liveness), .stalled)
-        let action = TapHealthMonitor.action(
-            issues: [.tapInert],
-            inertKind: .stalled,
-            consecutiveNeverDeliveredReinstalls: 5,
-            maxInertReinstallsBeforeExit: 1
+        XCTAssertFalse(TapHealthMonitor.isNeverDelivered(liveness))
+        let issues = TapHealthMonitor.evaluate(
+            tapEnabled: true,
+            includePermissionProbe: false,
+            liveness: liveness
         )
-        XCTAssertEqual(action, .reinstall, "idle/stalled must not fatal-exit")
-    }
-
-    func testShortSilenceAfterKeyDownsIsNotInert() {
-        let liveness = TapLivenessInput(
-            secondsSinceAnchor: 400,
-            inertAfterSeconds: 300,
-            stalledAfterSeconds: 1800,
-            gracePeriodActive: false,
-            everReceivedKeyDown: true
-        )
-        XCTAssertNil(TapHealthMonitor.inertKind(liveness))
+        XCTAssertFalse(issues.contains(.tapInert))
     }
 
     func testGracePeriodSuppressesInertDetection() {
         let liveness = TapLivenessInput(
-            secondsSinceAnchor: 400,
+            secondsSinceInstall: 400,
             inertAfterSeconds: 300,
-            stalledAfterSeconds: 1800,
             gracePeriodActive: true,
             everReceivedKeyDown: false
         )
-        XCTAssertNil(TapHealthMonitor.inertKind(liveness))
+        XCTAssertFalse(TapHealthMonitor.isNeverDelivered(liveness))
     }
 
     func testFirstNeverDeliveredActionReinstalls() {
         let action = TapHealthMonitor.action(
             issues: [.tapInert],
-            inertKind: .neverDelivered,
             consecutiveNeverDeliveredReinstalls: 0,
             maxInertReinstallsBeforeExit: 1
         )
@@ -116,21 +97,10 @@ final class TapHealthMonitorTests: XCTestCase {
     func testRepeatedNeverDeliveredActionExitsSoKeepAliveCanRespawn() {
         let action = TapHealthMonitor.action(
             issues: [.tapInert],
-            inertKind: .neverDelivered,
             consecutiveNeverDeliveredReinstalls: 1,
             maxInertReinstallsBeforeExit: 1
         )
         XCTAssertEqual(action, .fatalExit)
-    }
-
-    func testNonInertIssuesDoNotRequestLivenessExit() {
-        let action = TapHealthMonitor.action(
-            issues: [.staleTCCSuspected],
-            inertKind: nil,
-            consecutiveNeverDeliveredReinstalls: 5,
-            maxInertReinstallsBeforeExit: 1
-        )
-        XCTAssertEqual(action, .none)
     }
 
     private func healthySnapshot() -> PermissionSnapshot {

@@ -49,8 +49,9 @@ Scripts (in `scripts/`): `install-full.sh`, `bundle-keypop-app.sh`, `launch-keyp
 **TCC troubleshooting (agents):**
 - `./scripts/fix-keypop-tcc.sh` — full rebuild, reset TCC, open System Settings. Use when grants go stale or after moving the app bundle.
 - Trust the **daemon log** over `keypop probe permissions` from Terminal for Input Monitoring — Terminal context can show `listen=false` while the LaunchAgent daemon has a working tap.
-- Log lines: `tap_installed` (tap object created), `expanded|…` (match fired), `tap_inert|kind=never_delivered|…` (no keyDown since install — reinstall then exit), `tap_reinstall_failed|…` (re-grant TCC + restart).
+- Log lines: `tap_installed`, `expanded|…`, `heal|tap_reinstalled|…`, `tap_inert|kind=never_delivered|…`, `tap_reinstall_failed|…`.
 - `tap_create_allowed` / `tap_enabled` only mean a tap object exists; trust `expanded|` or diagnostic `key_down_count>0` for real delivery.
+- Recovery: `;kpfix` (self-test + in-process reinstall when tap works). If that does nothing: `keypop heal` (control-plane; does not need the tap). Then TCC + `./scripts/launch-keypop.sh restart` if still dead.
 - Kill zombie daemons: `pkill -f "keypop run --snippets"` then `./scripts/launch-keypop.sh restart`. Stale processes from legacy `~/.local/KeyPop.app` block expansion even when new grants look correct.
 - Remove old TCC entries (black `keypop` exec, legacy `~/.local/KeyPop.app`, accidental Terminal/Cursor grants) before re-adding `~/Applications/KeyPop.app`.
 

@@ -154,7 +154,13 @@ Run a short, metadata-only diagnostic session before reproducing the issue:
 
 KeyPop writes a redacted report under `~/.config/keypop/diagnostics/`. It records tap health, app bundle IDs, aggregate key-event counts, and whether KeyPop posted a paste — never the characters you type, shortcut text, expanded prompt text, or clipboard contents. Diagnostics turn themselves off after 30 minutes; use `./scripts/launch-keypop.sh debug-off` to stop sooner.
 
-If the report verdict is `tap_inert` (or the log shows `tap_inert|`), the daemon installed a tap that is not receiving key events. KeyPop will reinstall once, then exit so LaunchAgent KeepAlive can respawn. If it keeps failing, remove **KeyPop.app** from Input Monitoring, re-add `~/Applications/KeyPop.app`, and run `./scripts/launch-keypop.sh restart`.
+If expansion stops working:
+
+1. Type `;kpfix` — if you see `KeyPop OK`, the tap is alive (and KeyPop just reinstalled it).
+2. If `;kpfix` does nothing, run `keypop heal` in a terminal (this does not need the tap).
+3. If still broken: `./scripts/launch-keypop.sh restart`, or re-grant Input Monitoring to `~/Applications/KeyPop.app`.
+
+If the diagnostic verdict is `tap_inert`, the daemon installed a tap that never received key events after start. KeyPop reinstalls once, then exits so KeepAlive can respawn — or use `keypop heal`.
 
 **No expansion on iPhone** — check System Settings → Keyboard → Text Replacements; wait for iCloud sync.
 

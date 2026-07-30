@@ -1,13 +1,15 @@
 import Foundation
 
 /// Infrequent, low-overhead checks for a silently dead CGEvent tap.
+///
+/// Mid-session idle silence is not treated as failure — use `keypop heal` or `;kpfix`
+/// when the user notices expansion is broken. Automatic recovery focuses on
+/// never-delivered taps (installed but never received a keyDown).
 public struct TapHealthMonitorConfig: Sendable {
     public let checkIntervalSeconds: TimeInterval
     public let permissionProbeIntervalSeconds: TimeInterval
     /// No keyDown since install/reinstall for this long (after grace) ⇒ never-delivered inert.
     public let inertAfterSeconds: TimeInterval
-    /// Had keyDowns, then silence this long ⇒ soft reinstall only (never fatal; idle users look like this).
-    public let stalledAfterSeconds: TimeInterval
     /// Suppress inert detection right after install/reinstall.
     public let startupGraceSeconds: TimeInterval
     /// After this many never-delivered reinstalls without recovery, exit for KeepAlive.
@@ -17,14 +19,12 @@ public struct TapHealthMonitorConfig: Sendable {
         checkIntervalSeconds: TimeInterval = 120,
         permissionProbeIntervalSeconds: TimeInterval = 600,
         inertAfterSeconds: TimeInterval = 300,
-        stalledAfterSeconds: TimeInterval = 1800,
         startupGraceSeconds: TimeInterval = 180,
         maxInertReinstallsBeforeExit: Int = 1
     ) {
         self.checkIntervalSeconds = checkIntervalSeconds
         self.permissionProbeIntervalSeconds = permissionProbeIntervalSeconds
         self.inertAfterSeconds = inertAfterSeconds
-        self.stalledAfterSeconds = stalledAfterSeconds
         self.startupGraceSeconds = startupGraceSeconds
         self.maxInertReinstallsBeforeExit = maxInertReinstallsBeforeExit
     }
@@ -37,35 +37,24 @@ public enum TapHealthIssue: Equatable, Sendable {
     case listenPermissionLost
     case injectPermissionLost
     case staleTCCSuspected
-    /// Tap object exists / create-probe may pass, but keyDown delivery looks wrong.
+    /// Tap installed but has never delivered a keyDown (create-probe may still pass).
     case tapInert
 }
 
-/// Why liveness failed. Wall-clock silence alone is not enough for a hard failure.
-public enum TapInertKind: Equatable, Sendable {
-    /// Zero keyDown callbacks since the current tap was installed.
-    case neverDelivered
-    /// Saw keyDowns earlier, then a long silence (may be idle user or a late death).
-    case stalled
-}
-
 public struct TapLivenessInput: Equatable, Sendable {
-    public let secondsSinceAnchor: TimeInterval
+    public let secondsSinceInstall: TimeInterval
     public let inertAfterSeconds: TimeInterval
-    public let stalledAfterSeconds: TimeInterval
     public let gracePeriodActive: Bool
     public let everReceivedKeyDown: Bool
 
     public init(
-        secondsSinceAnchor: TimeInterval,
+        secondsSinceInstall: TimeInterval,
         inertAfterSeconds: TimeInterval,
-        stalledAfterSeconds: TimeInterval,
         gracePeriodActive: Bool,
         everReceivedKeyDown: Bool
     ) {
-        self.secondsSinceAnchor = secondsSinceAnchor
+        self.secondsSinceInstall = secondsSinceInstall
         self.inertAfterSeconds = inertAfterSeconds
-        self.stalledAfterSeconds = stalledAfterSeconds
         self.gracePeriodActive = gracePeriodActive
         self.everReceivedKeyDown = everReceivedKeyDown
     }
@@ -90,7 +79,7 @@ public enum TapHealthMonitor {
             issues.append(.tapDisabled)
         }
 
-        if let liveness, inertKind(liveness) != nil {
+        if let liveness, isNeverDelivered(liveness) {
             issues.append(.tapInert)
         }
 
@@ -111,35 +100,23 @@ public enum TapHealthMonitor {
         return issues
     }
 
-    public static func inertKind(_ input: TapLivenessInput) -> TapInertKind? {
-        guard !input.gracePeriodActive else { return nil }
-        if !input.everReceivedKeyDown {
-            return input.secondsSinceAnchor >= input.inertAfterSeconds ? .neverDelivered : nil
-        }
-        return input.secondsSinceAnchor >= input.stalledAfterSeconds ? .stalled : nil
+    /// Only the post-install blind-tap case. Idle silence after prior keyDowns is not inert.
+    public static func isNeverDelivered(_ input: TapLivenessInput) -> Bool {
+        guard !input.gracePeriodActive, !input.everReceivedKeyDown else { return false }
+        return input.secondsSinceInstall >= input.inertAfterSeconds
     }
 
-    /// Decide recovery for liveness failures.
-    ///
-    /// - `neverDelivered`: reinstall, then fatal — the tap is lying about health.
-    /// - `stalled`: soft reinstall only — idle users look identical to a late tap death.
     public static func action(
         issues: [TapHealthIssue],
-        inertKind: TapInertKind?,
         consecutiveNeverDeliveredReinstalls: Int,
         maxInertReinstallsBeforeExit: Int = 1
     ) -> TapLivenessAction {
-        guard issues.contains(.tapInert), let inertKind else {
+        guard issues.contains(.tapInert) else {
             return .none
         }
-        switch inertKind {
-        case .stalled:
-            return .reinstall
-        case .neverDelivered:
-            if consecutiveNeverDeliveredReinstalls >= maxInertReinstallsBeforeExit {
-                return .fatalExit
-            }
-            return .reinstall
+        if consecutiveNeverDeliveredReinstalls >= maxInertReinstallsBeforeExit {
+            return .fatalExit
         }
+        return .reinstall
     }
 }

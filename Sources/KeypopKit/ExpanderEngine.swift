@@ -30,16 +30,19 @@ fileprivate final class EngineState {
     var keyDownsSinceTapInstall: UInt64 = 0
     var lastKeyDownAt: Date?
     var onTapDisabled: ((CGEventType) -> Void)?
+    var onAfterExpansion: ((String) -> Void)?
 
     init(phrases: [String: String], usageStore: UsageStore?) {
-        self.phrases = phrases
+        let merged = BuiltInSnippets.merging(with: phrases)
+        self.phrases = merged
         self.usageStore = usageStore
-        self.matcher = KeywordMatcher(keywords: Array(phrases.keys))
+        self.matcher = KeywordMatcher(keywords: Array(merged.keys))
     }
 
     func reload(phrases: [String: String]) {
-        self.phrases = phrases
-        self.matcher = KeywordMatcher(keywords: Array(phrases.keys))
+        let merged = BuiltInSnippets.merging(with: phrases)
+        self.phrases = merged
+        self.matcher = KeywordMatcher(keywords: Array(merged.keys))
         self.buffer = ""
     }
 
@@ -114,7 +117,9 @@ fileprivate final class EngineState {
             // Keep expansions serialized through pasteboard restore so restores cannot race.
             let holdMs = injector.restoreDelayMs
             DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(Int(holdMs))) { [weak self] in
-                self?.isExpanding = false
+                guard let self else { return }
+                self.isExpanding = false
+                self.onAfterExpansion?(keyword)
             }
         } catch {
             let kind = errorKind(error)
@@ -197,12 +202,37 @@ public final class ExpanderEngine {
         state = EngineState(phrases: phrases, usageStore: usageStore)
         self.healthConfig = healthConfig
         diagnosticSession = DiagnosticSession()
+        state.onAfterExpansion = { [weak self] keyword in
+            guard keyword == BuiltInSnippets.fixKeyword else { return }
+            self?.heal(reason: "snippet_kpfix")
+        }
     }
 
     public func reload(phrases: [String: String]) {
         state.reload(phrases: phrases)
         fputs("reloaded|\(phrases.count) snippets\n", stderr)
         KeypopDiagnostics.event("watcher_reload", fields: ["snippet_count": String(phrases.count)])
+    }
+
+    /// Reinstall the production tap. Used by `keypop heal` and `;kpfix`.
+    public func heal(reason: String) {
+        do {
+            try installTap()
+            consecutiveNeverDeliveredReinstalls = 0
+            fputs("heal|tap_reinstalled|reason=\(reason)\n", stderr)
+            KeypopDiagnostics.event("heal", fields: [
+                "action": "tap_reinstalled",
+                "reason": reason,
+            ])
+        } catch {
+            fputs("heal|failed|\(error.localizedDescription)\n", stderr)
+            KeypopDiagnostics.event("heal", fields: [
+                "action": "failed",
+                "reason": reason,
+            ])
+            fputs("heal_hint|run: keypop heal   # or ./scripts/launch-keypop.sh restart\n", stderr)
+            exit(1)
+        }
     }
 
     public func setEnabled(_ enabled: Bool) {
@@ -333,7 +363,6 @@ public final class ExpanderEngine {
 
         let tapEnabled = eventTap.map { CGEvent.tapIsEnabled(tap: $0) } ?? false
         let liveness = currentLivenessInput()
-        let kind = TapHealthMonitor.inertKind(liveness)
         let permissionInterval = max(1, healthConfig.permissionProbeIntervalSeconds)
         let checksPerPermissionProbe = UInt(ceil(permissionInterval / healthConfig.checkIntervalSeconds))
         let includePermissionProbe = healthCheckCount % checksPerPermissionProbe == 0
@@ -350,10 +379,10 @@ public final class ExpanderEngine {
             )
             KeypopDiagnostics.event("health_heartbeat", fields: [
                 "tap_enabled": tapEnabled ? "true" : "false",
-                "seconds_since_anchor": String(Int(liveness.secondsSinceAnchor)),
+                "seconds_since_install": String(Int(liveness.secondsSinceInstall)),
                 "key_downs_since_tap": String(state.keyDownsSinceTapInstall),
             ])
-            handleHealthIssues(lightIssues, inertKind: kind, reason: "light_health")
+            handleHealthIssues(lightIssues, reason: "light_health")
             return
         }
 
@@ -362,7 +391,7 @@ public final class ExpanderEngine {
             "inject_ready": snapshot.readyForInject ? "true" : "false",
             "tap_create_allowed": snapshot.tapCreateAllowed ? "true" : "false",
             "tap_enabled": tapEnabled ? "true" : "false",
-            "seconds_since_anchor": String(Int(liveness.secondsSinceAnchor)),
+            "seconds_since_install": String(Int(liveness.secondsSinceInstall)),
             "key_downs_since_tap": String(state.keyDownsSinceTapInstall),
         ])
         let issues = TapHealthMonitor.evaluate(
@@ -371,28 +400,21 @@ public final class ExpanderEngine {
             includePermissionProbe: true,
             liveness: liveness
         )
-        handleHealthIssues(issues, inertKind: kind, reason: "scheduled_health")
+        handleHealthIssues(issues, reason: "scheduled_health")
     }
 
     private func currentLivenessInput() -> TapLivenessInput {
         let now = Date()
         let graceActive = now.timeIntervalSince(tapInstalledAt) < healthConfig.startupGraceSeconds
-        let everReceived = state.keyDownsSinceTapInstall > 0
-        let anchor = state.lastKeyDownAt ?? tapInstalledAt
         return TapLivenessInput(
-            secondsSinceAnchor: now.timeIntervalSince(anchor),
+            secondsSinceInstall: now.timeIntervalSince(tapInstalledAt),
             inertAfterSeconds: healthConfig.inertAfterSeconds,
-            stalledAfterSeconds: healthConfig.stalledAfterSeconds,
             gracePeriodActive: graceActive,
-            everReceivedKeyDown: everReceived
+            everReceivedKeyDown: state.keyDownsSinceTapInstall > 0
         )
     }
 
-    private func handleHealthIssues(
-        _ issues: [TapHealthIssue],
-        inertKind: TapInertKind?,
-        reason: String
-    ) {
+    private func handleHealthIssues(_ issues: [TapHealthIssue], reason: String) {
         guard !issues.isEmpty else { return }
 
         fputs("tap_health|\(issues.map(issueLabel).joined(separator: ","))\n", stderr)
@@ -412,7 +434,6 @@ public final class ExpanderEngine {
 
         let action = TapHealthMonitor.action(
             issues: issues,
-            inertKind: inertKind,
             consecutiveNeverDeliveredReinstalls: consecutiveNeverDeliveredReinstalls,
             maxInertReinstallsBeforeExit: healthConfig.maxInertReinstallsBeforeExit
         )
@@ -420,14 +441,11 @@ public final class ExpanderEngine {
         case .none:
             return
         case .reinstall:
-            let kindLabel = inertKind.map(inertKindLabel) ?? "unknown"
-            if inertKind == .neverDelivered {
-                consecutiveNeverDeliveredReinstalls += 1
-            }
-            fputs("tap_inert|reinstall|kind=\(kindLabel)|consecutive=\(consecutiveNeverDeliveredReinstalls)\n", stderr)
+            consecutiveNeverDeliveredReinstalls += 1
+            fputs("tap_inert|reinstall|kind=never_delivered|consecutive=\(consecutiveNeverDeliveredReinstalls)\n", stderr)
             KeypopDiagnostics.event("tap_inert", fields: [
                 "action": "reinstall",
-                "kind": kindLabel,
+                "kind": "never_delivered",
                 "consecutive": String(consecutiveNeverDeliveredReinstalls),
             ])
             reinstallTapFromHealthCheck(reason: "tap_inert")
@@ -438,7 +456,7 @@ public final class ExpanderEngine {
                 "kind": "never_delivered",
             ])
             fputs(
-                "tap_inert_hint|Input Monitoring grant may be stale. Remove KeyPop.app from Input Monitoring, re-add ~/Applications/KeyPop.app, then: ./scripts/launch-keypop.sh restart\n",
+                "tap_inert_hint|Tap never received keyDowns. Try: keypop heal — or re-grant Input Monitoring to ~/Applications/KeyPop.app, then ./scripts/launch-keypop.sh restart\n",
                 stderr
             )
             exit(1)
@@ -465,13 +483,6 @@ public final class ExpanderEngine {
         case .injectPermissionLost: return "inject_lost"
         case .staleTCCSuspected: return "stale_tcc"
         case .tapInert: return "tap_inert"
-        }
-    }
-
-    private func inertKindLabel(_ kind: TapInertKind) -> String {
-        switch kind {
-        case .neverDelivered: return "never_delivered"
-        case .stalled: return "stalled"
         }
     }
 }

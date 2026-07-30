@@ -2,9 +2,14 @@
 
 ## [Unreleased]
 
+### Added
+
+- `keypop heal` — out-of-band tap reinstall via `~/.config/keypop/control` (works when the keyboard tap is blind); falls back to LaunchAgent restart.
+- Built-in `;kpfix` — expands to `KeyPop OK` and reinstalls the tap (self-test when listen works).
+
 ### Fixed
 
-- Detect inert CGEvent taps that still report `tap_enabled` / create-probe success. `never_delivered` reinstalls once then exits for KeepAlive; `stalled` (idle after prior keyDowns) soft-reinstalls only.
+- Detect never-delivered CGEvent taps (installed but zero keyDowns); reinstall once, then exit for KeepAlive. No idle/stalled guessing — use `keypop heal` / `;kpfix` when you notice a break.
 - Clipboard paste restore is async (500ms default), cancels stale restores on overlap, and holds expansion serialization through restore.
 - Snippet directory watch ignores sibling file writes; usage stats moved to `~/.local/state/keypop/usage.json` (legacy file migrated once).
 - Full install syncs the signed app binary back to `~/.local/bin/keypop` so CLI and KeyPop.app share one code identity.
