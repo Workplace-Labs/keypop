@@ -58,10 +58,13 @@ Kit files in `kits/` are import **sources** — still run `keypop import`, not a
 
 If `keypop` is not installed yet:
 
-- **From this repo:** `./scripts/create-keypop-signing-cert.sh` once (stable local signing — skip this and `install.sh` falls back to ad-hoc signing, which breaks TCC grants on every rebuild), then `./scripts/install.sh`
+- **CLI-only bootstrap:** `./install.sh` installs the `keypop` command without the app bundle, LaunchAgent, or TCC permission flow. Use this when you only need CRUD, kit import/export, or scripting. From a local checkout, the equivalent is `./scripts/install-full.sh --cli-only`.
+- **Full Mac setup:** `./scripts/create-keypop-signing-cert.sh` once (stable local signing — without it, the full installer falls back to ad-hoc signing, which breaks TCC grants on every rebuild), then `./scripts/install-full.sh`
 - **From the wl-agent-toolkit**, without a local checkout: `scripts/keypop-install.sh` — clones (or updates) the repo, then runs both of the above in order automatically. Accepts `--repo <path>` / `$KEYPOP_REPO_PATH`, and `--yes` to skip the interactive TCC pause for scripted/agent runs.
 
-Either path builds, signs, installs the LaunchAgent, and walks through the Input Monitoring + Accessibility TCC grants.
+The full setup builds, signs, installs the app and LaunchAgent, and walks through the Input Monitoring + Accessibility TCC grants.
+
+After either installation path, run `keypop inspect` to verify the installed paths and basic configuration before starting the daemon or troubleshooting permissions.
 
 If `keypop` is already installed, use the daemon commands below rather than re-running an installer.
 
@@ -200,6 +203,8 @@ Shipped prompt kits (import with `--prefix` as needed). `;p` is the recommended 
 
 Run these in the shell. They update Apple Text Replacements and auto-export to `~/.config/keypop/snippets.json` (do not edit that file yourself).
 
+Mutating commands write Apple Text Replacements and, by default, export the resulting shortcuts to `~/.config/keypop/snippets.json` for the Mac daemon. `--no-sync` or `KEYPOP_SYNC=0` disables only that runtime-file export; it does not make a mutation read-only and does not prevent Apple Text Replacement changes. Use `--dry-run` when you need to preview an import without changing either store. Use `--no-sync` when the native Text Replacement update is intentional but you do not want to refresh the daemon's runtime file, for example during a controlled import or while the daemon is not in use. To restore normal export behavior, unset `KEYPOP_SYNC` or set `KEYPOP_SYNC=1`.
+
 ### List shortcuts
 
 ```sh
@@ -250,6 +255,8 @@ keypop import kits/prompts-core.snippets.json --prefix ';p' --apply --on-conflic
 keypop import kits/workplace-labs-top5.snippets.json --prefix ';wl' --apply --on-conflict skip
 ```
 
+For an applied import, add `--no-sync` only when you intentionally want to skip refreshing the daemon's runtime file. It still updates Apple Text Replacements. Keep `--dry-run` for a no-write preview.
+
 **Export** — share a prefix zone with teammates:
 
 ```sh
@@ -296,6 +303,7 @@ tail -f ~/.local/log/keypop.log      # tap_installed, expanded|…
 - **Never edit `~/.config/keypop/snippets.json` directly** — use `keypop create`/`update`/`delete`/`import`
 - Never write directly to `~/Library/KeyboardServices/TextReplacements.db`
 - Always `--dry-run` before `import --apply`
+- `--no-sync` and `KEYPOP_SYNC=0` suppress only the runtime export; they are not a substitute for `--dry-run` and do not prevent native Text Replacement writes.
 
 ## Key paths
 
