@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.2.5] - 2026-08-07
+
+### Added
+
+- **Impeccable Design Kit** — a suite of prompts that fight AI design slop:
+  - `ip-build` — generate shippable code with brand context and anti-slop rules
+  - `ip-critique` — heuristic-scored design review that surfaces generic patterns
+  - `ip-audit` — deterministic technical checks (contrast, overflow, z-index)
+  - `ip-polish` — final pass that consumes critique/audit backlog
+  - `ip-de-slop` — deep check for category and safe-alternative clichés
+
+### Changed
+
+- **Impeccable Guide** (`docs/impeccable-guide.md`) — comprehensive workflow for design taste enforcement
+
 ## [0.2.4] - 2026-07-30
 
 ### Added

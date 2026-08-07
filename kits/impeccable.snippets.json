@@ -1,0 +1,27 @@
+[
+  {
+    "name": "Build",
+    "keyword": ";ipbuild",
+    "text": "Design and build [feature/page] as shippable code, not a prototype. First, one sentence: who uses this, where, in what mood — let that force the theme and color strategy (pick one: restrained/one accent, committed/one saturated color at 30-60%, full palette of named roles, or drenched). Don't default to dark-for-cool or light-for-safe, and don't default to a cream/sand/beige body bg if there's no existing palette — that's the current reflex, not a neutral choice. Avoid on reflex: side-stripe borders, gradient text, decorative glassmorphism, hero-metric-template (big number + gradient), identical repeating cards, an uppercase eyebrow above every section, 01/02/03 numbering used as decoration rather than a real sequence. Before showing me the result, ask yourself: could someone guess this layout/palette just from the product category? If yes, that's a tell — fix it before you show me."
+  },
+  {
+    "name": "Critique",
+    "keyword": ";ipcritique",
+    "text": "Critique [this UI] as a design review, not a bug hunt. Score it out of 10. The main thing I want: if I only told another designer the product category, could they guess this exact layout and palette? If yes, name the specific choice that's the reflex, and what a less obvious choice would look like for this brand specifically — not a generic alternative, one that fits what's actually here. Then hierarchy, IA, and cognitive load in a few lines each, and a prioritized P0/P1/P2 fix list."
+  },
+  {
+    "name": "Audit",
+    "keyword": ";ipaudit",
+    "text": "Audit [this UI/code] — technical only, no aesthetic opinions. Prioritize the non-obvious stuff over things a linter would catch: - Measure actual rendered body-text contrast against its actual rendered background - don't trust the token name (this is the #1 thing that makes AI output read as \"off\"). - Any heading that overflows its container at real copy length, at mobile width. - Any dropdown/popover absolutely-positioned inside an overflow:hidden/auto parent — it'll get clipped; needs position:fixed, native dialog/popover, or a portal. - Any reveal animation that gates content visibility behind the animation itself (breaks on hidden tabs/headless renders) instead of enhancing an already-visible default. - z-index: real scale, or arbitrary 999s fighting each other. Flat list, ranked by severity, not a summary."
+  },
+  {
+    "name": "Polish",
+    "keyword": ";ippolish",
+    "text": "Final pass before I ship [this]. Don't restyle what already works — check specifically for what gets skipped under deadline pressure: - Every ban still absent: side-stripes, gradient text, glassmorphism-as-default, hero-metric-template, identical card grids, decorative eyebrows/numbering. - Every interactive element has a real hover/focus/active/disabled state, not just a color swap. - Empty, error, and loading states exist and aren't a blank div or generic spinner. - Motion present somewhere purposeful, not overcorrected into totally static \"to be safe\" — but nothing bounces, and reduced-motion works. - No leftover placeholder copy, no error message that just says \"something went wrong\" without saying what to do. Tell me what you changed, and flag anything you're not sure about instead of quietly smoothing over it."
+  },
+  {
+    "name": "De-Slop",
+    "keyword": ";ipde-slop",
+    "text": "This reads as generic/AI-made and I can't say exactly why. Check two levels: First-order: could someone guess the palette/layout from the product category alone? Name the element doing it if so. Second-order — the trap one tier deeper: even if I dodged the obvious category cliché, did I land on the *safe alternative* cliché instead (avoided SaaS-cream but landed on generic dark-terminal-mode; avoided navy-gold fintech but landed on generic editorial-serif)? Name that too if it applies. Give me one concrete, brand-specific direction — color, type, one structural layout choice — and rewrite the top of the page to show it, not describe it."
+  }
+]
