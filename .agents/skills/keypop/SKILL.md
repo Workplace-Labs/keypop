@@ -170,7 +170,7 @@ If `keypop` is already installed, use the daemon commands below rather than re-r
 
 **You do**, depending on their pick:
 - **Another tip:** surface something from Conventions, Common commands, or a kit they haven't tried.
-- **Explore other kits:** describe `workplace-labs-thinking`, `workplace-labs-dev`, `workplace-labs-hr`, and `lab-rats` from the Shipped prompt kits table above; import whichever sounds good.
+- **Explore other kits:** describe `workplace-labs-thinking`, `workplace-labs-dev`, `workplace-labs-hr`, `lab-rats`, and `gstack-inspired` from the Shipped prompt kits table above; import whichever sounds good.
 - **See their library:** run `keypop list` and summarize it back to them.
 - **Sharing kits:** walk through [Kits (import and export)](#kits-import-and-export).
 
@@ -198,6 +198,7 @@ Shipped prompt kits (import with `--prefix` as needed). `;p` is the recommended 
 | `kits/workplace-labs-thinking.snippets.json` | `;wl` (Workplace Labs example) | `;wlpremortem`, `;wloptions` |
 | `kits/workplace-labs-dev.snippets.json` | `;wl` (Workplace Labs example) | dev-focused prompts |
 | `kits/workplace-labs-hr.snippets.json` | `;wl` (Workplace Labs example) | HR/coaching prompts |
+| `kits/gstack-inspired.snippets.json` | `;gs` | `;gsoh`, `;gsceo`, `;gslock`, `;gsreview`, `;gsship` |
 
 ## Common commands
 
@@ -244,6 +245,18 @@ keypop delete --shortcut ';poldprompt'
 ```sh
 keypop get --shortcut ';pproof'
 ```
+
+### Cheat sheet
+
+When someone asks for a cheat sheet of their shortcuts, build it from `keypop list`. Do not read `snippets.json`.
+
+After you create, update, delete, or import shortcuts, offer to make a fresh cheat sheet. Build it when they say yes. Skip the offer if you already made one in this conversation.
+
+- Group only what is installed. Useful groups: prompts you say to AI, design, links, paste (email, phone, address), terminal. Drop empty groups.
+- Each row is the keyword plus a few words of what it does. Do not paste the full prompt.
+- Write one local HTML page they can scan: grouped sections, monospace keywords, short labels, plenty of space. Open it. `tmp/` is fine.
+- Do not commit contact details into the repo.
+- Mention leftovers in one line: placeholder text, duplicate shortcuts, or a kit they expected that is not installed.
 
 ## Kits (import and export)
 

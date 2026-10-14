@@ -73,16 +73,18 @@ If you are installing kits for the first time, import one and use it for a day b
 | [`kits/karpathy-agentic-coding.snippets.json`](karpathy-agentic-coding-kit.md) | `;ak` | Agentic engineering prompts for specs, eval loops, implementation, steering, simplification, diff review, and verification |
 | [`kits/caveman-prompting.snippets.json`](caveman-prompting-kit.md) | `;cm` | Output-compression prompts for concise tasks, debugging, review, verification, handoff, and safe prompt shortening |
 | [`kits/compound-engineering.snippets.json`](compound-engineering-kit.md) | `;ce` | Product-engineering prompts for strategy, ideation, requirements, planning, execution, review, simplification, and reusable lessons |
+| [`kits/gstack-inspired.snippets.json`](gstack-inspired-kit.md) | `;gs` | Staged product-to-ship prompts: office hours, scope mode, implementation lock, review gate, and PR note |
 
 ### Agent Workflow Kits
 
-These three kits are deliberately focused. They are not meant to be imported as one giant "AI best practices" dump.
+These kits are deliberately focused. They are not meant to be imported as one giant "AI best practices" dump.
 
 | Kit | Based on | First shortcut to try | Notes |
 |-----|----------|-----------------------|-------|
 | `karpathy-agentic-coding` | Andrej Karpathy's Sequoia Ascent 2026 talk, [`From Vibe Coding to Agentic Engineering`](https://www.youtube.com/watch?v=96jN2OCOfLs) | `;akloop` | Best when you want specs, eval loops, implementation, diff review, steering, simplification, checkpointing, and verification. |
 | `caveman-prompting` | Julius Brussee's `juliusbrussee/caveman` project | `;cm` | Use for shorter assistant output. Do not use it to remove important context from the task. |
 | `compound-engineering` | Every Inc's Compound Engineering plugin | `;ceplan` | Best when you want a repeatable engineering cycle: strategy, ideate, plan, work, review, simplify, capture. |
+| `gstack-inspired` | Garry Tan's [gstack](https://github.com/garrytan/gstack), prompt distill only | `;gsoh` | Best when you want a design brief, a scope mode, an implementation lock, a named review gate, and a PR note. Not the gstack installer. |
 
 The Caveman kit deserves one extra caveat: newer prompt-compression research suggests output compression is useful, but compressing the user's input too aggressively can make models compensate with longer or worse answers. That is why this kit keeps the task structure intact and mostly asks the assistant to be concise.
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- **gstack Inspired Kit** (`kits/gstack-inspired.snippets.json`): five `;gs` prompts distilled from gstack's role handoffs. Office hours, CEO scope mode, eng lock, review gate, and ship. See `docs/gstack-inspired-kit.md`.
+
+### Changed
+
+- KeyPop skill: after a shortcut create, update, delete, or kit import, offer a scannable cheat sheet built from `keypop list`.
+
 ## [0.2.5] - 2026-08-07
 
 ### Added

@@ -1,0 +1,27 @@
+[
+  {
+    "name": "Office Hours",
+    "keyword": ";gsoh",
+    "text": "Do not plan implementation and do not write code.\n\nIf this thread already answers the six questions below, write the design brief from those answers and mark anything you still had to assume. Otherwise your first reply is only question 1. Ask the rest one at a time, and wait for each answer:\n\n1. Demand: who wants this badly enough to change what they do today?\n2. Status quo: what do they do now, and why is that not enough?\n3. Desperate specificity: name the exact person, moment, and job to be done.\n4. Narrowest wedge: what is the smallest version that still solves that moment?\n5. Observation: what have we actually seen, versus what we are assuming?\n6. Future fit: if this works, what does it become, and what must stay true?\n\nThen write a design brief with these headings:\n- user and moment\n- problem\n- narrowest wedge\n- evidence vs assumptions\n- out of scope\n- open questions\n\nStop after the design brief."
+  },
+  {
+    "name": "CEO Review",
+    "keyword": ";gsceo",
+    "text": "Read the design brief. Do not write code. Do not repeat the interview.\n\nIf the thread has no design brief, stop and say so.\n\nChallenge the premise, then recommend exactly one scope mode:\n- Expand: a larger product is the better product. Name what you would add and why the wedge is too small.\n- Selective: hold the wedge, and name at most two additions that clearly earn their place.\n- Hold: ship the wedge as written. Name what you are refusing to add.\n\nYour first reply ends after the recommendation and its main risk. Do not choose the mode for me.\n\nAfter I reply with Expand, Selective, or Hold, write the product decision and nothing else:\n- mode\n- in scope\n- out of scope\n- success looks like\n- premise you still doubt\n\nDo not produce an engineering plan."
+  },
+  {
+    "name": "Eng Lock",
+    "keyword": ";gslock",
+    "text": "Use only the product decision. If the thread has no product decision, stop and say so.\n\nDo not reopen product scope, add features, or shrink the wedge unless I change the mode.\n\nBefore proposing new code, stop at the first rung that already works:\n1. a helper or pattern in this repo\n2. the standard library\n3. a native platform feature\n4. an already-installed dependency\n\nWrite an implementation lock:\n- files to touch\n- one architecture decision\n- tests, edge cases, and error paths\n- order of work\n\nCompleteness applies to the chosen scope that remains after that ladder. If you cut something inside that scope, record the cut, why, and the condition that should bring it back.\n\nDo not implement until I accept the lock."
+  },
+  {
+    "name": "Review Gate",
+    "keyword": ";gsreview",
+    "text": "Review the diff against the product decision and the implementation lock. If either is missing, say what is missing and continue with what you have. Do not change product scope. Do not edit files.\n\nClassify each finding:\n- Critical: security, data integrity, spec mismatch, or a broken acceptance criterion. Ask me. Do not fix.\n- Informational: naming, duplication, missing types, or unused code. List them. Do not fix unless I explicitly say to.\n\nEnd with exactly one gate:\n- DONE: no critical findings\n- DONE_WITH_CONCERNS: shippable, with each concern named and who must accept it\n- BLOCKED: a critical finding must be fixed first\n- NEEDS_CONTEXT: you cannot judge without something only I know\n\nFor every finding include the file, what is wrong, and the smallest fix. If there are no findings, say so and still name the gate."
+  },
+  {
+    "name": "Ship",
+    "keyword": ";gsship",
+    "text": "Prepare the release from the review gate. Do not re-review the diff and do not start new work.\n\nIf the thread has no review gate, stop and say so.\nIf the gate is BLOCKED or NEEDS_CONTEXT, stop and say what is missing.\nIf the gate is DONE_WITH_CONCERNS and I have not explicitly accepted those concerns, list them and stop. Do not write the PR yet.\n\nWhen the gate is DONE, or I have accepted the concerns, write:\n- PR title\n- what changed, in user-visible terms\n- commands run and their results\n- what was not verified\n- rollback\n\nDo not say this is ready to ship without both the gate and the verification evidence."
+  }
+]

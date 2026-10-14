@@ -141,6 +141,7 @@ New to prompt kits? Start with **one** kit, not all of them. The full kit guide 
 | `kits/karpathy-agentic-coding.snippets.json` | `;ak` | Agentic engineering prompts |
 | `kits/caveman-prompting.snippets.json` | `;cm` | Shorter assistant output |
 | `kits/compound-engineering.snippets.json` | `;ce` | Product-engineering loops |
+| `kits/gstack-inspired.snippets.json` | `;gs` | Product-to-ship role handoffs |
 
 `;wl` and `;lab` are just Workplace Labs' own prefixes for the kits it publishes — pick whatever prefix makes sense when you build and share your own.
 
