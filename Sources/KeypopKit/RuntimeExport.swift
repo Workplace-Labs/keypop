@@ -34,10 +34,12 @@ public enum RuntimeExport {
 
     @discardableResult
     public static func write(_ rows: [Replacement]) throws -> String {
+        let (deduplicated, warnings) = ReplacementDeduplication.deduplicate(rows)
+        ReplacementDeduplication.emitWarnings(warnings)
         let path = snippetsPath()
         let parent = URL(fileURLWithPath: path).deletingLastPathComponent()
         try FileManager.default.createDirectory(at: parent, withIntermediateDirectories: true)
-        try KitFormat.encode(rows).write(to: URL(fileURLWithPath: path), options: .atomic)
+        try KitFormat.encode(deduplicated).write(to: URL(fileURLWithPath: path), options: .atomic)
         return path
     }
 }

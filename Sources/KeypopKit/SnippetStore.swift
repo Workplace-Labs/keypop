@@ -14,8 +14,10 @@ public struct SnippetStore: Sendable {
     public static func load(from path: String) throws -> SnippetStore {
         let data = try Data(contentsOf: URL(fileURLWithPath: path))
         let replacements = try KitFormat.parseReplacements(from: data)
+        let (deduplicated, warnings) = ReplacementDeduplication.deduplicate(replacements)
+        ReplacementDeduplication.emitWarnings(warnings)
         var map: [String: String] = [:]
-        for replacement in replacements {
+        for replacement in deduplicated {
             map[replacement.shortcut] = replacement.phrase
         }
         return SnippetStore(phrases: map)
