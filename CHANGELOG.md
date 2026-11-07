@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Duplicate shortcut keywords in `snippets.json` or Apple reads now collapse to one row (last phrase in file/list order wins); sync and daemon load emit `keypop_duplicate|` warnings when drops occur.
+
 ### Added
 
 - **gstack Inspired Kit** (`kits/gstack-inspired.snippets.json`): five `;gs` prompts distilled from gstack's role handoffs. Office hours, CEO scope mode, eng lock, review gate, and ship. See `docs/gstack-inspired-kit.md`.

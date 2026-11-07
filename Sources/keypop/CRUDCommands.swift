@@ -99,19 +99,22 @@ enum CRUDCommands {
             throw bridgeError(nsError)
         }
 
-        return try rows.map { row in
+        let mapped = try rows.map { row in
             guard let shortcut = row["shortcut"] as? String, let phrase = row["phrase"] as? String else {
                 throw CLIError.runtime("KeyboardServices returned a malformed replacement row")
             }
             return Replacement(shortcut: shortcut, phrase: phrase)
         }
-        .sorted { left, right in
+        let (deduplicated, warnings) = ReplacementDeduplication.deduplicate(mapped)
+        ReplacementDeduplication.emitWarnings(warnings)
+        return deduplicated.sorted { left, right in
             left.shortcut.localizedStandardCompare(right.shortcut) == .orderedAscending
         }
     }
 
     static func replacementMap(_ rows: [Replacement]) -> [String: Replacement] {
-        Dictionary(uniqueKeysWithValues: rows.map { ($0.shortcut, $0) })
+        let deduplicated = ReplacementDeduplication.deduplicate(rows).deduplicated
+        return Dictionary(uniqueKeysWithValues: deduplicated.map { ($0.shortcut, $0) })
     }
 
     static func filterReplacements(_ rows: [Replacement], prefix: String?) -> [Replacement] {
@@ -167,7 +170,9 @@ enum CRUDCommands {
     }
 
     static func writeKitFile(_ replacements: [Replacement], to path: String) throws {
-        try KitFormat.encode(replacements).write(to: URL(fileURLWithPath: path), options: .atomic)
+        let (deduplicated, warnings) = ReplacementDeduplication.deduplicate(replacements)
+        ReplacementDeduplication.emitWarnings(warnings)
+        try KitFormat.encode(deduplicated).write(to: URL(fileURLWithPath: path), options: .atomic)
     }
 
     static func stableReplacements(maxAttempts: Int = 12, delayMicros: UInt32 = 250_000) throws -> [Replacement] {
